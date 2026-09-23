@@ -1,0 +1,80 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.pid
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.*
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.virtual_documents/
+
+# Secrets and credentials (IBL / Alyx / cloud)
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*
+*secret*
+*token*.json
+.alyx/
+.one/
+one_params
+login.json
+id_rsa
+id_ed25519
+
+# Raw / derived session dumps (multi-GB). Rebuild with fullData.py etc.
+BehaviorRes/Database/
+BehaviorRes/DatabaseDiscretized/
+BehaviorRes/DatasetFiltered/
+BehaviorRes/DatasetFilteredDiscretized/
+BehaviorRes/ModelData/
+BehaviorRes/ModelDataLeft/
+BehaviorRes/ModelDataLeftIpsi/
+BehaviorRes/ModelDataRight/
+BehaviorRes/ModelDataRightContra/
+**/sessions/
+
+# IBL aggregate tables and local neural caches
+*.pqt
+*.pkl
+*.h5
+*.hdf5
+*.nwb
+*.npy
+*.npz
+*.mat
+
+# Keep sklearn / ridge checkpoints stored as pickle inside result caches
+!**/cache/**/*.pkl
+
+# Video and other bulky media (plots stay)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wav
+*.mp3
+
+# Keep small derived label tables; ignore other parquet dumps
+*.parquet
+!BehaviorRes/wheel_paws_labels.parquet

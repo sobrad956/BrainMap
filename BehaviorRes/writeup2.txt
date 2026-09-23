@@ -1,0 +1,3508 @@
+================================================================================
+How ModelDataLeft was generated, and why it is the dataset it is
+A from-scratch account of the science, the Brain-Wide Map paper's choices,
+and every cut we made afterward
+================================================================================
+
+This file is meant to be readable if you have never taken a neuroscience
+class, never trained a model, and have never heard of the International
+Brain Laboratory or the Brain-Wide Map. Technical steps are still here,
+in order, with numbers. What is new relative to writeup.txt is the
+argument: why each step is a scientific claim about brains, not just a
+data-cleaning recipe.
+
+The folders this document describes are
+
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeft
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataRight
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeftIpsi
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataRightContra
+
+Left and Right are twin subsets of ModelData. Left keeps the 7,173
+trials whose wheel_paws label is "left". Right keeps the 7,225 whose
+label is "right". Same 32 mice, same 53 sessions, same 10,537 neurons
+(2,464 of them in MOp or MOs), same 20 millisecond grid. They differ
+in the effector and, because IBL placed almost every motor probe in
+the left hemisphere, in whether that effector is ipsilateral or
+contralateral to the recorded motor cortex.
+
+LeftIpsi and RightContra are hemisphere-pure copies of those twins.
+They drop every unit with Allen CCF ML coordinate allen_x > 0 (the
+right hemisphere: 844 units), remap spike_counts onto the kept
+columns, and then drop any session left with fewer than 5 MOp/MOs
+units. That last rule removed exactly one session: KS023
+(cortexlab) 2019-12-10, eid aad23144-0e52-4eac-80c5-c4ee2decb198,
+whose motor cortex was 52 right-hemisphere MOs5 cells and 0
+left-hemisphere motor cells.
+
+    ModelDataLeftIpsi      32 mice, 52 sessions, 6,819 trials, 9,597 units
+                           100% left hemisphere, wheel_paws = left,
+                           100% ipsilateral pairing
+    ModelDataRightContra   32 mice, 52 sessions, 7,191 trials, 9,597 units
+                           100% left hemisphere, wheel_paws = right,
+                           100% contralateral pairing
+
+KS023 the mouse remains via 2019-12-06, eid
+a4000c2f-fa75-4b3e-8f06-a7cf599b87ad (234 left / 72 right trials
+in the parents) and 2019-12-08, eid
+a92c4b1d-46bd-457e-a1f4-414265f0e2d4 (426 left / 11 right). How these
+folders were carved out of the public BWM freeze is the second half
+of this file. The first half is why.
+
+
+--------------------------------------------------------------------------------
+0. The one-sentence claim, then the rest of the file
+--------------------------------------------------------------------------------
+
+Claim: if you want to know what motor cortex is doing during the IBL
+decision task, you should predict the paw, not the wheel. The wheel is a
+convenient one-dimensional object in the world. Motor cortex does not
+innervate the wheel. It innervates muscles that move the limb. The limb
+sometimes drags the wheel and sometimes does not. Those two situations
+are different computations, and treating wheel speed as "the movement"
+hides that difference.
+
+The original Brain-Wide Map (BWM) paper used wheel velocity as a movement
+target because it was already logged, it is the animal's report of the
+decision, and it is the same physical object in every lab. That was a
+reasonable proxy for a paper whose main question was "where in the brain
+can we read out the choice." It is a bad proxy for a paper whose question
+is "how does cortex generate the movement that implements the choice."
+
+Those are not the same question. This dataset is built for the second
+one.
+
+The rest of this file, in order:
+
+    1.  What a brain recording even is: the probe, the raw voltage,
+        spike sorting, isolation QC, other signals besides spikes,
+        and how a channel is mapped onto a named brain area
+    2.  What the mouse is asked to do
+    3.  What the BWM paper asked, and why the wheel was their movement
+    4.  Why neural activity should not be thought of as encoding the wheel
+    5.  Why the paw is the right object instead
+    6.  Why this task is not a ballistic reach, and why that matters
+    7.  Still / coupled / decoupled as motor primitives
+    8.  Why those primitives should be encoded differently
+    9.  What we kept from the paper on purpose
+    10. The pipeline, step by step, with the scientific reason for each cut
+        (including right-camera ×2, 2D speed, and speedNormalized)
+    11. What a ModelDataLeft / ModelDataRight trial contains
+    12. Hemisphere, laterality, and the literature
+    13. Hemisphere-pure copies: LeftIpsi and RightContra
+    14. Authors versus us, in one place
+    15. Honest limitations
+    16. Counts, ancestry, scripts
+
+
+================================================================================
+PART I. BACKGROUND YOU NEED BEFORE ANY FOLDER NAME MAKES SENSE
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. What we are looking at when we look at a "unit"
+--------------------------------------------------------------------------------
+
+A neuron is a cell that communicates by brief electrical pulses called
+spikes (also called action potentials). A spike is approximately a one-
+millisecond event. It is all-or-none: the cell either fires or it does
+not. The information a neuron can send to the rest of the brain is
+carried in the times of those spikes, not in their height.
+
+The rest of this section is what that sentence hides: the silicon
+(1.1), the raw voltage and the features we did not keep (1.2), the
+sorter the paper actually ran (1.3), the three isolation tests (1.4),
+and the atlas that turns a contact into MOp5 (1.5). After sorting, a
+"unit" is one putative neuron: a list of timestamps at which that cell
+fired. It is not the only thing the electrode measured.
+
+Not every sorted blob is a clean neuron. Spike sorting is an algorithm,
+not a microscope: it groups similar voltage waveforms and calls each
+group a "unit." Some groups really are one cell. Some are two cells
+glued together (contamination: extra spikes that do not belong). Some
+are one cell with half its spikes missing (false negatives: the
+algorithm only caught the big spikes). Some are just electrical noise.
+If you decode movement from a contaminated unit, you are mixing two
+cells' opinions. If you decode from a truncated unit, you are looking
+at a random subset of the cell's spikes and calling the gaps "silence."
+That is why isolation quality control exists.
+
+Before those tests make sense, you need the hardware, the raw voltage,
+the sorter the paper actually ran, and the atlas that turns a contact
+on a silicon needle into a name like MOp5. Those are not garnish.
+They are the generative model of the numbers in spike_counts. A
+decoder that treats every unit as an independent Bernoulli draw is
+ignoring the fact that two units 20 micrometres apart on the same
+shank saw overlapping extracellular fields, that the LFP on those
+channels is a different physical quantity from the spike times, and
+that "MOp5" is a voxel in a mouse-specific atlas after a human-plus-
+algorithm alignment, not a GPS coordinate of the cell body.
+
+
+1.1  The Neuropixels probe: 960 electrodes, 384 live channels, and
+     a checkerboard that is the reason sorting works
+
+The Brain-Wide Map recordings in this freeze were made with Neuropixels
+1.0 probes (Jun, Steinmetz, Siegle, Harris, Carandini, and colleagues,
+Nature 2017; IMEC commercial device). A Neuropixels 1.0 is a single
+straight silicon shank, about 10 millimetres long, with a cross-section
+of roughly 70 by 20–24 micrometres. That is thinner than a human hair
+and long enough, in a mouse, to go from the cortical surface through
+motor cortex, striatum, and into thalamus on one insertion. The same
+physical object in a macaque or a human would sample a much smaller
+fraction of the brain; the geometry is absolute, the coverage is not.
+
+Along that shank sit 960 electrode sites. Each site is a 12 by 12
+micrometre square of titanium nitride, impedance on the order of 150
+kiloohms at 1 kHz. They are not 960 independent wires. They are metal
+pads fabricated on one CMOS chip, switchable onto a smaller number of
+recording channels.
+
+The distinction that matters:
+
+    electrode / site     a physical contact on the shank (960 of them)
+    channel              a live amplifier + ADC that can listen to one
+                         electrode at a time (384 of them)
+    bank / channel map   which 384 of the 960 are connected right now
+    unit                 a putative neuron, inferred later from the
+                         384 live voltage traces
+
+You cannot record all 960 sites at once. The 384 figure is a hardware
+ceiling: there are 384 parallel, dual-band recording channels in the
+probe base. CMOS switches under the sites let the experimenter pick
+which 384 electrodes those channels address. IBL's default, and the
+map used for essentially all BWM insertions, is the dense contiguous
+layout: the most distal (tip-ward) 384 sites, forming a gap-free
+column about 3.84 millimetres tall. That choice is not cosmetic.
+Kilosort isolates neurons by matching a spike's spatial footprint
+across neighboring sites. If you recorded a sparse, gappy subset of
+electrodes, that footprint would be undersampled and sorting would
+get worse. The unused 576 sites are still on the shank; they are just
+not wired to an ADC during the session. A later session in the same
+animal could, in principle, switch to a more dorsal bank and listen
+to a different 3.84 mm of the same track. The BWM protocol did not
+do that mid-session. One insertion, one bank, one 3.84 mm column.
+
+How the 384 live sites are arranged (IBL `neuropixel.dense_layout`
+version=1, which matches the IMEC 1.0 checkerboard):
+
+    four columns across the shank
+    two sites per row
+    20 micrometres of vertical (axial) pitch from row to row
+    16 micrometres of lateral pitch from column to column
+    columns occupied in a repeating stagger 2, 0, 3, 1 so that
+        nearest neighbors form a checkerboard, not a square grid
+    12 by 12 micrometre pads, so the metal almost tiles the pitch
+    192 rows × 20 µm = 3.84 mm of recorded depth
+
+The original Jun et al. paper quotes 25 micrometres as the centre-to-
+centre nearest-neighbor distance, which is the diagonal of that
+checkerboard, not a contradiction of IBL's 16/20 numbers. IBL's
+geometry header stores, per live channel: x, y (lateral and axial
+on the shank, micrometres), row, col, shank (always 0 for NP 1.0),
+ADC index, and sample_shift.
+
+sample_shift is a modelling landmine if you ever go back to raw
+traces. The 384 channels are not sampled at the same instant.
+Neuropixels 1.0 has 32 analogue-to-digital converters; each ADC
+round-robins 12 channels inside one 30 kHz sample period (~33
+microseconds). Channels on different ADCs therefore have systematic
+sub-sample time offsets, stored as sample_shift. Spike-sorting
+interpolates them. A naive "the voltage on channel 17 at sample t
+is simultaneous with channel 203" is false at the 10-microsecond
+scale. For 20 ms binned spike counts this does not matter. For
+waveform alignment, spike-LFP phase, or any claim about millisecond
+synchrony across the probe, it does.
+
+What a modeller can actually use from this geometry, even without
+reopening the raw files:
+
+    axial_um     depth of the unit's peak channel along the shank,
+                 tip = 0. Two units 20 µm apart are neighbors.
+                 Two units 2000 µm apart are in different structures
+                 even if they share a probe_name.
+    lateral_um   which of the four columns. Almost never used in
+                 decoding papers; it is the only handle on the
+                 shank's medio-lateral micro-position.
+    channel      integer 0–383 on THAT probe. Channel 40 on probe00
+                 is not channel 40 on probe01. After we concatenate
+                 probes, unit_idx is the modelling index; channel
+                 is not unique in a session.
+    probe_name   probe00 or probe01. Many BWM sessions have two
+                 shanks in the same animal at once, in different
+                 structures. Our spike_counts columns from two
+                 probes are two independent 3.84 mm worlds that
+                 happen to share a clock.
+    pid          the insertion UUID. The identity of "this piece of
+                 silicon in this brain on this day."
+
+Spatial facts that leak into any model of these spike trains,
+whether you model them or not:
+
+    One neuron is seen on several sites. Extracellular amplitude
+    falls off over tens of micrometres. A well-isolated cell on
+    this geometry typically has a spatial footprint of ~5–20
+    channels. That is why dense silicon works and a single
+    microwire does not: the sorter is clustering a spatiotemporal
+    movie, not a 1-D voltage wiggle.
+
+    Nearby units are not independent observations of the brain.
+    They are nearby in tissue, they share local inhibition, they
+    share the same LFP, and they were competing for the same
+    templates during sorting. Treating 200 motor units as i.i.d.
+    features overstates the number of independent samples.
+
+    The recorded column is a 1-D (really a very thin 2-D) sample
+    of a 3-D volume. Motor cortex is a sheet. A shank through MOp
+    gives you a stack of layers (2/3, 5, 6a, 6b) at one (AP, ML)
+    location, not a map of the motor sheet. You cannot reconstruct
+    a somatotopic map from one insertion. You CAN ask whether
+    layer 5 units predict paw speed differently from layer 2/3,
+    because the shank actually stacks those layers.
+
+    Dead, noisy, and out-of-brain channels exist. IBL detects them
+    (outside the brain: flat traces; dead: tiny amplitude; noisy:
+    excess variance) and interpolates or excludes them before
+    sorting. A 384-channel file does not mean 384 working ears.
+
+    The shank displaces tissue, dimples the surface, and leaves
+    gliosis. Histology is partly a correction for the fact that
+    the brain was not in the atlas pose while the probe was in it.
+
+    Neuropixels 2.0 (two-column linear sites, or four shanks) is
+    a different geometry. This freeze is 1.0. Do not mix the
+    pitch numbers.
+
+The 10 mm shank vs the 3.84 mm live window also explains coverage
+quirks in our folders. An insertion aimed at left MOp may have its
+live bank sitting in cortex plus striatum, or in cortex plus
+thalamus, depending on how deep the tip went and which bank was
+on. Units from the same probe_name in the same session can be in
+MOp5 and in a completely different region a millimetre deeper.
+brain_area is per unit, not per probe.
+
+
+1.2  What the electrode actually records, and why spikes are not
+     the only derived feature
+
+The physical measurement is extracellular voltage versus time, at
+each live site, relative to a reference (on NP 1.0, typically a
+large tip contact and/or an external reference). That voltage is a
+sum of everything nearby that moves charge: the action potentials
+of cells within ~50–100 µm, the slower synaptic currents of a much
+larger neighborhood, volume-conducted fields from farther away,
+muscle artifact, and electronic noise.
+
+Neuropixels 1.0 splits this on-chip into two streams at once
+(dual-band):
+
+    AP  ("action potential" / spike band)
+        analogue filter roughly 0.3–10 kHz
+        sampled at 30,000 samples per second
+        stored as the `.ap.bin` file
+        this is what spike sorting eats
+
+    LFP ("local field potential")
+        analogue filter roughly 0.5–500 Hz
+        sampled at 2,500 samples per second
+        stored as the `.lf.bin` file
+        this is NOT sent into Kilosort
+
+A spike, in this picture, is a ~1 millisecond deflection of tens
+to hundreds of microvolts on a handful of neighboring AP-band
+channels. The sorter's job (next subsection) is to turn those
+deflections into event times labelled by putative neuron. After
+that, the modelling literature — and this dataset — almost always
+throws away the voltage and keeps the event times. That is a
+choice, not a law of nature. The same electrode, the same 384
+channels, the same session, contain several other derived features
+that have been shown, repeatedly, to carry movement information.
+
+What you can derive, and why a modeller might care:
+
+    1. Sorted spike times (what we use).
+       Single-unit activity (SUA). One putative cell, 0/1 events.
+       Finest spatial grain, highest interpretability, most
+       fragile to isolation errors and to unit dropout over time.
+
+    2. The spike waveform itself, not just the time.
+       Each unit has a template: a short spatiotemporal snippet
+       (typically ~1–2 ms × ~10–20 channels). From that you can
+       compute trough-to-peak duration, peak-to-trough ratio,
+       spatial spread, and amplitude. Putative fast-spiking
+       (narrow-waveform, often PV interneurons) versus regular-
+       spiking (broad-waveform, often excitatory pyramidal)
+       cells are distinguished this way in cortex, including
+       motor cortex. Those classes do not play the same role in
+       generating movement. A decoder that lumps them is mixing
+       two circuits. We did not split them. The waveforms are in
+       the IBL release; they are not in our spike_counts tensor.
+
+    3. Multi-unit activity (MUA) / threshold crossings / hash.
+       Ignore identity. Count every threshold crossing on a
+       channel, or take the envelope of the AP-band voltage, or
+       sum all unsorted spikes near a site. Trautmann, O'Shea,
+       Sun, and colleagues (Neuron 2019, "Accurate Estimation of
+       Neural Population Dynamics without Spike Sorting") showed
+       that for many population-level questions, including
+       decoding, this unsorted hash recovers dynamics similar to
+       fully sorted units. The reason is statistical: a decoder
+       of a movement is using a population rate, and nearby
+       cells are correlated enough that knowing "someone in this
+       50 µm neighborhood fired" is already a lot. MUA is also
+       more stable when isolation quality drifts. The cost is
+       that you can no longer say "this MOp5 pyramidal cell."
+
+    4. Spike-band power.
+       The energy in the AP band, per channel, in a 20 ms bin,
+       without detecting events. Related to MUA. Robust. Cheap.
+       Mixes many cells and some noise.
+
+    5. Local field potential, by frequency band.
+       The LFP is dominated by synaptic currents, not by action
+       potentials (Buzsáki, Anastassiou, Koch, Nature Reviews
+       Neuroscience 2012). It is a mesoscale signal: one channel
+       "hears" a few hundred micrometres to millimetres, not
+       50 µm. Classic bands, in motor cortex:
+
+           delta     ~1–4 Hz     often movement-related in
+                                 primate M1, also arousal
+           theta     ~4–8 Hz     more hippocampal; still shows
+                                 up in cortex
+           mu/alpha  ~8–12 Hz    sensorimotor rhythm; suppressed
+                                 during movement
+           beta      ~13–30 Hz   the famous motor-cortical
+                                 "status quo" rhythm (Engel and
+                                 Fries 2010). High during hold /
+                                 posture, suppressed at go.
+                                 Baker, Lemon and others tied
+                                 beta to isometric hold and to
+                                 corticospinal synchrony.
+           gamma     ~30–80 Hz   often related to local
+                                 processing; mixed
+           high-gamma / high-frequency LFP
+                     ~80–400 Hz  in motor cortex this band is
+                                 the best LFP decoder of
+                                 kinematics. It is also the band
+                                 most contaminated by actual
+                                 spikes leaking through the
+                                 filter (Ray and Maunsell,
+                                 Neuron 2011). So "high-gamma
+                                 encodes movement" and "spikes
+                                 encode movement" are not fully
+                                 independent claims.
+
+    6. Current-source density (CSD).
+       The second spatial difference of the LFP along the shank.
+       It sharpens laminar sinks and sources (where current
+       enters or leaves the tissue). On a 20 µm-pitch probe this
+       is almost the point of the geometry. CSD can tell you
+       which layer is receiving synaptic input at go-cue versus
+       which layer is spiking. We do not compute it.
+
+    7. Spike-LFP coupling.
+       The phase of beta (or of any band) at which a given unit
+       prefers to fire. A cell that is locked to beta during
+       STILL and unlocks during COUPLED is a different object
+       from a cell whose rate just goes up. This is one of the
+       few ways the still / coupled / decoupled regimes could
+       show up as a change in coordination rather than as a
+       change in firing rate. We do not compute it.
+
+    8. Amplitude drift of the unit over the session.
+       Kilosort tracks this. A cell whose amplitude slowly falls
+       is often the probe drifting relative to the tissue, not
+       the cell "adapting." If a decoder's weights on that unit
+       silently change over a session, you may be looking at
+       drift, not learning.
+
+What the literature has actually shown, in motor cortex, about
+these non-spike signals:
+
+    LFP can decode movement. Mehring, Rickert, Vaadia, Cardoso
+    de Oliveira, Aertsen, Rotter (Nature Neuroscience 2003)
+    reconstructed 2-D hand trajectories from LFP in monkey M1.
+    That paper is why people stopped treating LFP as "just
+    noise below the spike band."
+
+    High-frequency LFP is the useful kinematic band. Zhuang,
+    Truccolo, Vargas-Irwin, Donoghue (Journal of Neurophysiology
+    2010) decoded 3-D reach and grasp from LFP up to 400 Hz in
+    monkey M1 and found 100–200 Hz and 200–400 Hz carried the
+    most information — i.e. the bands that overlap residual
+    spike energy. Low-frequency LFP was worse for kinematics
+    and better for cruder states (move vs rest).
+
+    With large sorted ensembles, spikes usually win, and LFP is
+    not independent extra information. Bansal, Truccolo,
+    Vargas-Irwin, Donoghue (Journal of Neurophysiology 2012)
+    compared SA (spikes), MUA, and multiband LFP on dual 96-
+    electrode arrays in MI and PMv during reach-to-grasp.
+    Ensembles of >16 units carried more information than
+    multiband LFP, and the LFP contribution was largely nested
+    inside the spike information rather than complementary.
+    Combined signals helped robustness more than peak accuracy.
+    Translation to us: with 5–200 motor units we are in the
+    regime where spikes should dominate a kinematic decoder.
+    That is not a reason to ignore LFP. It is a reason not to
+    expect LFP to add a new kinematic axis once you already
+    have a good population.
+
+    LFP and unsorted spikes are more stable over months than
+    isolated units. Flint, Wright, Scheid, Rubio, Solla,
+    Slutzky (Journal of Neural Engineering 2012, 2013) and
+    Perge, Zhang, Malik, Homer, Cash, Friehs, Donoghue,
+    Hochberg (JNE 2014, human M1) showed that as units
+    disappear from chronic arrays, LFP and threshold-crossing
+    rates keep decoding. Stavisky, Kao, Nuyujukian, Ryu,
+    Shenoy (J Neurophysiol 2015) found high-frequency LFP
+    useful for BCI and partly complementary to spikes. IBL
+    insertions are acute (one session per craniotomy, probe
+    out at the end), so chronic dropout is not our problem.
+    Within-session drift still is.
+
+    Beta is a hold / posture / "do not move" signal, not a
+    speed signal. Motor cortical beta power is high during
+    steady posture and drops around movement onset (event-
+    related desynchronization; Pfurtscheller; Baker, Kilner,
+    Pinches, Lemon 1999). Engel and Fries (2010) framed beta
+    as a status-quo rhythm. For THIS dataset that is almost
+    the definition of our STILL regime versus COUPLED /
+    DECOUPLED. A still / coupled / decoupled classifier that
+    only sees spike counts may be struggling to see a
+    phenomenon that is louder in 20 Hz power on the same
+    channels. The BWM paper decoded wheel velocity from
+    spikes and did not publish this comparison. We have not
+    published it either. The LFP files exist on the IBL
+    servers; they are not in ModelDataLeft.
+
+    High-gamma is partly spikes in disguise. Ray and Maunsell
+    (Neuron 2011) showed that much of 80–200 Hz power tracks
+    the spike rate of nearby cells. Using high-gamma and
+    sorted spikes as "two modalities" without accounting for
+    that double-counts the same action potentials. Using
+    beta and sorted spikes is a cleaner contrast: different
+    biophysics, different spatial scale, different hypothesised
+    role (state / posture vs. moment-to-moment drive).
+
+    Unsorted activity is often enough for population dynamics.
+    Trautmann et al. (Neuron 2019) is the citation if someone
+    asks why we bothered with Kilosort at all. The answer for
+    this project is scientific, not statistical: we want to
+    talk about motor-cortex neurons in named layers, with the
+    same isolation the BWM paper used, because the claim is
+    about that circuit. If the claim were "predict paw speed
+    as well as possible from this craniotomy," MUA plus LFP
+    plus spikes would be the honest feature set, and Trautmann
+    plus Bansal plus Zhuang would be the methods section.
+
+Why this might matter for the still / coupled / decoupled idea
+specifically. Sorted spikes in 20 ms bins are a good model of
+the output of motor cortex (which cells fired). They are a
+worse model of the input and the state (what synaptic drive
+arrived, whether the local circuit is in a hold-beta regime,
+whether a population is synchronised without a rate change).
+Interactive, contact-rich movement is exactly where those
+distinctions have been claimed to live: beta during hold,
+desynchronisation at go, high-gamma / MUA during the
+kinematic burst, low-frequency LFP tracking slower postural
+adjustments. A decoder that fails on DECOUPLED from spikes
+alone has two interpretations: (1) motor cortex does not
+represent unloaded paw motion well, or (2) it does, but not
+in the single-unit rate. (2) is untestable in our current
+tensors because we never built the other features. That is
+a limitation, not a finding.
+
+The raw AP traces also contain things sorting is designed to
+throw away: overlapping spikes, axonal bursts, stimulation
+artifacts (not an IBL issue), and the shape of each spike as
+it changes with the cell's recent history. We do not use
+those. Mentioning them is the honest statement that
+spike_counts is a lossy compression of the electrode.
+
+
+1.3  Spike sorting as actually run for this paper: IBL's port of
+     Kilosort 2.5, revision 2024-05-06
+
+"Spike sorting" means: take the 384 AP-band traces, find the
+brief spatiotemporal events that look like action potentials,
+and assign each event to a cluster that is supposed to be one
+neuron. It is clustering in a space whose axes are "voltage on
+each nearby channel, at each of ~30 samples around the event."
+A cluster is a template. A spike is assigned to the template
+it matches, after accounting for the fact that the whole probe
+slowly drifts through the tissue over hours.
+
+The algorithm at the core is Kilosort 2.5 (Pachitariu, Steinmetz,
+and the Cortex Lab / HHMI lineage; MATLAB original). Kilosort
+2.5's distinctive move, relative to Kilosort 2, is explicit
+drift correction: it estimates a time-varying depth shift of
+the recording and registers the data so that a cell that slid
+50 µm down the shank over the session is still one cluster,
+not two. Without that, a three-hour IBL session would fracture
+units. The rest of the engine is template matching: initialise
+templates from detected spikes, subtract the explained voltage,
+detect leftovers, iterate, merge templates that are really the
+same cell.
+
+IBL does not run stock MATLAB Kilosort 2.5 on the raw `.ap.bin`
+and call it a day. They documented a pipeline (International
+Brain Laboratory, "Spike sorting pipeline for the International
+Brain Laboratory," Figshare, doi:10.6084/m9.figshare.19705522,
+v4) and implemented it as a Python port whose clustering step
+is Kilosort 2.5 (the `ibl-sorter` / earlier `pykilosort` line;
+clustering "based on the original MATLAB version of Kilosort
+2.5, written by Marius Pachitariu"). The modifications that
+matter:
+
+    Destriping. Neuropixels traces have common-mode "stripes"
+    from the ADC multiplexing. IBL removes them before
+    detection. If you skip this, Kilosort will invent units
+    that are electrical clocks.
+
+    Bad-channel detection. Dead, noisy, and out-of-brain
+    channels are flagged and interpolated or excluded so they
+    do not seed templates.
+
+    Dense geometry passed in explicitly. The sorter is told
+    the 16/20 µm checkerboard and the sample_shift, so a
+    template can be a 2-D spatial footprint rather than 384
+    unrelated traces.
+
+    Automatic quality metrics after clustering, not Phy
+    clicking. The BWM paper's 75,708 "good" neurons are not
+    a human-curated subset. They are Kilosort clusters that
+    passed the three numerical tests in the next subsection.
+    There was no "a postdoc looked at this session in Phy
+    and deleted the trash." That is a feature (reproducible,
+    scalable across 699 insertions) and a limitation (a
+    human would still split some merges and delete some
+    noise the metrics missed).
+
+    A single re-sort of the entire map. Acquisition spanned
+    years. Early sessions were originally sorted with older
+    IBL/Kilosort versions. For the public BWM freeze they
+    re-ran the current pipeline on everything so that a unit
+    in 2019 and a unit in 2022 mean the same algorithmic
+    object. That re-run is what produced 621,733 Kilosort
+    units, of which 75,708 passed QC.
+
+The revision we loaded is SpikeSortingLoader revision
+2024-05-06. That is a date stamp on the IBL Alyx/ONE object,
+not a Kilosort version number. It is the sorted-spike release
+that sits under clusters.pqt for the 2024_Q2_IBL_et_al_BWM
+tag. If a later IBL release re-sorts again, cluster integers
+will not match ours. We froze this revision by reading the
+public aggregates rather than re-sorting.
+
+How isolation actually happens, in English, because "Kilosort
+clustered it" is not an explanation:
+
+    A real spike is a stereotyped millivolt-scale (at the
+    cell) / microvolt-scale (at the electrode) waveform that
+    appears on a compact neighborhood of sites, with amplitude
+    falling off with distance, and that cannot repeat inside
+    a refractory period. Kilosort's templates are those
+    stereotyped spatiotemporal movies. Two cells are isolated
+    from each other when their movies are different enough —
+    different shape, or different location on the probe, or
+    both — that assigning a spike to the wrong template would
+    make a worse reconstruction of the voltage. Cells that
+    sit on top of each other with similar waveforms are the
+    ones that get merged (contamination). Cells whose spikes
+    sometimes look small (the cell is far, or the trough is
+    near the detection threshold) are the ones that get
+    truncated (false negatives). The three IBL tests below
+    are numerical attempts to catch those two failure modes
+    plus the "this template is just noise" mode, without a
+    human.
+
+    Isolation is therefore only as good as (a) the geometry
+    being dense enough for a footprint, (b) drift correction
+    keeping the footprint still, (c) the cell being close
+    enough to a site for a large amplitude, and (d) no other
+    cell looking the same. Tetrodes did (a) with 4 wires in
+    a ~20 µm bundle and could isolate a handful of cells in
+    a local cluster. Neuropixels does (a) along 3.84 mm and
+    isolates hundreds, with the same logic stretched in
+    depth. It does not give you a census of every cell in
+    motor cortex. It gives you the ones that sat near the
+    shank, were large enough, and were distinctive enough.
+
+Known failure modes the white paper itself flags, which a
+model should not pretend away:
+
+    Overmerges (two cells, one cluster) and oversplits (one
+    cell, two clusters, often because drift correction was
+    imperfect).
+    Units that are real but unstable, so they fail QC even
+    though a human would keep them for a short window.
+    Units that pass QC and are still multi-unit, because the
+    refractory test is a statistical bound, not a proof.
+    The sorter never sees the LFP band, so a "unit" has no
+    idea whether it is firing at a preferred beta phase.
+
+After sorting, IBL stores, per cluster, the peak channel, the
+template, amplitudes, spike times, and the QC metrics. We
+keep spike times (binned) plus the peak-channel anatomy.
+We do not keep the templates.
+
+
+1.4  Isolation QC: the three tests behind label = 1
+
+The Brain-Wide Map paper did not use the classical "isolation distance"
+or L-ratio cuts from older tetrode papers. They used the IBL's three
+neuron-level tests, stored as a single score called `label` on each
+unit. `label` is the fraction of those three tests the unit passed:
+1 means all three, 2/3 means two, 1/3 means one, 0 means none. The
+paper kept only units with label = 1 (in code, `label >= 1`). Out of
+621,733 Kilosort units in the release, 75,708 passed. Those are what
+the paper calls "well-isolated neurons," and often just "neurons."
+Everything else is still in the raw sorting; it is not in their
+analyses, and it is not in ours.
+
+We used exactly that set. If we had invented a stricter or looser cut,
+later numbers would not be comparable to theirs, and we would not know
+whether a difference came from biology or from a different definition
+of "a neuron."
+
+Here is what the three tests actually ask, in English, then in the
+numbers the code uses.
+
+    1. Is the spike big enough to be a cell, not a wiggle?
+
+       A real action potential on a Neuropixels probe is tens to
+       hundreds of microvolts. Tiny events are usually noise or a
+       distant cell you cannot isolate. The test: the median spike
+       amplitude of the unit must be greater than 50 microvolts.
+       Fail this, and the cluster is treated as noise.
+
+    2. Does this look like ONE cell, or a pile of cells?
+
+       A neuron cannot spike twice in a fraction of a millisecond.
+       After a spike there is a refractory period: a short dead time.
+       If a "unit" has lots of spike pairs closer together than that,
+       you are not looking at one cell. You are looking at at least
+       two cells whose waveforms got merged, or at noise.
+
+       The catch is that different cell types have different
+       refractory periods, and a slow cell produces so few spikes
+       that a couple of close pairs might be chance. So IBL does not
+       pick one magic dead-time (the old "2 ms ISI violation" rule)
+       and fail you for exceeding it. They slide over possible
+       refractory periods from about 0.5 to 10 milliseconds, in
+       0.25 ms steps. At each candidate dead-time they ask: given
+       this cell's firing rate, is the number of too-close spike
+       pairs low enough that contamination is under 10%, with at
+       least 90% confidence (Poisson assumption)? If ANY of those
+       dead-times looks clean enough, the unit passes. If none does,
+       it fails. Very low-rate units tend to fail even with few
+       violations, because there is not enough evidence they are
+       clean. That is intentional: "we cannot tell" is a fail, not
+       a pass.
+
+       Plain meaning: we only keep clusters that behave as if a
+       single cell is firing, not a crowd.
+
+    3. Did we catch all of this cell's spikes, or only the loud ones?
+
+       Spike-sorting has a detection threshold. If a cell's spike
+       heights straddle that threshold, the histogram of amplitudes
+       looks chopped off on the left: lots of spikes piled against
+       the floor, and an invisible pile of smaller spikes that were
+       never detected. Those missing spikes will be counted as
+       silence, which is a lie about the firing rate.
+
+       The test looks at that amplitude histogram without assuming
+       it is a bell curve. It compares the short left tail to the
+       upper part of the distribution. The unit fails if the
+       leftmost occupied bin is BOTH (a) more than 5 standard
+       deviations above the upper-tail mean AND (b) more than 10%
+       as tall as the peak bin. In code this is the "noise cutoff"
+       metric; passing means `noise_cutoff < 5`. It is a
+       dimensionless shape score, not a voltage.
+
+       Plain meaning: we only keep clusters whose spike heights look
+       fully above the detection floor, so "no spike in this 20 ms"
+       can be trusted as the cell not firing.
+
+A unit must pass all three to get label = 1. Passing amplitude and
+refractory but failing the truncated-histogram test still yields
+2/3, and the paper throws it out. They do not mix "pretty good"
+units with "good" units.
+
+Two caveats, so the methods text and the code do not fight:
+
+    The Nature paper's Methods sentence summarizes the three tests
+    as "amplitude > 50 μV; noise cut-off < 20 μV; and refractory
+    period violation." The 50 μV amplitude cut is real. "Noise
+    cut-off < 20 μV" is not what the released IBL code computes;
+    the operational gate is the histogram metric with threshold 5,
+    plus the sliding refractory-period test, plus 50 μV. When we
+    say we used the paper's units, we mean we used `label == 1` as
+    computed by that code and frozen in clusters.pqt, not a
+    reimplementation of the slightly garbled Methods sentence.
+
+    Other metrics exist (presence ratio, drift, missed-spike
+    estimates, classical ISI contamination). IBL computes some of
+    them. They are not part of `label`. Isolation distance and
+    L-ratio are not the gate. If a later analysis wants those,
+    they would be extra, and they would no longer be the BWM unit
+    set.
+
+The paper then applies two further filters that are NOT isolation
+QC: drop units in `void` or `root` (not grey matter in the Allen
+atlas), and for their canonical regional analyses keep a region
+only if it has at least 5 well-isolated neurons in a session and
+that region appears in at least 2 sessions. Our DatasetFiltered /
+ModelData analog of the last idea is the "at least 5 MOp/MOs units
+in the session" cut, applied at the motor-cortex admission ticket,
+not as a redefinition of what a neuron is.
+
+
+1.5  How a contact on the probe becomes a brain area: atlases,
+     histology, electrophysiological alignment, and why a mouse
+     map is not a monkey map
+
+A channel index (0–383) is a location on silicon. A name like MOp5
+is a location in a standardised mouse brain. Getting from one to
+the other is a pipeline with millimetre-scale targeting error,
+tens-of-micrometres alignment error, and a species-specific atlas
+at the end. If you skip this, "motor cortex coverage" is a
+stereotaxic hope. If you trust it blindly, you will treat a 70 µm
+error as a layer boundary.
+
+The atlas this paper uses is the Allen Mouse Common Coordinate
+Framework, CCF v3 (Lein et al. 2007; Oh et al. 2014; Wang et al.
+2020), paired with the Allen Reference Atlas ontology. The CCF is
+a 3-D voxel grid of a standardised adult mouse brain, typically
+sampled at 10 or 25 micrometres. Every voxel has:
+
+    a millimetre coordinate (in IBL's convention: x = medio-
+    lateral with negative = left, y = anterior-posterior,
+    z = dorsal-ventral)
+    an integer region id
+    a human-readable acronym (MOp, MOs, CP, VAL, ...) and,
+    in cortex, a layer suffix (MOp5, MOs6a, ...)
+
+"Standardised" is doing a lot of work. Real mice are not the
+average mouse. Brains differ in size, in the angle of the
+cortical sheet, in how much a probe dimpled the surface, and in
+how much histology itself warped the tissue. The CCF exists
+because you cannot average "bregma −1.0, 0.5, 1.2 mm" across
+animals and call that a region. You register each brain to the
+template, then read the template's labels.
+
+IBL's localisation workflow (Liu, Newsome, et al., eNeuro 2021,
+"Accurate Localization of Linear Probe Electrode Arrays across
+Multiple Brains"; Wool and IBL 2020; the IBL histology white
+papers) has two stages, and confusing them is how people get
+the error bars wrong.
+
+    Stage 1 — find the track in the brain.
+
+        The probe is painted with a fluorescent dye (CM-DiI)
+        before insertion. After the recording, the animal is
+        perfused, the brain is cut and imaged. IBL's in-house
+        method is serial block-face two-photon microscopy
+        (SBF2P): photograph the block face, cut a slice,
+        photograph, repeat, so you get a 3-D volume in which
+        the DiI track is a fluorescent streak. That volume is
+        registered to the Allen average template. A human
+        then traces the streak as a 3-D polyline of "picks"
+        (xyz_picks). This is the insertion track in CCF
+        coordinates. It says: the shank went along this
+        curve. It does not yet say which electrode sat at
+        which millimetre of that curve, because the brain
+        was sliced after the probe came out, and because
+        histology warps.
+
+    Stage 2 — slide the 384 channels along that track until
+    the electrophysiology matches the anatomy.
+
+        Along a Neuropixels column you can see landmarks in
+        the voltage without any histology: the brain surface
+        (activity starts); white matter (few spikes, different
+        LFP); ventricles (dead quiet); hippocampal CA1 (big
+        spikes, LFP phase reversal); the hippocampus-thalamus
+        border; cerebellar white matter; and so on. IBL's
+        alignment GUI plots those electrophysiological
+        features as a function of depth on the probe, plots
+        the atlas regions along the reconstructed track, and
+        lets a curator place corresponding landmarks. The
+        software then interpolates, possibly stretching, the
+        mapping from "axial_um on the shank" to "xyz in CCF."
+        That mapping is applied to every channel, and the
+        CCF voxel at that xyz becomes brain_area.
+
+        This second step is why two insertions with the same
+        stereotaxic aim do not have the same channel-to-area
+        table, and why a unit's allen_z is not "the manipulator
+        reading." Ground-truth checks with optogenetic and
+        fluorescent tagging of known pathways put the
+        electrode-to-atlas error at better than about 0.1 mm
+        for this class of workflow (Liu et al. 2021). 100
+        micrometres is several cortical layers. Layer labels
+        (MOp5 vs MOp6a) are therefore informed guesses with
+        real error, not facts with the same status as "this
+        spike happened." Region labels at the scale of MOp
+        versus MOs versus striatum are much safer: those
+        structures are hundreds of micrometres to millimetres
+        thick along a typical track.
+
+IBL stores whether this alignment is `alignment_resolved`
+(a curator finished the GUI, and in the BWM protocol a second
+lab often looks at it). Units in `void` or `root` failed this
+pipeline: they sit outside annotated grey matter, either
+because the channel is out of the brain or because the
+alignment put them in a hole. The paper drops them. So do we.
+
+What we store per unit from this pipeline:
+
+    brain_area     Allen acronym plus layer when the voxel
+                   has one (MOp5, MOs2/3, MOs6a, ...). Our
+                   motor ticket is "starts with MOp or MOs,"
+                   which keeps all layers and drops FRP
+                   (frontal pole), even though FRP sits next
+                   door.
+    allen_x, y, z  CCF millimetres. x < 0 is left hemisphere.
+                   This is how LeftIpsi / RightContra know
+                   laterality. It is also how you would plot
+                   a unit inside MOp rather than just count
+                   it as "one motor cell."
+    axial_um       shank coordinate, used to order units
+                   along the probe. Combined with brain_area
+                   it is how you see the shank stacking
+                   layers.
+
+The mapping is per channel, inherited by the unit via the
+unit's peak channel. A neuron whose extracellular field
+straddles a region border is assigned to wherever its
+largest-amplitude site sat. That is a convention.
+
+Why this does not copy to other organisms, and what would
+have to change.
+
+    The CCF is a mouse atlas. Its named regions, its layer
+    scheme, its voxel size, and its coordinate origin are
+    defined for Mus musculus. A rat is mapped in Waxholm
+    Space, a marmoset in its own MRI/atlas, a macaque in
+    CHARM/SARM and related parcellations (Reveley, Saleem,
+    Jung, and colleagues), a human in MNI space with
+    atlases such as AAL, Harvard-Oxford, Glasser MMP, and
+    so on. Those are different meshes of different brains.
+    You cannot take a mouse allen_xyz, scale it by the
+    ratio of brain weights, and land in human M1.
+
+    Homology is by region name and by circuit, not by
+    millimetre. Mouse MOp is the closest named analogue of
+    primate primary motor cortex (M1 / F1 / area 4), mouse
+    MOs of parts of premotor / secondary motor cortex. The
+    analogue is imperfect: primate M1 has a giant Betz-cell
+    layer 5 and a thumb-sized somatotopic map; mouse MOp is
+    small, the map is cruder, and corticospinal density is
+    different. If this project were in a macaque, "motor
+    cortex" would be a different set of atlas labels, a
+    different probe (the same 3.84 mm Neuropixels column
+    would sit entirely inside a sulcal bank instead of
+    traversing cortex plus striatum), and a different
+    histology pipeline (often MRI + dye + registration to
+    the macaque template, not Allen serial two-photon).
+
+    Probe geometry is species-agnostic; coverage is not.
+    A 10 mm NP 1.0 shank can span most of a mouse
+    hemisphere's depth. In a human it is a local column.
+    IBL's "brain-wide" claim is a mouse claim: the grid of
+    insertions tiles the mouse CCF. A "brain-wide map" in
+    another species is a different experimental design,
+    even with the same silicon.
+
+    Head-fixed Neuropixels in mice is IBL's recording
+    regime. Freely moving Neuropixels, Utah arrays in
+    primate M1, Neuropixels in rat medial agranular
+    cortex, sEEG in human — all produce "spikes during
+    movement" and none of them share an atlas. Combining
+    them in one model without an explicit homology rule
+    (this named area in atlas A corresponds to that named
+    area in atlas B) is mixing coordinate systems.
+
+    Even inside the mouse, strain, age, and sex shift the
+    brain relative to the CCF. IBL uses a standardised
+    wild-type line and still relies on per-animal
+    registration rather than a look-up from bregma.
+
+    Other mouse atlases exist (Paxinos and Franklin's 2-D
+    plates, the Kim / Franklin 3-D variants). IBL committed
+    to Allen CCF v3 so that a region name in a Mainz session
+    and a region name in a Berkeley session are the same
+    string. We inherited that commitment. If we had labelled
+    motor cortex from Paxinos plates by eye, our MOp counts
+    would not match the paper's, and laterality via allen_x
+    would not exist.
+
+Modelling consequences of the atlas step, stated as things a
+model could use and currently mostly does not:
+
+    brain_area as a categorical feature (MOp5 vs MOs6a vs
+    everything else) is the coarsest, safest anatomical
+    prior. Layer is less safe than region, as noted.
+
+    allen_xyz as a continuous feature lets a model share
+    strength across nearby tissue and across animals
+    ("a unit at this CCF location tends to..."), which is
+    the whole point of a common framework. It also lets
+    you plot residuals in the brain rather than as a bar
+    of session IDs.
+
+    axial_um plus probe id is the right coordinate if the
+    scientific claim is about the recording column (CSD,
+    laminar current, neighboring-unit smoothness), not
+    about named areas.
+
+    Alignment error is a source of label noise. A handful
+    of our "MOp" units may be MOs or somatosensory cortex
+    (SSp, which borders MOp). That is one reason we did
+    not subset spike_counts to motor units only for the
+    saved tensors: a decoder can still use neighbors, and
+    a later analysis can tighten the mask.
+
+    Laterality is atlas-derived. allen_x < 0 is left
+    because that is the CCF convention IBL adopted, which
+    matches the histological left of the animal. It is
+    not "the probe was in the left craniotomy" — a right-
+    hemisphere insertion has allen_x > 0 even if the
+    stereotaxic notes were sloppy. KS023 2019-12-10 is
+    the existence proof: motor units with allen_x > 0 on
+    a mouse that also has left-hemisphere probes.
+
+The short version: a unit is a Kilosort template on a 384-
+channel checkerboard, QC'd by three tests, sitting at a CCF
+voxel that a DiI track plus an ephys-to-atlas alignment
+assigned to it, in a mouse-specific atlas that does not
+transfer by scaling to any other species. spike_counts is
+the 20 ms compression of that object. Everything else the
+electrode measured is still on disk at IBL and is not in
+these folders.
+
+
+A "firing rate" is how often a unit spikes, usually expressed in Hertz
+(spikes per second). Motor-cortex cells in this dataset have a median
+rate of a few Hertz, which is typical: they are not firing constantly,
+and a 20 millisecond bin will often contain zero or one spike from a
+given cell. That is why we count spikes in bins rather than treating the
+raw point process as a dense video. It is also why you need a population
+of cells, not one cell, to reconstruct a continuous movement: a single
+neuron is a flickering, noisy vote.
+
+"Encoding" is the claim that some property of the world (or of the body)
+can be read out from those spike times. "The neuron encodes wheel speed"
+is everyday language for "if I know the spikes, I can predict wheel
+speed better than chance, and if I know wheel speed, I can predict the
+spikes better than chance." Encoding is a statistical relationship. It
+does not mean the neuron is causally driving the wheel, and it does not
+mean the wheel is what the neuron "cares about." A neuron in your motor
+cortex that fires when you turn a doorknob will statistically encode the
+angular velocity of the knob. The cell is not a knob detector. It is
+closer to a muscle-and-limb detector, and the knob is what the limb
+happened to be holding.
+
+That distinction — statistical readout versus the thing the circuit is
+actually computing — is the entire reason this dataset exists.
+
+
+--------------------------------------------------------------------------------
+2. Motor cortex, in plain language
+--------------------------------------------------------------------------------
+
+The cerebral cortex is the wrinkled outer sheet of the mammalian brain.
+Different patches of it are specialized. Visual cortex is specialized
+for the eyes. Motor cortex is specialized for movement.
+
+In the mouse, the two motor areas we care about are named in the Allen
+Brain Atlas (CCF v3; how a Neuropixels channel gets one of these names
+is section 1.5 — it is histology plus electrophysiological alignment,
+not the manipulator reading):
+
+    MOp    primary motor cortex
+    MOs    secondary motor cortex
+
+"Primary" does not mean "the only place movement is generated." It means
+this patch has a relatively direct path to the spinal cord, where motor
+neurons live that actually contract muscles. Many of those output cells
+sit in deep layers, which is why you will see area names like MOp5 and
+MOs6a in our unit table: 5 and 6a are cortical layers, stacked like
+floors of a building. Layer 5 in motor cortex is famous for corticospinal
+cells. Layer 2/3 is more corticocortical. We kept all of those layers
+because a probe records whatever it passes through, and because
+"movement" is not only the last-stage command.
+
+A crude but useful fact about the wiring: each hemisphere of motor cortex
+preferentially controls the opposite side of the body. Left MOp is more
+about the right limbs; right MOp is more about the left limbs. This is
+called contralateral control. It is not absolute — there is ipsilateral
+and bilateral influence, especially for posture and for skilled
+manipulation — but it is the textbook first approximation.
+
+That fact will come back to haunt ModelDataLeft. Most of the motor units
+in this dataset sit in the LEFT hemisphere. The trials we kept are LEFT
+paw trials. Classically, that is the ipsilateral pairing, not the
+contralateral one. We did not hide that. Section 13 discusses it.
+
+Motor cortex is not a keyboard where each key is a muscle. It is closer
+to a dynamical system that generates patterns. Those patterns get
+translated, several synapses downstream, into muscle activations. The
+patterns can represent:
+
+    intended direction of a reach
+    the speed or vigor of a movement
+    the current posture being held
+    a rhythmic or repeated action
+    the switch from "hold still" to "go"
+    preparatory activity that happens BEFORE any muscle twitches
+    feedback about how the limb is actually moving
+    the presence of an object the limb is contacting
+
+A single scalar like "wheel angular velocity" collapses all of that into
+one number. Sometimes that number is a decent summary. Often it is not.
+
+
+--------------------------------------------------------------------------------
+3. What the mouse is asked to do (the IBL task)
+--------------------------------------------------------------------------------
+
+The International Brain Laboratory (IBL) is a consortium of labs that
+agreed to run the SAME mouse task and share the data. The task is a
+visual decision.
+
+A mouse sits with its head fixed, so the skull cannot move. That is
+necessary for a Neuropixels probe, which cannot travel with a freely
+walking animal at micron precision. The mouse's front paws can still
+move. In front of the paws is a small steering wheel, like a tiny
+steering wheel from a car, mounted so that rotating it left or right is
+the animal's way of answering.
+
+On each trial:
+
+    1. A visual stimulus appears on the left or the right of a screen.
+       The stimulus is a Gabor patch (a fuzzy striped blob). How visible
+       it is is called contrast, which we stored as "brightness":
+       0%, 6.25%, 12.5%, 25%, or 100%. Zero percent is a catch: there is
+       no visible blob, but a trial still happens.
+
+    2. The mouse must report the side by turning the wheel that way.
+
+    3. If it is correct, it gets a drop of sugar water (reward).
+       If it is wrong, it does not.
+
+    4. The world is not fair on every trial. Sometimes left is more
+       likely (80%), sometimes right is more likely (80%), sometimes
+       fifty-fifty. That block structure is "probabilityLeft," which we
+       stored as block_prior. It exists so that the mouse (and anyone
+       decoding its brain) has a prior, not just a stimulus.
+
+The wheel turn is the REPORT of the decision. It is not the decision
+itself. The decision is a computation that started when the stimulus
+appeared, ran through visual cortex and decision-related areas, and
+ended, if the animal is doing the task, in a movement. The BWM paper is
+largely about that whole-brain computation: where can you read out the
+choice, how early, how does contrast affect it. Movement, for that
+paper, is mostly a timestamp (when did the wheel first move) and a
+one-dimensional trace (how fast is the wheel spinning).
+
+Watch a video of an actual trial, though, and you do not see a wheel
+spinning itself. You see a paw. Sometimes one paw. Sometimes both.
+Sometimes the paw is planted on the wheel and dragging it. Sometimes the
+paw lifts off, repositions, and plants again. Sometimes the other paw
+is held against the body and twitching without ever touching the wheel.
+Sometimes the animal is still for a few hundred milliseconds after the
+stimulus, then explodes into a turn. Sometimes it fidgets first.
+
+That is the behavior we are trying to put back into the dataset.
+
+
+--------------------------------------------------------------------------------
+4. What the Brain-Wide Map paper actually did
+--------------------------------------------------------------------------------
+
+The paper (International Brain Laboratory et al.) recorded Neuropixels
+probes across many brain regions, in many labs, in the task above, and
+asked which regions carry which task variables.
+
+Two analyses matter for us.
+
+Decoding. Take spike counts in a window of time, train a statistical
+model, and ask how well you can predict a variable the experimenter
+already knows: the stimulus side, the contrast, the mouse's choice, or
+the wheel velocity. If a region decodes choice well, the paper treats
+that as evidence that the region "has" choice information.
+
+Encoding. The reverse direction: predict a neuron's firing from the
+task variables, often with a GLM (generalized linear model). This asks
+what the cell's rate depends on.
+
+For movement, their workhorse target was the wheel. Specifically, for
+the decoding analysis that our 20 ms grid is in conversation with:
+
+    They took a FIXED time window around the first wheel movement:
+        firstMovement minus 0.2 seconds
+        to firstMovement plus 1.0 seconds
+    That is 1.2 seconds exactly.
+    They chopped it into 20 millisecond bins.
+    1.2 / 0.02 = 60 bins, every trial, every mouse.
+    Wheel velocity was linearly interpolated onto that grid.
+    Spikes were counted inside each bin.
+    A decoder then tried to reconstruct the wheel trace from the spikes.
+
+That design is elegant for a multi-lab map:
+
+    The wheel is logged in every session at 1000 Hz. Video is not.
+    The wheel is one number over time, not a 3D skeleton.
+    The first-movement-aligned window puts every trial into the same
+        "peri-movement" frame, which is how you compare a visual-cortex
+        insertion in Lab A to a motor-cortex insertion in Lab B.
+    Sixty bins is a rectangular tensor. Machine-learning tools like
+        rectangular tensors.
+    The wheel IS the animal's answer. If you want "where is the
+        decision's output," wheel velocity is that output's physical
+        shadow.
+
+None of that is foolish. It is what you do if your scientific object is
+the decision, and movement is how the decision leaves the animal.
+
+It is the wrong object if your scientific object is the movement itself.
+
+They also restricted trials with a flag called bwm_include and with a
+reaction-time window of 0.08 to 2.0 seconds (time from stimulus onset to
+first wheel movement). They restricted neurons to well-isolated units
+(label = 1): the cluster had to pass all three IBL isolation tests
+(spike big enough, refractory period like one cell, amplitude histogram
+not chopped off at the floor). Section 1 spells those tests out; section
+10.8 has the numbers. We inherited all three of those filters, on
+purpose, so that when we say "these are BWM trials and BWM units," we
+mean it.
+
+What they did not do:
+
+    They did not treat paw position as a decoding target.
+    They did not label whether the paw was on the wheel, off the wheel,
+        or still.
+    They did not ask which paw did the work.
+    They did not let trial length vary with how long the animal actually
+        took to get the reward. They cut a 1.2 s cookie from around
+        firstMovement instead.
+    They did not need video quality control, stereo views, or a theory
+        of motor primitives, because the wheel does not care about any
+        of that.
+
+Our dataset starts where theirs stops.
+
+
+--------------------------------------------------------------------------------
+5. Why neural activity should not be thought of as encoding the wheel
+--------------------------------------------------------------------------------
+
+This is the load-bearing section. Read it slowly.
+
+5.1 The wheel is not a body part
+
+Motor cortex's downstream targets are, eventually, muscles. Muscles
+move bones. Bones, in this task, are the bones of the mouse's forelimb.
+The wheel is an object those bones sometimes press on.
+
+There is no "wheel muscle." There is no sensory nerve from the wheel
+into motor cortex. There is, at most:
+
+    proprioception from the limb (sensors in muscles and joints that
+        say how the arm is configured)
+    touch from the paw pads if they contact the wheel
+    vision of the wheel, which is mostly a visual-cortex problem
+    the mechanical consequence that when the paw drags, the wheel
+        rotates, and that rotation is what the experimenter scores
+
+If a motor-cortex population statistically predicts wheel speed, it is
+almost certainly because wheel speed is a FUNCTION of limb state during
+the moments when the paw is planted. The chain is:
+
+    motor cortex
+        -> spinal cord
+        -> muscles
+        -> limb kinematics
+        -> frictional contact
+        -> wheel angular velocity
+
+Decoding the last item and calling it "what motor cortex encodes" is
+like decoding the speed of a shopping cart from the driver's motor
+cortex and concluding that motor cortex represents shopping carts. You
+will get a good decoder on days when the driver is pushing the cart.
+You will get a terrible decoder — or a systematically lying one — on
+days when the driver lets go, lifts the cart, or walks beside it.
+
+5.2 The mapping from limb to wheel is many-to-one, and sometimes
+    one-to-nothing
+
+Many different limb trajectories can produce the same wheel velocity:
+different contact points, different force profiles, one paw or two,
+a plant-and-drag versus a series of short shoves. The wheel is a one-
+dimensional projection of a higher-dimensional action.
+
+Worse: many limb trajectories produce ZERO wheel velocity. Lifting the
+paw, hovering, switching paws, a postural adjustment, a missed swipe —
+all of these are movements. The wheel says "nothing is happening." A
+decoder trained to output wheel speed is being trained to treat those
+movements as the same as sitting still.
+
+That is not a small edge case. In the left-paw subset we kept, the first
+half of a typical trial is still dominated by "still," and coupled
+episodes are a minority of time. Decoupled movement exists. If you only
+look at the wheel, decoupled movement is invisible, and still is
+indistinguishable from "I am moving my arm in the air."
+
+5.3 What would have to be true for the wheel to be the right target
+
+The wheel would be a sufficient movement variable if, and only if, all
+of the following were approximately true:
+
+    (a) The paw is always in contact with the wheel during the window
+        you decode.
+    (b) That contact is always mechanically effective (no slip, no
+        pushing in a non-rotating direction).
+    (c) The animal always uses the same effector (same paw, same
+        posture).
+    (d) You do not care about movement that is not the report.
+    (e) You are willing to treat motor cortex as an "output cable for
+        the decision" rather than as a controller of a limb.
+
+For the BWM paper's question — can we read the choice out of region X —
+(d) and (e) are close to the point, and (a)–(c) are nuisances they can
+average over with 30,000 trials. For a motor question, (a)–(c) ARE the
+phenomenon, and (d)–(e) are the mistakes.
+
+5.4 Why the original authors still used it (and why that was not a
+    blunder)
+
+We are not claiming the BWM authors were confused about anatomy. They
+knew the wheel is a manipulandum. They used it because:
+
+    It is the task-relevant output. In decision neuroscience, the
+        "movement" is often defined as whatever implements the choice.
+        A saccade, a button press, a joystick flick, a wheel turn: the
+        tradition is to take the report and decode it.
+    It is standardized. Twelve labs, one wheel protocol. Video
+        pipelines differ; wheels do not.
+    It is low-dimensional. You can plot a single trace. You can put it
+        in a GLM. You can compare labs.
+    It is already QC'd. Pose tracking fails. Wheels rarely do.
+
+Those are engineering and scientific-community reasons. They are good
+reasons to use the wheel as a PROXY. They are not reasons to believe
+motor cortex represents wheel radians per second as such.
+
+Our project is what happens when you stop treating the proxy as the
+thing.
+
+
+--------------------------------------------------------------------------------
+6. Why the paw is the right object
+--------------------------------------------------------------------------------
+
+6.1 The paw is what the muscles move
+
+The mouse's report is implemented by a forelimb action. The most distal
+segment we can see well on the IBL side cameras is the paw (the tracker
+labels a keypoint called paw_r on each camera; "r" here means "the paw
+closer to this camera," not "right paw" — a confusing bit of IBL
+vocabulary that section 10.2 spells out). If motor cortex is generating
+a command, the first place that command should show up in the external
+world is in the limb's kinematics: position, velocity, and whether the
+paw is planted or lifted.
+
+Predicting paw speed from spikes is therefore a more honest motor
+decoding problem than predicting wheel speed. You are asking the model
+to reconstruct something the descending pathway actually influences,
+rather than something that pathway influences only when a contact
+constraint happens to hold.
+
+6.2 Paw kinematics dissociate from the wheel exactly when the science
+    is interesting
+
+Three situations:
+
+    STILL. Paw not really moving, wheel not really moving. A wheel
+        decoder and a paw decoder agree: nothing is happening. Even
+        here the neural story may not be "zero." Holding a posture is
+        an active computation (more in section 7).
+
+    COUPLED. Paw moving, in contact, wheel moving. This is the regime
+        in which the BWM wheel target is a decent proxy. A paw-speed
+        decoder and a wheel-speed decoder should both work, and they
+        should be correlated, because the limb is doing the task.
+
+    DECOUPLED. Paw moving, wheel not (or not because of this paw). A
+        wheel decoder is being asked to output near-zero while motor
+        cortex may be highly active. A paw decoder is being asked to
+        output the actual limb speed. This is the regime that tells
+        you whether your "motor" decoding was ever about the limb, or
+        only about the report.
+
+If those three regimes are mixed together in training, a model can take
+a rotten shortcut: ignore the limb, predict the wheel, look good on
+average because coupled periods dominate the error when the wheel is
+moving, and silently fail on decoupled movement. You would never notice
+if you only reported wheel-decoding R^2, which is what a BWM-style
+analysis reports.
+
+6.3 The paw has more than one number
+
+The wheel is a signed scalar (left vs right rotation, and how fast).
+The paw, even in our reduced representation, has:
+
+    x, y in the near-camera image plane, in left-camera-equivalent
+        pixels (right-camera 640×512 traces are multiplied by 2)
+    z as a stereo disparity (a mediolateral proxy, not millimetres),
+        rebuilt after that scale so z = x_near − x_far in the same
+        pixel units
+    vx, vy, vz
+    speed = hypot(vx, vy)     2D image-plane magnitude; z is not in it
+    speedNormalized           that speed divided by the session's
+                              typical coupled speed
+    a discrete regime label
+
+That extra dimensionality is not a nuisance. Direction, height above
+the wheel, and whether you are planted are different motor problems.
+Primary motor cortex in other species is famous for directional tuning
+during reaches, for posture, and for contact. Collapsing to wheel
+radians throws those axes away.
+
+We still often talk about predicting "paw speed" as a first target
+because speed is the simplest scalar that is about the limb and not
+about the object. That is a starting point, not a claim that motor
+cortex is a speedometer.
+
+
+--------------------------------------------------------------------------------
+7. Ballistic tasks versus this task: why the usual playbook fails
+--------------------------------------------------------------------------------
+
+A great deal of what "everyone knows" about motor cortex comes from
+tasks that are nothing like a mouse on an IBL wheel.
+
+7.1 What a ballistic movement task is
+
+Think of a monkey reaching from a center hold to one of eight targets
+(the "center-out" task). Or a rodent making a single, stereotyped grab
+for a pellet. Or a human pointing at a dot. The properties those tasks
+are designed to have:
+
+    A discrete GO. The animal is still, then it moves, then it is
+        still again.
+    A stereotyped trajectory. Trial 17 to the upper-right target looks
+        like trial 43 to the upper-right target. You can average them.
+    A short, once-and-done movement. The interesting neural event is a
+        burst around onset, not a long conversation with an object.
+    An effector that is specified. Right arm. Always.
+    An experimenter-defined peri-movement window that actually contains
+        the movement and not much else.
+
+Because of that design, a set of analysis habits grew up and became
+"how you do motor neuroscience":
+
+    Align to movement onset.
+    Time-warp trials so that onset and target-hit fall on the same
+        two ticks, even if some reaches were faster.
+    Average the warped traces ("peri-event time histogram").
+    Fit directional tuning: this cell likes 45 degrees.
+    Treat the movement as one thing with a direction and a reaction
+        time.
+
+Those habits are not wrong for ballistic tasks. They are matched to the
+behavior. Time-warping is almost defensible when every trial is the
+same action at a different speed, the way two performances of the same
+piece of music can be stretched onto one score.
+
+7.2 What the IBL mouse is actually doing
+
+Head-fixed, paws on or near a wheel, visual decision, then a turn that
+may be:
+
+    a single plant-and-drag
+    several small corrections
+    a lift, a reach, a plant, a drag
+    a switch from one paw to the other
+    a period of stillness, then a late explosion
+    bimanual for some mice, unimanual for others
+    interrupted by fidgets that have nothing to do with the report
+
+The duration from stimulus to reward is not a constant. In our filtered
+set the number of 20 ms bins per trial ranges from 8 (160 ms) to
+pathological tens of thousands, with a median of 18 (360 ms) and a long
+right tail. Even after we cap at 500 bins, ModelDataLeft still spans 8
+to 494 bins. That is not "the same reach, sometimes faster." That is
+different amounts of behavior.
+
+There is no single "the movement" to warp onto. If you stretch a 280 ms
+trial and a 2 s trial onto 60 bins, you are asserting that they are
+the same action at different tempos. They are not. The long trial may
+contain a hesitation, a lift, a second attempt, a postural hold. Those
+are extra primitives, not a slow-motion replay of the short trial.
+
+Reaction time itself (actionTime, stimulus to first wheel movement) is
+already variable, which is why the BWM paper needed an 0.08–2.0 s
+window. Everything AFTER first movement is even less stereotyped,
+because that is where the interaction with the wheel lives.
+
+7.3 Why this is a harder scientific problem, not just a messier dataset
+
+In a ballistic reach, motor cortex can get away with a feedforward
+burst: plan, go, brake. Feedback exists, but the movement is over
+before much of it can change the plan.
+
+On the wheel, the limb is in a closed loop with an object. Contact can
+start and stop. Slip can happen. The animal can add a second paw. The
+controller, if it is any good, is not replaying a tape. It is switching
+between holding, engaging, and disengaging. Those switches are exactly
+what still / coupled / decoupled are trying to name.
+
+A decoder that assumes one regime — "the animal is always doing the
+wheel-turn" — will misattribute neural activity from the other regimes.
+A paper that only ever decodes the wheel will never find out.
+
+7.4 Why we refused the two standard "make the tensor rectangular"
+    tricks
+
+Time-warp to a fixed number of bins. This is the ballistic habit. We
+did not do it, because paw speed is a physical quantity in real time
+(left-camera-equivalent pixels per second, or, after
+speedNormalized, a dimensionless multiple of that session's typical
+coupled drag). A 20 ms bin of spike counts is also a real-time quantity. Warping
+would mean the same motor command is sometimes called "fast" and
+sometimes "slow" depending on how long the trial was. It would also
+smear still, coupled, and decoupled into each other whenever a long
+trial has extra holds.
+
+Pad every trial to the global maximum length. This keeps real time but
+fills most of the tensor with fake time. The global maximum in the
+unfiltered discretized set was 65,004 bins, from broken feedback
+timestamps, not from a mouse thinking for twenty minutes. Even a
+sane pad (say 500 bins) would mean most trials — median 18 bins — are
+almost entirely padding. Models hate that unless you mask carefully,
+and padding invents a "post-reward" or "pre-stim" epoch we did not
+want to pretend we measured.
+
+What we did instead: keep real 20 ms bins from stimulus onset to
+reward, let n_bins vary, drop leftover time shorter than one bin, and
+push the variable-length problem into the model. That is not because
+variable length is convenient. It is because the behavior is variable
+length, and hiding that would be lying about the motor problem.
+
+
+--------------------------------------------------------------------------------
+8. Still, coupled, and decoupled: intermediate primitives
+--------------------------------------------------------------------------------
+
+This labeling is not in the BWM paper. It was built from watching
+videos (the ZFM-01576 overlay code) and then applied to every trial.
+It is the most interpretation-heavy object in the dataset, and it is
+the one that most needs a scientific defense, not just a threshold
+defense.
+
+8.1 Why "the movement" is the wrong unit
+
+Human motor neuroscience learned, slowly, that complex action is not
+one trajectory. It is a sequence of simpler things: hold this posture,
+launch this reach, grasp this object, release, hold again. Those
+simpler things are called primitives (or synergies, or motor schemas,
+depending on which decade and which lab). The claim is not that the
+brain has three magic labels in a lookup table. The claim is that the
+controller reuses a small number of control modes, and that mixing
+those modes in your analysis is how you convince yourself motor cortex
+is inscrutable.
+
+On the IBL wheel, a trial is not "a left turn" the way a center-out
+trial is "a 45-degree reach." A trial is a miniature sequence. The
+sequence is composed of something like:
+
+    hold the current pose (still)
+    move the limb through free space, possibly toward the wheel
+        (decoupled)
+    engage the wheel and drag it (coupled)
+    maybe disengage, maybe re-engage
+    maybe use the other paw
+    stop
+
+"Left choice" is the task's name for the whole sequence. It is a
+terrible name for what motor cortex has to generate at each moment.
+
+8.2 STILL is not "the neuron is off"
+
+Still means: the paw is not moving much, and we are not claiming a
+drag. In the image, the paw is roughly where it was.
+
+That can be:
+
+    a true rest, waiting for the stimulus to be processed
+    an active postural hold (isometric force against the wheel or
+        against the body, with little visible motion)
+    a pause between two drags
+    the late part of a trial after the wheel has already been brought
+        to criterion
+
+Motor cortex is well known, in other species, to fire for posture.
+A cell can have a preferred arm configuration and sit at a high rate
+while nothing is moving. If you only decode velocity, you call that
+cell "unrelated to movement" or you call still periods "baseline" and
+subtract them away. Either move can be a mistake. Still is a regime
+to predict, or at least to condition on, not a void.
+
+In ModelDataLeft, still dominates the early trial. That is
+neuroscientifically expected: decision computation is happening,
+corticospinal output is not yet launching a drag, or the drag has not
+started. A model that is given the whole trial and asked to predict
+paw speed will spend most of its early bins predicting near-zero.
+That is not a failure of motor encoding. That is the animal not having
+moved yet. Conditioning on regime, or on time relative to first
+movement, is how you stop a model from getting a cheap score for
+saying "zero" for 200 ms.
+
+8.3 COUPLED is interactive control, not a reach
+
+Coupled means: the paw is moving, the wheel is moving, and the paw is
+not lifted off the contact height. In English: the limb is engaged
+with the object and the object is doing the thing the experimenter
+cares about.
+
+This is the closest analogue to "the BWM movement." It is also the
+regime in which:
+
+    tactile feedback from the paw pads should be live
+    the mechanics of the wheel (inertia, friction, the rotary encoder)
+        matter to the controller
+    force, not just kinematics, is part of the problem — and we do
+        not have force. We have kinematics plus the wheel's motion as
+        a noisy consequence of force. That is a limitation. Coupled
+        is where that limitation hurts most.
+    a wheel decoder SHOULD work, and its success should not be taken
+        as evidence that cortex represents the wheel
+
+Coupled is closed-loop. Compare to a ballistic reach, which can be
+mostly open-loop: muscle pattern launched, limb flies, small
+corrections. Here the controller is in contact with something that
+pushes back. That is a different spinal and cortical problem
+(think "manipulate" versus "point").
+
+If motor cortex has anything like a contact mode or a grasp mode —
+and in primates, motor and premotor cortex absolutely do — coupled
+is where it should light up as such, not merely as "high velocity."
+
+8.4 DECOUPLED is movement that the task pretends does not exist
+
+Decoupled means: the paw is doing something that is not turning the
+wheel. Lifted off. Moving in the air. A mostly vertical swipe. Moving
+while the wheel is idle.
+
+This is free space movement. It is the closest analogue to a reach.
+It is also, from the experimenter's point of view, often "not the
+behavior." From the spinal cord's point of view it is absolutely the
+behavior.
+
+Why it must be separated:
+
+    A wheel-only analysis codes it as zero output. If cortex is active,
+        you conclude cortex is noisy, or "not motor," or encoding
+        something cognitive. You have mislabeled a motor epoch as a
+        cognitive residual.
+
+    A paw-speed analysis without a regime label mixes it with coupled
+        drags. Speeds may look similar; the mechanics are not. One is
+        unloaded (the paw's mass). One is loaded (the wheel). Motor
+        cortex and cerebellum care about load. Mixing them is how you
+        get mushy tuning.
+
+    Decoupled is often the REPOSITIONING primitive that sets up a
+        coupled drag: lift, move, plant. If you only study coupled,
+        you have thrown away the approach. If you only study the
+        wheel, you have thrown away the approach AND miscounted it as
+        rest.
+
+    In some mice the "other" paw is decoupled almost always: it moves
+        a little, held against the body, never plants. That movement
+        is a confound for used_paw (which looks at speed) and a reason
+        we built wheel_paws (which looks at coupling). Decoupled on
+        the non-acting paw is not a motor report. It is a tell.
+
+8.5 Why they should be encoded differently (the actual neural claim)
+
+You cannot see the encoding until you train a model. The claim, stated
+as a hypothesis this dataset is built to test, is:
+
+    Still, coupled, and decoupled are not three speeds. They are three
+    control problems, and motor cortex (and the rest of the recorded
+    brain) should look different across them even at matched limb
+    speed.
+
+Concretely:
+
+    Still versus moving is the classic peri-movement contrast: a
+        condition-independent "go" or "hold" signal, plus rate changes
+        in corticospinal cells. This exists in every ballistic dataset.
+        We should see it here too, but "moving" must be split.
+
+    Coupled versus decoupled, at the same paw speed, is the contact /
+        load / object-interaction contrast. Predicted differences:
+            tactile-related activity (more coupled)
+            different muscle synergies (dragging in one axis versus
+                lifting in another)
+            possibly more feedback-driven activity when coupled,
+                because the wheel is a mechanical loop
+            possibly more feedforward reach-like activity when
+                decoupled
+        A wheel decoder cannot pose this contrast. A paw-speed decoder
+        that ignores regime will average it away.
+
+    Transitions (still to decoupled, decoupled to coupled, coupled to
+        still) may be the most informative bins in the trial. Motor
+        cortex is good at switching. If you bin at 20 ms you have a
+        chance of seeing switches; if you average a 1.2 s window you
+        do not.
+
+    Other brain areas in the same session should split differently.
+        Visual cortex should care about the stimulus, not the regime,
+        except insofar as movement produces visual flow. Striatum
+        might care about vigor and about whether the report is being
+        executed (coupled) versus prepared. Thalamus will depend on
+        which nucleus. This is why we kept non-motor units in the
+        pickles even though admission to ModelData required motor
+        cortex: the contrast across areas is part of the question.
+
+8.6 These primitives compose; they are not the whole theory
+
+Still / coupled / decoupled is a THREE-state cartoon of a richer
+action. We do not have:
+
+    force
+    EMG (muscle electrical activity)
+    a true 3D millimetre skeleton
+    digits (the paw is one keypoint, not a hand)
+    a "which joint" breakdown
+    an experimenter-verified plant versus slip
+
+So we should not pretend we have discovered the motor alphabet. We
+have a coarse, video-based, mechanically motivated partition that
+separates "not moving," "moving the object," and "moving but not the
+object." That is already a different scientific object than "the
+wheel trace," and it is matched to what the cameras can support.
+
+The heuristic itself (thresholds, 80 ms, 100 px/s, 0.40 ratio) is
+documented in Part II. Those numbers are judgement. The existence of
+the three regimes is not a number. It is visible on the videos in
+BehaviorRes/PawStrats. If you hate the thresholds, watch the videos
+and propose better ones. Do not go back to pretending the wheel is
+the limb.
+
+
+--------------------------------------------------------------------------------
+9. What we kept from the paper, and why we kept it
+--------------------------------------------------------------------------------
+
+A dataset that "improves on" a paper by silently changing the trial
+set is not an improvement. It is a different experiment. We wanted
+to be able to say: these are the BWM mice, the BWM trials, the BWM
+units; we changed the MOVEMENT VARIABLE and the TIME WINDOW.
+
+Kept, on purpose:
+
+    The motor-cortex cohort of the 2023-12 freeze, not a private
+        list of "sessions we like."
+    bwm_include trials, so we are not quietly using trials the paper
+        rejected for QC reasons.
+    Reaction time 0.08–2.0 s, same as their decoding set. Below
+        80 ms is too fast to be a decision-related movement in this
+        task (it is often a fidget that happened to trip the wheel).
+        Above 2 s is a mouse that did not engage.
+    Units with clusters.pqt label >= 1 and spike-sorting revision
+        2024-05-06. Same neurons they would have called neurons:
+        median amplitude > 50 µV, sliding refractory-period
+        contamination under 10% at 90% confidence, and an amplitude
+        histogram that is not chopped off at the detection floor
+        (noise_cutoff < 5). Label is the fraction of those three
+        tests passed; we keep only a perfect score.
+    20 ms bins. Not because 20 ms is sacred (cortical timescales
+        range from a few milliseconds at the synapse to hundreds of
+        milliseconds for decisions), but because it is their decoding
+        currency, it is long enough that a 3 Hz cell sometimes has a
+        spike in a bin, and it is short enough to see a drag start.
+    Pose likelihood >= 0.95, the IBL default. Below that, the keypoint
+        is a guess. Inventing a looser threshold would have invented
+        fake paw motion, which is the one thing we cannot afford.
+    Near-paw = paw_r on that camera, IBL's anatomical convention.
+    Wheel traces as SessionLoader signed rad/s, their decoding
+        representation, stored so we can still COMPARE paw decoding
+        to wheel decoding on the same trials. We did not delete the
+        proxy. We demoted it.
+
+Changed, on purpose, and these are the scientific diffs:
+
+    Target: paw kinematics and regime, not (only) wheel velocity.
+    Window: stimulus onset to reward, not firstMovement−0.2 to +1.0.
+        Why: we want the hold before the turn, the turn, and the
+        finish, because those are different primitives. Their window
+        is a peri-movement cookie that starts after still is mostly
+        over and ends on a clock that does not care about reward.
+    Length: variable n_bins, leftover dropped, no warp, no pad.
+    No extrapolation of missing pose. Their decoder could extrapolate
+        wheel because a 1.2 s window sometimes stuck out past the
+        loaded wheel trace. Extrapolating a paw is fabricating a
+        limb.
+    Effector labels: used_paw, then wheel_paws, then a left-only
+        subset. They had no effector.
+    Speed units: right-camera ×2 into left-camera pixels, 2D
+        hypot(vx, vy) not 3D, plus speedNormalized so sessions
+        and cameras share a scale. They had no paw speed.
+    Modeling copies that require pose, reward, stereo, enough motor
+        units, visible contrast, and sane duration.
+
+The next part is those copies, in the order they were made.
+
+
+================================================================================
+PART II. THE PIPELINE, WITH THE SCIENTIFIC REASON FOR EACH CUT
+================================================================================
+
+Nothing in BehaviorRes is a recording we made. Everything starts from
+IBL's frozen Brain-Wide Map release and the public OpenAlyx API
+(https://openalyx.internationalbrainlab.org, password international).
+
+
+--------------------------------------------------------------------------------
+10. Step A — Database: a warehouse of paper trials, not a model matrix
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/fullData.py
+Output: /Users/Stefan/Desktop/BehaviorRes/Database
+
+39 mice, 67 sessions, 30,264 trials, 13,929 units.
+
+10.1 Why a warehouse first
+
+If you filter first, you cannot ask later "what did we lose." Database
+keeps error trials, sessions with no video, and whatever pose exists.
+Later folders are copies. This is a scientific choice as much as a
+software choice: motor claims that depend on dropping errors or dropping
+no-video sessions should be restatable as "on the subset of Database
+defined by X," not as "the data we happened to load."
+
+10.2 Cohort: only mice that have motor cortex in the freeze
+
+Source list:
+
+    /Users/Stefan/Desktop/MOUSELAB/BWM_2023_12_mice_with_motor_cortex_recordings.csv
+
+That CSV is the (subject, date) pairs in the 2023_12_bwm_release.csv
+freeze that have good MOp or MOs units. 39 mice, 67 sessions.
+
+Why not the entire BWM? Because most BWM insertions are not in motor
+cortex. Visual cortex is a good place to decode the stimulus and a
+bad place to claim you are reconstructing a limb. We still keep, for
+each admitted session, EVERY probe in that session, including striatum,
+thalamus, and so on. The session is the physical recording. Motor
+cortex is the admission ticket. A later model can ask whether CP
+(caudate-putamen) predicts paw speed better than MOp on the same
+trials; it cannot ask that if we threw CP away at load time.
+
+The 39 mice, with the IBL lab that recorded them, are:
+
+    angelakilab:           NYU-21, NYU-30, NYU-37, NYU-39, NYU-48
+    churchlandlab:         CSHL049, CSHL058, CSHL059, CSHL060
+    churchlandlab_ucla:    UCLA033, UCLA034, UCLA035, UCLA037
+    cortexlab:             KS023, KS043, KS046, KS051, KS052, KS091
+    danlab:                DY_011, DY_014
+    hausserlab:            PL033
+    hoferlab:              SWC_043, SWC_061
+    mainenlab:             ZFM-01576, ZFM-01936, ZFM-01937, ZFM-02370,
+                           ZM_1897, ZM_2240, ZM_2241, ZM_2245
+    mrsicflogellab:        SWC_038
+    steinmetzlab:          NR_0027
+    wittenlab:             ibl_witten_19, ibl_witten_32
+    zadorlab:              CSH_ZAD_019, CSH_ZAD_024, CSH_ZAD_026
+
+Not all survive. That is later.
+
+10.3 Trial inclusion: theirs, not ours
+
+A trial is kept if ALL of:
+
+    (a) bwm_include is True
+    (b) actionTime = firstMovement − stimOn is in [0.08, 2.0] seconds
+    (c) stimOn, feedback, firstMovement are finite
+    (d) trialDuration = feedback − stimOn is > 0
+
+Neuroscience of (b): a movement that starts 40 ms after a visual
+stimulus is not a decision about that stimulus. Visual cortex has
+barely seen it. 80 ms is a lower bound the paper chose to keep
+"the first movement" in the space of reactions, not startles. 2 s is
+an upper bound so that you are not decoding a mouse that disengaged.
+We did not reopen that debate. If our paw decoder is compared to their
+wheel decoder, the trials must match.
+
+Error trials (4,312 of 30,264; feedbackType = −1) stay in Database.
+An error is a different motor object: the animal may not complete a
+turn, may turn the wrong way, may time out. The neural picture of
+"failed report" is interesting and is not this modeling set. Dataset
+Filtered drops them because the user asked for successful behavior and
+because mixing successful drags with failed ones would again mix
+regimes without naming them.
+
+Clock: t = 0 at stimulus onset. That is a DECISION-ALIGNED clock, not
+a MOVEMENT-aligned clock. The paper's wheel decoder used movement
+alignment. We use stimulus alignment because we want the still period
+before firstMovement to remain in the trial. That is the period during
+which a ballistic analysis would already have thrown the data away,
+and during which a decision analysis lives. Keeping both in one
+window is how you later ask "when does the population switch from
+decision-ish to motor-ish," which you cannot ask if you only ever
+start at firstMovement − 0.2 s.
+
+10.4 Stimulus, choice, reward, block
+
+    stim_side     left or right (which side the Gabor was on)
+    brightness    0, 0.0625, 0.125, 0.25, 1.0
+    choice        left / right / nogo, from IBL integers 1 / −1 / 0
+    block_prior   probabilityLeft: 0.2, 0.5, 0.8
+    reward        1 or −1
+    outcome       reward / error / no_feedback
+
+Why these are not "just metadata." Contrast controls how hard the
+decision is, and in this dataset it also controls how long the trial
+is: low contrast, longer, more time in still. A motor decoder that
+ignores contrast will confuse "hard trial, late movement" with "this
+mouse has slow paws." Side of stimulus and side of choice are almost
+always the same on rewarded trials (the animal got it right). Block
+prior is a cognitive variable that should, in theory, affect when
+movement starts more than how the paw is configured — another reason
+to keep still in the window.
+
+0% contrast is a different TASK (detect absence), not a dimmer Gabor.
+It stays in Database and is removed at ModelData. See 10.F below.
+
+10.5 The wheel, stored anyway
+
+SessionLoader wheel at 1000 Hz, signed angular velocity in rad/s,
+windowed to [stimOn, feedback], t shifted to 0 at stimOn.
+
+We are arguing against the wheel as the TARGET. We still store it
+because:
+
+    it is how we DEFINE coupled (paw moving AND wheel moving)
+    it is how we can run a BWM-style decoder as a baseline on the
+        exact same bins
+    it is the animal's report, which is still a scientifically real
+        object, just not the motor object
+
+If we had deleted the wheel we would have been unable to say "coupled."
+The proxy is an input to the regime label, not the thing we want
+cortex to mean.
+
+10.6 Pose: two trackers, both cameras, one chosen paw at this stage
+
+DeepLabCut (dlc) and Lightning Pose (lp) independently track body
+parts on the left and right side cameras. IBL convention:
+
+    On a given camera, paw_r is the NEAR paw (closer to that camera).
+    left-camera  paw_r = anatomical LEFT paw
+    right-camera paw_r = anatomical RIGHT paw
+    The far view of the same paw is paw_l on the opposite camera.
+
+Likelihood < 0.95 becomes NaN. We do not interpolate across long
+holes. Inventing a paw position when the tracker is lost would invent
+a movement, and we would then "decode" our interpolation.
+
+The two side cameras are not a calibrated stereo pair, and they do
+not even share a pixel grid:
+
+    left camera    1280 × 1024    60 Hz     near paw = anatomical left
+    right camera    640 ×  512   150 Hz     near paw = anatomical right
+
+One right-camera pixel covers roughly twice the scene of one
+left-camera pixel. Raw x and y are therefore not comparable across
+paws until the right camera is multiplied by 2 (Step K). z is not
+millimetres. It is z = x_near − x_far, a disparity proxy for
+mediolateral position, rebuilt after that scale. There is no camera
+calibration and no body-camera paw in this set. Claiming 3D
+millimetres would have been theater.
+
+Speed is 2D: hypot(vx, vy). It does not include vz. Folding disparity
+into Euclidean speed would mix two rulers and let the noisier axis
+dominate, especially on right-paw trials where z still contains the
+finer left-camera x. z and vz remain stored as their own channels
+if a later analysis wants mediolateral motion without pretending it
+shares a metric with the image plane.
+
+Two sessions had only one camera; they later leave the filtered set
+because a modeling target that sometimes has z and sometimes does
+not is two targets pretending to be one. Speed itself is 2D either
+way; the stereo cut is so z is present as a feature, not so speed
+can be 3D.
+
+10.7 used_paw: a first, flawed effector label
+
+We could not store both paws in the first pickles (size). For each
+trial we picked the near paw with higher mean image-plane speed over
+the trial, DLC first, Lightning Pose if needed, ties to left.
+
+This is a MOVEMENT heuristic, not a dominance phenotype, and not
+"who turned the wheel." A paw held against the body can wiggle fast
+in pixels without doing the task. Videos showed that constantly.
+used_paw is still on every trial because it is what the STORED
+dlc_* / lp_* traces actually are: the kinematics of that chosen paw.
+
+The later label wheel_paws is the scientific effector label. The
+fact that they disagree on thousands of trials is not a bug. It is
+the demonstration that "which paw moved" and "which paw did the
+task" are different questions. Motor cortex should care about the
+second more than the first if it is generating the report, and about
+both if it is generating all movement.
+
+10.8 Units and spikes
+
+For each probe: SpikeSortingLoader revision 2024-05-06, intersect
+with clusters.pqt label >= 1. Concatenate probes. unit_idx is 0 ..
+n_units−1 for the session. Spikes on a trial are times relative to
+stimOn plus an index into that table.
+
+That `label >= 1` cut is the paper's isolation QC, not a private
+SNR rule. IBL computes three binary tests and sets
+
+    label = (number of tests passed) / 3
+
+so the only values are 0, 1/3, 2/3, and 1. The paper's loader
+(`load_good_units`, `min_qc=1`) keeps label == 1. We do the same.
+The three tests, as implemented in
+brainbox.metrics.single_units.compute_labels, are:
+
+    (a) amp_median > 50 µV
+        Median waveform height. Below this, the cluster is treated
+        as noise. Plain English: the electrical event has to be
+        large enough to be a nearby cell, not a ripple.
+
+    (b) max_confidence >= 90 on the sliding refractory-period test
+        Acceptable contamination 10%; bins 0.25 ms; candidate
+        dead-times from ~0.5–10 ms. Pass if, for at least one
+        candidate refractory period, we are at least 90% confident
+        the unit is under 10% contaminated. Plain English: the
+        spike train has to have a dead time, like one cell, not
+        like two cells talking over each other. "Not enough spikes
+        to tell" fails.
+
+    (c) noise_cutoff < 5
+        Amplitude-histogram shape test (quantile_length 0.25,
+        100 bins). Fail if the low-amplitude bin is both > 5 SD
+        above the upper-tail mean and > 10% of the peak-bin
+        height. Plain English: the cluster cannot look chopped
+        off at the detection threshold, or we would be mistaking
+        missed spikes for silence.
+
+The Nature Methods sentence says "amplitude > 50 μV; noise cut-off
+< 20 μV; and refractory period violation." Use the code, not that
+sentence, if they disagree: the 20 μV figure is not the operational
+threshold. clusters.pqt already carries the frozen `label` from
+this pipeline, which is why we read the label instead of
+recomputing the three tests ourselves.
+
+n_units is a session constant. A cell that does not fire on a trial
+is a zero, not a missing column. That is the right neural fact:
+silence is data. Dropping silent cells trial-by-trial would make
+"population size" covary with "how much the animal moved," which
+would confound any decoder. Isolation QC is applied once per unit
+per session, not per trial: a neuron does not become "un-isolated"
+because it was quiet on trial 17.
+
+Coordinates: IBL CCF, x = ML (negative = left hemisphere), y = AP,
+z = DV. Area strings like MOp5 are Allen acronyms plus layer. How
+those strings and xyz values are produced from a DiI track, a serial
+two-photon volume, and an ephys-to-atlas alignment — and why they
+do not transfer by scaling to a rat, macaque, or human brain — is
+section 1.5. The spike_counts tensor is sorted AP-band events only;
+the LFP, MUA, waveforms, and CSD that the same 384 channels also
+support are section 1.2, and they are not in these folders.
+
+
+--------------------------------------------------------------------------------
+11. Step B — Velocity and the three regimes, at native camera time
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/enrich_and_discretize.py (first half)
+
+Positions are not what muscles are commanded in. To a first
+approximation, descending motor signals are closer to velocity and
+force than to camera x. We compute, at the camera's own times:
+
+    Gaussian-smooth each of x, y, z with sigma = 20 ms
+    then np.gradient in time, only inside contiguous finite segments
+        of at least 3 samples
+    speed = hypot(vx, vy)
+
+    (The first write of this step used 3D speed whenever vz was
+    finite: sqrt(vx^2+vy^2+vz^2). That mixed image-plane pixels
+    with disparity units. Step K replaced the stored speed arrays
+    with the 2D hypot and did not delete the column.)
+
+Why 20 ms smoothing: it matches the bin we will later use, and it
+is a reasonable scale for suppressing camera jitter without turning
+a 50 ms lift into mush. It is NOT the bin yet. Native time still
+has ~60 Hz (left camera) or ~150 Hz (right camera) samples.
+
+Then the regime machine, per sample, after interpolating wheel
+velocity onto paw times:
+
+    paw speed = hypot(vx, vy)     (image plane, for the state machine)
+    v_still   = clip(max(0.12 * p95_speed, 140), 140, 320) px/s
+    omega_move = clip(max(0.10 * p95_|wheel|, 0.30), 0.30, 1.00) rad/s
+
+    contact baseline: exponential tracker on image y
+        (y increases downward, so contact is LARGE y)
+        follows downward quickly (40 ms) and upward slowly (280 ms)
+        so a plant updates the "floor" fast and a lift is a drop
+        below that floor
+    lift_thr = max(14 px, 4.5 * early_y_std)
+
+    STILL:      default, not moving much
+    COUPLED:    moving AND wheel moving AND not lifted
+    DECOUPLED:  lifted, OR moving while wheel idle, OR a mostly
+                vertical swipe
+
+Then a ~60 ms majority smoother and a 45 ms minimum dwell, so a
+single noisy frame is not a regime change. Motor primitives, if they
+are real, last longer than one video frame. If we had allowed
+one-frame states we would have been labeling tracker noise.
+
+Adaptive thresholds with floors: cameras and mice differ. A fixed
+px/s cut is not a physical cut. The floors (140 px/s, 0.30 rad/s)
+stop a dead-still trial from promoting jitter to "movement." This is
+the same philosophical move as the paper's 80 ms minimum RT: do not
+let noise become an event.
+
+2D speed for the state machine, not 3D: coupling is a plant-and-drag
+in the image, plus the wheel. z is noisier and sometimes missing.
+Using z in the regime label would have made the label undefined on
+exactly the sessions we were about to drop for missing z anyway.
+
+These arrays (dlc_paw_state, lp_paw_state) are the native-time
+primitives. Binning comes later. Computing them native-first is
+deliberate: a regime that lasts 50 ms should be decided on 60 Hz
+data, then voted into 20 ms bins, not invented inside a 20 ms bin
+that has already averaged a plant and a lift together.
+
+
+--------------------------------------------------------------------------------
+12. Step C — DatasetFiltered: no paw, no motor question
+--------------------------------------------------------------------------------
+
+If the scientific object is the paw, a session with empty pose
+cannot answer the question. Keeping its wheel would just recreate
+the BWM dataset, which we already have from the paper.
+
+Dropped entirely (no DLC and no Lightning Pose):
+
+    KS051, KS052, ZM_1897
+    SWC_038 on 2020-07-30 (other dates of this mouse are kept)
+
+Dropped per trial: reward != 1.
+
+Why rewarded only, in neural terms: an error trial's "movement"
+may be a wrong-direction turn, a hesitation, or an incomplete
+engagement. The mapping from decision to coupled drag is broken
+or different. If you want to study that, use Database. If you want
+to study successful left-paw implementation of a correct choice,
+errors are a different generative model and should not be silently
+averaged in.
+
+After this copy: 36 mice, 63 sessions, 24,571 trials, before the
+stereo cut.
+
+
+--------------------------------------------------------------------------------
+13. Step D — Stereo required in the modeling copies
+--------------------------------------------------------------------------------
+
+Two sessions had pose on only one camera:
+
+    ibl_witten_19  2020-07-23   eid 65f5c9b4-4440-48b9-b914-c593a5184a18
+        right camera only
+    CSH_ZAD_024    2020-06-08   eid 8207abc6-6b23-4762-92b4-82e05bed5143
+        left camera only
+
+xy existed. z was NaN for every sample. Speed is 2D either way;
+what these sessions lacked was the mediolateral disparity channel.
+
+We deleted them from DatasetFiltered and DatasetFilteredDiscretized
+and KEPT them in Database / DatabaseDiscretized.
+
+Why this is science, not fussiness: mediolateral motion (toward / away
+from the wheel along the animal's left-right axis) is plausibly the
+axis that distinguishes a plant from a hover. Speed no longer uses
+that axis (Step K), but z is still stored as its own feature. If some
+sessions have it and some do not, a pooled model that touches z
+learns a chimera. The warehouse still has the xy-only sessions if
+someone wants a strictly 2D-only analysis that includes them.
+
+After deletion: 34 mice, 61 sessions, 23,783 trials, 12,316 units.
+
+
+--------------------------------------------------------------------------------
+14. Step E — 20 ms discretization: their bin, not their window
+--------------------------------------------------------------------------------
+
+Outputs: DatabaseDiscretized and DatasetFilteredDiscretized.
+ModelDataLeft descends from the latter.
+
+14.1 Why 20 ms, again, now that you know about regimes
+
+A spike is ~1 ms. A video frame is ~7–17 ms. A short coupled drag
+might be 80–200 ms. A decision might be hundreds of milliseconds.
+20 ms sits between frame rate and drag duration. It is coarse enough
+that spike counts are not almost-all-zeros for a 3 Hz cell, and fine
+enough that a still-to-coupled transition is not trapped inside a
+200 ms sludge bin.
+
+Could we have used 10 ms? Yes, at the cost of sparser counts. 50 ms?
+Yes, at the cost of smearing primitives. We used 20 ms to stay in
+the paper's currency so that "our paw decoder versus their wheel
+decoder" is not also "our 50 ms versus their 20 ms."
+
+14.2 Their window versus ours
+
+They: firstMovement − 0.2 s to +1.0 s, always 60 bins.
+
+That window is a ballistic habit. The −0.2 s captures a little
+preparation. The +1.0 s captures a stereotyped-enough movement if
+you believe movements last about a second. Many IBL trials do not.
+Some are over in 200 ms. Some coupled drags start late and run long.
+Their cookie both (i) includes time before stimOn on short-RT trials
+and (ii) chops off the end of long trials, including extra primitives.
+
+We: t = 0 at stimOn, through feedback (reward), n_bins =
+floor(T / 0.02), leftover < 20 ms dropped.
+
+    n_bins varies. That is the motor fact.
+    Still at the beginning is in the data.
+    We do not invent post-reward movement.
+    We do not stretch dt away from 20 ms.
+
+leftover_s is always in [0, 0.02). Values that look like 0.02 are
+floating point.
+
+14.3 Causality in the bin, and why motor people should care
+
+    Spikes in bin i: t in [t_left, t_right)   (left-closed, right-open)
+    Wheel and paw continuous traces: linearly interpolated at t_right
+
+Every spike in the bin occurs strictly before the behavior sample
+for that bin.
+
+This is their decoding convention. It is also the ethically correct
+one if you want to say "spikes predict movement" rather than "spikes
+echo movement." Motor cortex can and does receive feedback, so some
+activity is the consequence of the last 20 ms of motion, not the
+cause of the next. We cannot solve that with binning. We can at least
+not put future spikes into the features for this sample. A model that
+still "predicts" well is then either truly predictive or using
+feedback delayed by less than a bin — both of which are more
+interesting than a model that cheats by seeing the paw's next frame
+in the spike count.
+
+No extrapolation. Pose holes stay NaN. Their wheel interpolator used
+fill_value='extrapolate' because the 1.2 s window could stick out.
+Extrapolating a paw speed is claiming a limb velocity you did not
+see. For a motor target that is scientific misconduct in miniature.
+
+14.4 States on the grid
+
+Native still/coupled/decoupled are majority-voted inside each 20 ms
+bin. Ties: sample closest to the right edge (consistent with "the
+behavior sample lives at the right edge"). Empty: none / −1.
+
+This is how a primitive that was computed at 60–150 Hz becomes a
+20 ms label without being recomputed on already-averaged kinematics.
+If a bin contains 10 ms of still and 10 ms of coupled, majority vote
+is a hard choice; the min-dwell on the native labels already forbade
+flicker, so mixed bins should be rare-ish and should cluster at
+transitions — which are exactly the bins a model should not get a
+confident regime for.
+
+14.5 spike_counts
+
+Shape (n_bins, n_units), uint16. Same n_units for every trial of a
+session. Different n_bins across trials. Within a trial, every
+timeseries has length n_bins. We checked all 23,783 filtered
+discretized trials: zero within-row mismatches.
+
+n_bins in that set: min 8, mode 14, median 18, p90 51, p99 ~300,
+max 65,004 (broken timestamps). That max is why ModelData exists.
+
+
+--------------------------------------------------------------------------------
+15. Step F — ModelData: a modeling table that is still both paws
+--------------------------------------------------------------------------------
+
+Three cuts, in this order.
+
+15.1 At least 5 motor-cortex units in the session
+
+Motor cortex := brain_area startswith "MOp" or "MOs". Layers included
+(MOp5, MOs6a, MOp2/3, ...). FRP (frontal pole) excluded: nearby, not
+the same area, not how the cohort CSV was defined.
+
+Why 5, not 1, not 20. One cell can show you a PSTH; it cannot
+reconstruct a continuous trajectory. Population decoding in motor
+cortex typically needs tens of cells for a good kinematic reconstruction
+in monkeys; mice with Neuropixels sometimes give us that, sometimes
+give us a handful. Five is a floor that says "there is a motor
+population, barely." PL033 2022-10-10 has exactly 5 and was kept.
+Twenty would have been a prettier decoder and a more biased mouse
+list. This is a judgement call, named as such.
+
+Eight sessions failed (motor units, filtered-set trials):
+
+    ibl_witten_32  2021-07-21    1 unit     134 trials
+    CSHL060        2020-03-11    3          629
+    CSHL058        2020-07-11    3          238
+    SWC_061        2020-11-23    4          452
+    SWC_043        2020-09-21    2          308
+    SWC_043        2020-09-16    4          378
+    UCLA035        2022-02-24    2          330
+    NYU-39         2021-05-12    1          451
+
+    2,920 trials removed with those sessions
+
+Mice gone entirely: NYU-39, ibl_witten_32.
+After this cut: 20,863 trials, 53 sessions, 32 mice.
+
+When we keep a session we keep ALL its units, not only MOp/MOs.
+Admission is "enough motor cortex to be in the motor study." Feature
+selection is a model choice. Thalamic and striatal cells on the same
+probe are the comparison group that lets you ask whether paw speed is
+specifically motor-cortical. If we had deleted them, that question
+would be unaskable.
+
+15.2 Drop 0% contrast
+
+1,502 further trials (1,707 zero-contrast trials existed in the
+filtered set; 205 sat in the eight sessions already gone).
+
+Remaining after this cut: 19,361.
+
+Neuroscience of this cut: 0% is not "dim." It is a catch trial. The
+decision problem is "is anything there," not "which side is the
+Gabor." Reaction times are longer (median n_bins 31 versus 16 at
+100%). The still period is a different still: waiting to be sure of
+absence, not preparing a directed report. Mixing 0% with 100% in a
+paw decoder trains the model on two tasks and then asks it for one
+R^2. The paper included 0% because their object was the whole
+decision set. Our object is the movement that implements a directed
+choice about a visible stimulus.
+
+15.3 Drop n_bins > 500
+
+84 further trials. n_bins == 500 never occurs. Remaining max 494,
+min 8. Among the 53 surviving sessions, 108 trials were this long;
+24 of those were also 0% and already gone; 84 are this cut.
+
+500 bins = 10 seconds of complete 20 ms bins. p99 of the filtered
+set is ~300 bins. The BWM RT cap is 2.0 s to FIRST movement, not to
+reward; n_bins > 500 means feedback_times is far past any ordinary
+trial, i.e. a bad interval, not a thoughtful mouse.
+
+We dropped rather than truncated. Truncation would quietly change
+trialDuration and invent an end of the movement that did not happen.
+
+ModelData is then:
+
+    32 mice, 53 sessions, 19,277 trials, 10,537 units
+    brightness in {0.0625, 0.125, 0.25, 1.0}
+    n_bins in [8, 494]
+    every session has >= 5 MOp/MOs units (median 39, max 226)
+    still all three effectors: left, right, both
+
+    6.25%   3,589 trials
+    12.5%   4,545
+    25%     5,281
+    100%    5,862
+
+
+--------------------------------------------------------------------------------
+16. Step G — wheel_paws: which limb implemented the report
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/label_wheel_paws.py
+This patched Database, DatasetFiltered, both discretized copies, and
+ModelData. ModelDataLeft did not exist yet.
+
+16.1 Why this label is the motor one
+
+Somatotopy: motor cortex is laid out roughly by body part. Mixing
+left-paw trials and right-paw trials in one decoder is mixing two
+effectors, possibly two hemispheres' worth of control, and then
+asking for one mapping from "the population" to "speed." In a
+ballistic lab you would never pool left-arm and right-arm reaches
+without saying so. The BWM wheel decoder does the equivalent by
+accident, because the wheel does not say which paw turned it.
+
+used_paw cannot fix this. Speed on the video does not equal task
+work. The other paw is often moving, held to the body, never
+planting. That is decoupled movement of a non-reporting limb. If you
+call that trial "right" because the right paw wiggled more in pixels,
+you then attach the RIGHT paw's stored kinematics to a trial whose
+report was executed by the left paw. That is how you build a dataset
+that cannot possibly yield a clean motor encoding.
+
+So we reloaded BOTH near paws from OpenAlyx (left-camera paw_r and
+right-camera paw_r), reused the still/coupled/decoupled machine, and
+asked which paws spent real time in COUPLED.
+
+16.2 The contribution rule
+
+A paw contributes if:
+
+    time in COUPLED >= 0.080 s     (~5 frames at 60 Hz)
+    AND mean image-plane speed >= 100 px/s
+
+If both contribute, label "both" only if
+    min(coupled_s) / max(coupled_s) >= 0.40
+Otherwise the weaker paw is a hitchhiker and the label is the
+stronger one.
+
+If neither contributes: fall back to used_paw (do not invent a third
+philosophy).
+If no pose: None. That is 1,682 Database trials, exactly the four
+no-pose sessions. Zero unlabeled trials in ModelData.
+
+80 ms: longer than the 45 ms min dwell, so a flicker of coupled is
+not "this paw did the task." Short enough that a brief real plant
+counts.
+
+100 px/s mean: on ZFM-01576, the classic left-paw mouse, the other
+paw's mean speed is ~8–21 px/s. Real reaches 160–340 px/s. 100 sits
+between "body-held jitter" and "a drag." The instantaneous coupled
+threshold is already ~140 px/s; the trial MEAN can be lower because
+of still periods.
+
+0.40 ratio: 80 ms of coupled on the passenger paw during a 400 ms
+primary drag is not bimanual work. Diagnosed on three sessions
+(ZFM-01576 left-dominant, ZM_2241 right-dominant, CSH_ZAD_026 mixed)
+before running all 67.
+
+Prefer Lightning Pose if it has a usable trace, else DLC, else
+used_paw. LP's other-paw traces were cleaner (ZM_2241 other-paw
+78 px/s DLC vs 35 px/s LP). In ModelDataLeft, all 7,173 trials have
+wheel_paws_source == "lp".
+
+We did not require DLC and LP to agree on "both." That would have
+undercounted bimanual trials. We trusted LP. Videos in
+BehaviorRes/PawStrats exist so a human can disagree.
+
+16.3 Result on ModelData
+
+    left   7,173   (37.2%)
+    right  7,225   (37.5%)
+    both   4,879   (25.3%)
+
+Mice are not a left-paw species. ZFM-01576 is 97% left. ZM_2241 is
+95% right. UCLA034 is 74% both. "The IBL mouse turns with the left
+paw" is a myth that used_paw and casual watching of famous sessions
+produced. wheel_paws kills it.
+
+25% both is itself a scientific finding. Bimanual wheel turning is
+not rare. A decoder that assumes one limb is wrong for a quarter of
+ModelData. ModelDataLeft is the response: hold the effector fixed.
+
+
+--------------------------------------------------------------------------------
+17. Step H — ModelDataLeft: one effector
+--------------------------------------------------------------------------------
+
+Copy ModelData, keep wheel_paws == "left". Do not drop units, do not
+re-bin, do not relabel.
+
+    19,277 -> 7,173 trials
+    32 mice, 53 sessions remain (no session had zero left trials)
+    10,537 units unchanged
+    2,464 of them MOp/MOs
+
+Why left, scientifically, not just because someone asked for left:
+
+    One effector is the ballistic-lab standard. You cannot interpret
+        a beta weight, a latent, or an R^2 if half the trials are
+        the other arm.
+    Left is common enough to have thousands of trials, unlike a
+        fussy intersection (left AND high contrast AND early session
+        AND ...).
+    The stored regime labels and the coupling definition are then
+        about THE SAME anatomical paw that did the work, on the
+        6,015 / 7,173 trials where used_paw is also left. (The
+        remaining 1,158 have used_paw == right and wheel_paws ==
+        left: the stored traces are the wrong paw. That is a real
+        limitation, section 20.)
+
+Why this is NOT "the left-paw-dominant mice":
+
+    ZFM-01576  486 / 503 ModelData trials kept (97%)
+    KS023     1014 / 1320 (77%); 14.1% of ModelDataLeft by itself
+    NYU-30     681 / 1521
+    CSH_ZAD_026 667 / 1786
+    ZM_2241      5 / 441   (a right-paw mouse; five left trials)
+    NYU-48       3 / 427
+
+Full counts, largest first:
+
+    KS023 1014, NYU-30 681, CSH_ZAD_026 667, DY_011 508, PL033 508,
+    ZFM-01576 486, SWC_038 321, KS046 318, CSHL059 264, SWC_043 235,
+    ZM_2245 200, CSH_ZAD_019 188, ZM_2240 173, CSHL058 170, CSHL049 159,
+    DY_014 129, ZFM-01937 128, ZFM-01936 126, UCLA035 124, KS043 121,
+    NYU-21 109, SWC_061 102, CSHL060 90, ZFM-02370 86, UCLA037 70,
+    NR_0027 39, NYU-37 38, UCLA034 38, KS091 38, UCLA033 35,
+    ZM_2241 5, NYU-48 3
+
+A pooled decoder will become a KS023 decoder unless you split or
+weight by mouse. That is not a reason to drop KS023. It is a reason
+not to pretend 32 mice are i.i.d.
+
+We kept ZM_2241 and NYU-48. Dropping "mice with few left trials"
+would have been a new inclusion rule. They are statistically almost
+absent; treat them that way.
+
+Brightness in ModelDataLeft: 6.25% 1,434; 12.5% 1,713; 25% 1,937;
+100% 2,089. n_bins min 8, median 18, max 494. n_units per session
+41 to 524. Reward always 1.
+
+The hemisphere issue is no longer a footnote. It is the reason
+ModelDataRight exists, and it is written out in sections 18 and 19.
+The one-line version, which those sections prove with counts:
+
+    ModelDataLeft  = left paw  + almost entirely left motor cortex
+                   = mostly IPSILATERAL pairing
+    ModelDataRight = right paw + almost entirely left motor cortex
+                   = mostly CONTRALATERAL pairing
+
+That is a recording-grid fact, not a claim that we matched probes to
+paws. Confirm it after reading section 19. Do not skip the caveat.
+
+
+--------------------------------------------------------------------------------
+18. Step I — ModelDataRight: the other unimanual effector
+--------------------------------------------------------------------------------
+
+Source: BehaviorRes/ModelData
+Output: BehaviorRes/ModelDataRight
+When: after ModelDataLeft existed, as a matched twin
+
+Operation, identical to Step H except the kept label:
+
+    load the ModelData pickle
+    keep trials whose wheel_paws == "right"
+    if at least one trial remains, write the session into ModelDataRight
+    do not drop units
+    do not re-discretize
+    do not re-label paws
+    rebuild trials.parquet, units.parquet, manifest.json
+
+No session in ModelData had zero right-paw trials either, so again
+all 53 sessions and all 32 mice remain.
+
+    ModelData:       19,277 trials
+    ModelDataLeft:    7,173 trials   (37.2%)
+    ModelDataRight:   7,225 trials   (37.5%)
+    (the remaining 4,879 are wheel_paws == "both", in neither folder)
+
+Why build the twin at all. Section 17's hemisphere remark was a
+prediction: if textbook corticospinal wiring is the main controller
+of this wheel-turn, then left-paw trials seen by left MOp/MOs are
+the harder (ipsilateral) pairing and right-paw trials seen by the
+same cells are the classical (contralateral) pairing. Leaving the
+right-paw trials inside ModelData as a "subset you could filter"
+would have been how they get silently mixed back in. A folder that
+can only be opened as right-paw trials is a commitment to test the
+prediction rather than to average it away.
+
+Why this is NOT "the right-paw-dominant mice" either. The mice that
+dominated ModelDataLeft are often rare here, and vice versa:
+
+    ZM_2241     419 / 441 ModelData trials kept (95% right)
+    NYU-48      360 / 427 (84%)
+    NR_0027     621 / 885 (70%)
+    NYU-21      434 / 594 (73%)
+    CSH_ZAD_026 879 / 1786 (49%; largest absolute count, 12.2% of
+                            ModelDataRight by itself)
+    NYU-30      596 / 1521
+    KS023       117 / 1320 (9%; the ModelDataLeft giant is a small
+                            right-paw animal)
+    ZFM-01576     2 / 503  (the stereotyped left-paw mouse; two
+                            right-paw trials remain)
+
+Full right-trial counts, largest first:
+
+    CSH_ZAD_026 879, NR_0027 621, NYU-30 596, NYU-21 434, ZM_2241 419,
+    NYU-48 360, SWC_043 315, DY_014 307, KS046 290, KS091 275,
+    ZFM-01936 244, ZM_2245 232, CSHL059 208, PL033 203, CSHL049 202,
+    SWC_038 184, ZM_2240 169, CSHL058 146, CSHL060 142, DY_011 124,
+    KS023 117, KS043 111, CSH_ZAD_019 110, ZFM-02370 109, UCLA033 83,
+    NYU-37 73, ZFM-01937 69, UCLA037 62, UCLA035 58, SWC_061 54,
+    UCLA034 27, ZFM-01576 2
+
+A pooled ModelDataRight decoder will be pulled toward CSH_ZAD_026,
+NR_0027, and NYU-30, not toward KS023. That is a different mouse
+weighting than ModelDataLeft. Comparing the two folders without a
+mouse split confounds "left vs right paw" with "which mice like
+which paw."
+
+We kept ZFM-01576's two right-paw trials for the same reason we kept
+NYU-48's three left-paw trials: the user asked for the subset, not a
+further "enough trials per mouse" cut. They are statistically almost
+absent; treat them that way.
+
+Brightness in ModelDataRight: 6.25% 1,310; 12.5% 1,679; 25% 2,015;
+100% 2,221. n_bins min 8, median 17, max 484. n_units per session
+still 41 to 524. Reward always 1.
+
+used_paw mismatch is worse here than on the left: 4,771 of 7,225
+have used_paw == "right" (the stored traces match the label); 2,454
+have used_paw == "left" but wheel_paws == "right". If you need
+right-paw kinematics, restrict to used_paw == "right" or re-extract
+right-camera paw_r. The stored dlc_* / lp_* arrays were not rewritten
+for this copy any more than they were for ModelDataLeft.
+
+The filter note in ModelDataRight/manifest.json is:
+
+    source = BehaviorRes/ModelData
+    filter.wheel_paws = right
+    n_trials_in  = 19277
+    n_trials_out = 7225
+
+
+--------------------------------------------------------------------------------
+19. Hemisphere, laterality, and whether this movement is ipsi or contra
+--------------------------------------------------------------------------------
+
+This section is the detailed record of a question that sounds simple
+and is not: does motor cortex control the wheel-turning paw from the
+opposite side of the brain (contralateral), from the same side
+(ipsilateral), or from both? And given how IBL actually planted the
+probes, which of those pairings did we BUILD?
+
+19.1 Plain-English anatomy, one more time
+
+Each half of motor cortex preferentially talks to the opposite side
+of the body. The main cable is the corticospinal tract. Most of its
+axons cross the midline in the medulla (the pyramidal decussation)
+and end in the spinal cord on the other side, where they influence
+the motor neurons that contract limb muscles. Textbook:
+
+    left MOp/MOs  ->  right paw
+    right MOp/MOs ->  left paw
+
+That is CONTRALATERAL control. Same-side (IPSILATERAL) axons exist.
+They are a minority. They often go to more proximal/axial musculature
+or are collaterals of cells that also project contralaterally. They
+are not "the other textbook." They are the exception that skilled
+and bimanual work keeps rediscovering.
+
+Allen CCF in this dataset: allen_x < 0 is the left hemisphere,
+allen_x > 0 is the right. No motor unit sits at x = 0.
+
+19.2 What is actually in the recordings
+
+Motor units in ModelData / ModelDataLeft / ModelDataRight (the unit
+table is the same 2,464 cells in all three folders):
+
+    Left hemisphere:  2,408 units  (97.7%)
+        MOp  1,409   (every primary-motor cell we have)
+        MOs    999
+    Right hemisphere:    56 units  ( 2.3%)
+        MOp      0
+        MOs     56
+
+    51 of 53 sessions: left motor cortex only
+     1 session: right motor cortex only
+        KS023 2019-12-10, 52 MOs, 0 MOp
+     1 session: mixed
+        CSHL058 2020-07-08, 66 left MOs + 4 right MOs
+
+Layer mix, for the motor set as a whole: about 85% in layer 5 or 6a
+(MOp5, MOs5, MOp6a, MOs6a), the output-ish layers. That does not
+change by paw folder: we did not drop units when we copied.
+
+This is not a biological finding about mice. It is IBL's insertion
+grid. The BWM paper says so, in the sentence that designed the map:
+
+    probes followed "a grid that covered the left hemisphere of the
+    forebrain and midbrain, which typically represent stimuli or
+    actions on the contralateral side, and the right hemisphere of
+    the cerebellum and hindbrain, which typically represent the
+    ipsilateral side."
+
+They planted left cortex ON PURPOSE because they expected it to
+represent the RIGHT side of the world and the RIGHT side of the
+body. They planted right cerebellum on purpose because cerebellum
+is ipsilateral. They did not plant right MOp as a matched control
+for left-paw mice. We inherited that grid.
+
+19.3 Units are a session property, so unique-unit "coverage by paw"
+     cannot differ
+
+Every ModelData session has at least one left-paw trial, one
+right-paw trial, and (in this set) the unit list does not change
+trial by trial. Therefore the UNIQUE motor units sitting in
+ModelDataLeft are exactly the unique motor units sitting in
+ModelDataRight: 2,408 left, 56 right. Asking "how many left-M1
+cells are there on left-paw trials versus right-paw trials" as a
+unique-unit count is a trick question. The answer is "the same
+cells." Hemisphere was not assigned by paw.
+
+What CAN differ is trial-weighted coverage: some sessions contribute
+more left-paw trials, some more right-paw trials, and the two
+sessions that even have right-hemisphere motor cells are not paw-
+balanced. That is the next subsection.
+
+19.4 Trial-weighted pairing: the confirmation
+
+Count, for each trial, how many left-hemisphere and right-hemisphere
+MOp/MOs units sit in that session. Sum across trials. That is
+"unit-trials": one recorded motor cell, on one trial.
+
+ModelDataLeft (left paw, 7,173 trials):
+
+    left motor cortex   312,151 unit-trials   94.2%
+    right motor cortex   19,088 unit-trials    5.8%
+
+    Ipsilateral pairing  (left paw, left M1)   94.2%
+    Contralateral pairing (left paw, right M1)  5.8%
+
+ModelDataRight (right paw, 7,225 trials):
+
+    left motor cortex   356,013 unit-trials   99.3%
+    right motor cortex    2,352 unit-trials    0.7%
+
+    Contralateral pairing (right paw, left M1) 99.3%
+    Ipsilateral pairing  (right paw, right M1)  0.7%
+
+Confirmed, in the sense the user asked:
+
+    ModelDataLeft  is a mostly IPSILATERAL  relationship between
+                   the acting paw and the recorded motor cortex.
+    ModelDataRight is a mostly CONTRALATERAL relationship between
+                   the acting paw and the recorded motor cortex.
+
+The 5.8% contralateral sliver inside ModelDataLeft is not a hidden
+right-MOp population spread across mice. It is two sessions:
+
+    KS023  2019-12-10
+        52 right MOs, 0 left motor
+        354 left-paw / 34 right-paw / 34 both
+        18,408 of the 19,088 right-M1 unit-trials on left-paw
+        trials (96%) are this one session
+        THIS session is actually contralateral: right cortex,
+        mostly left paw. It is the textbook match, and it is
+        why ModelDataLeft is not 99% ipsilateral.
+
+    CSHL058 2020-07-08
+        66 left MOs, 4 right MOs
+        170 left-paw / 146 right-paw / 74 both
+        the remaining 680 left-paw right-M1 unit-trials
+
+Drop KS023 and ModelDataLeft is 99.8% left hemisphere too. Session
+majority-paw versus majority-motor-hemi across the 53 sessions:
+
+    25  left-paw majority,  left motor majority
+    27  right-paw majority, left motor majority
+     1  left-paw majority,  right motor majority   (KS023)
+     0  right-paw majority, right motor majority
+
+Mice were not recorded in the hemisphere that matches their
+preferred paw. They were recorded in left forebrain, and then they
+used whichever paw they used.
+
+19.5 What the Brain-Wide Map authors said about this
+
+Three things, all in the 2025 Nature paper, and they pull in
+different directions.
+
+    (1) They DESIGNED for contralateral forebrain. The grid sentence
+        quoted in 19.2 is an anatomical prior: left cortex should
+        represent contralateral (right) actions. That is why
+        ModelDataRight, not ModelDataLeft, is the folder that
+        matches their design assumption.
+
+    (2) They NOTICED that paw strategy varies, and that the movement
+        is not ballistic. Quote, from the section on movement
+        correlates:
+
+            "We observed that different mice (and potentially the
+            same mouse on different sessions) adopted different
+            strategies for moving the wheel. For instance, some
+            used both front paws, whereas others used only one paw.
+            Turning the wheel is also a relatively complex
+            operation, rather than being a simple, ballistic
+            movement. Thus, one should not expect a simple
+            relationship between these movements and activity in
+            laterally specific motor areas. For simplicity, we
+            restricted our analyses to the activity associated with
+            wheel velocity (signed to distinguish left from right
+            movements) and its absolute value."
+
+        They saw the problem that ModelDataLeft / ModelDataRight
+        exist to isolate. They then decoded the wheel anyway,
+        explicitly because they did not want to take on lateralized
+        paw control.
+
+    (3) They never labeled which paw turned the wheel, never split
+        analyses by effector, and never tested whether MOp/MOs
+        activity was stronger for the contralateral paw. Choice
+        left/right in their figures is the REPORT side, not the
+        paw. Wheel sign is the report's direction, not which limb
+        produced it.
+
+So: they assumed contralateral representation at the level of the
+insertion grid; they warned that wheel turning should not map cleanly
+onto lateralized motor areas; they did not run the test. Our two
+folders are that test, still unrun until someone trains a model.
+
+19.6 What the rest of the literature says
+
+The anatomical default in mouse and rat is contralateral.
+
+    Corticospinal neurons in caudal and rostral forelimb areas
+    (roughly MOp and an adjacent premotor patch) are the usual
+    controllers of reaching and grasping. Ablation and imaging
+    studies of pellet retrieval assign reach to CFA and grasp to
+    RFA, both acting on the opposite forelimb. Precision isometric
+    pull, a cousin of "drag this object," depends on CST integrity
+    in a way that a sloppier pull does not. That is contralateral
+    control of a skilled distal action.
+
+Ipsilateral motor cortex is not silent. It is not the primary
+controller either.
+
+    A minority of CST axons do not cross, or recross, and often
+    terminate more ventrally, including near motor neurons (recent
+    mouse reconstructions of ipsilateral-projecting CSNs). ICMS in
+    rat M1 can evoke ipsilateral joints, but those sites almost
+    always also represent the same joint contralaterally; inactivate
+    the opposite M1 or cut the other pyramid and the ipsilateral
+    map collapses (Brus-Ramer, Carmel, Martin, J Neurosci 2009).
+    Unilateral motor-cortex lesions in rat impair skilled reaching
+    with the IPSILATERAL paw as well as the contralateral one,
+    with incomplete recovery (Gonzalez, Gharbawie, Williams, et al.,
+    EJN 2004). Skilled isometric-pull training expands the
+    ipsilateral forelimb ICMS map, then the map shrinks again
+    despite maintained performance (Milliken / Pruitt et al.).
+    Contralaterally-projecting CSNs in mouse still fire during
+    ipsilateral lever presses; some prefer ipsi, some contra, some
+    both, and that mix shifts with learning (iScience 2024).
+
+    Interhemispheric cortex-to-cortex pathways matter for sequential
+    bimanual actions (eNeuro 2021). About a quarter of ModelData is
+    wheel_paws == "both". That folder does not exist yet. Those
+    trials are the ones for which "which hemisphere" is the wrong
+    first question.
+
+Overtraining can reduce M1's necessity. Head-fixed mice moving a
+joystick become less impaired by M1 inactivation after many weeks
+(Hwang, Dahlen, Hu, et al., Sci Adv 2019). The IBL mice are experts
+on this wheel. A well-practiced plant-and-drag may live more in
+brainstem, cerebellum, and spinal loops than a naive reach. That
+does not flip the laterality of whatever cortical command remains.
+It may shrink how much MOp you need, ipsi or contra.
+
+19.7 What we think, stated as a hypothesis this pair of folders
+     is built to test
+
+A free paw spinning a Lego wheel is not a ballistic pellet reach
+and not a pure isometric pull. It is hold, lift, plant, drag,
+sometimes with the other paw hitchhiking. The descending command
+for the acting paw should still be predominantly CONTRALATERAL,
+because that is how the CST is built. Ipsilateral motor cortex
+should contribute posture, axial stabilization, and some of the
+bimanual or corrective component — more than in a center-out
+reach, less than a 50/50 split.
+
+Therefore:
+
+    If that hypothesis is right, a decoder from these MOp/MOs
+    cells to paw speed should work BETTER on ModelDataRight
+    (contralateral pairing, 99.3%) than on ModelDataLeft
+    (ipsilateral pairing, 94.2%), especially in the COUPLED
+    regime, and especially in MOp rather than MOs.
+
+    If the folders decode about equally, then either (i) much of
+    the "motor" signal in this task is unlateralized vigor /
+    posture / decision, or (ii) ipsilateral cortex really does
+    drive this particular learned manipulation, or (iii) the
+    decoder is using non-motor columns on the probe and the
+    laterality of MOp is being washed out.
+
+    If ModelDataLeft is BETTER, something in the hypothesis is
+    wrong, or KS023's 14% of left-paw trials (a contralateral
+    exception inside the ipsilateral folder) is doing something
+    pathological to the comparison, or mouse identity is
+    confounding paw (KS023 dominates Left; CSH_ZAD_026 / NR_0027
+    dominate Right). Any Left-versus-Right model comparison MUST
+    split or weight by mouse, or it is not a laterality test.
+
+We have not trained that decoder. The folders make the test
+possible without mixing effectors. They do not perform it.
+
+19.8 Caveats that would make a careless reader lie
+
+    Coverage does not "follow" the paw. The probe was already in
+    left cortex. Paw use varies inside that constraint.
+
+    Unique units do not differ by folder. Only trial weights do.
+
+    KS023 is a contralateral island inside ModelDataLeft. A
+    laterality comparison that does not isolate or drop that
+    session will understate how ipsilateral the rest of Left is.
+
+    stored kinematics still follow used_paw. Laterality of the
+    LABEL is clean. Laterality of the TRACE is not, on 1,158
+    Left trials and 2,454 Right trials.
+
+    Cerebellum in the BWM is mostly RIGHT hemisphere, which is
+    IPSILATERAL to the right body. If a session's second probe is
+    in right cerebellum, ModelDataRight may be contralateral in
+    cortex and ipsilateral in cerebellum at the same time. We did
+    not split cerebellar units by hemi in this count. The 97.7%
+    figure is MOp/MOs only.
+
+    "Mostly" is 94.2% and 99.3%, not 100%. Do not write "Left is
+    ipsilateral, Right is contralateral" without the percentages
+    and without KS023 2019-12-10. The next section removes that
+    impurity.
+
+
+--------------------------------------------------------------------------------
+20. Step J — ModelDataLeftIpsi and ModelDataRightContra
+--------------------------------------------------------------------------------
+
+The 94.2% / 99.3% figures in section 19 are "mostly." For a laterality
+test you want 100%. That means deleting every recorded unit that sits
+on the wrong side of the midline, not just ignoring them at train
+time, and then throwing out any session that no longer has a motor
+population.
+
+Sources: ModelDataLeft and ModelDataRight
+Outputs:
+
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeftIpsi
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataRightContra
+
+20.1 What "ipsilateral" and "contralateral" mean here
+
+Allen CCF ML: allen_x < 0 is left hemisphere, allen_x > 0 is right.
+No unit in ModelData has allen_x == 0.
+
+    Left paw  + left hemisphere  = ipsilateral
+    Right paw + left hemisphere  = contralateral
+    Left paw  + right hemisphere = contralateral
+    Right paw + right hemisphere = ipsilateral
+
+ModelDataLeftIpsi must keep only the first pairing. ModelDataRightContra
+must keep only the second. In both cases that is: keep allen_x < 0,
+drop allen_x > 0. The same 844 right-hemisphere units come out of
+both copies. They are not all motor. Across ModelData they live in
+11 sessions:
+
+    NYU-37     2021-01-26  angelakilab          194 right-hemi units
+    KS023      2019-12-10  cortexlab            174
+    CSHL058    2020-07-08  churchlandlab        173
+    ZFM-01936  2021-01-23  mainenlab             93
+    CSH_ZAD_026 2020-08-19 zadorlab              92
+    KS046      2020-12-04  cortexlab             61
+    CSHL060    2020-03-09  churchlandlab         33
+    DY_014     2020-07-17  danlab                13
+    KS043      2020-12-06  cortexlab              6
+    CSHL049    2020-01-10  churchlandlab          3
+    UCLA035    2022-02-18  churchlandlab_ucla     2
+
+Of those 844, only 56 are MOp/MOs, and all 56 are MOs, none MOp:
+52 in KS023 2019-12-10 (MOs5) and 4 in CSHL058 2020-07-08. The
+other 788 right-hemisphere cells are other areas on the same or
+the second probe (for KS023 2019-12-10: LSr, PL, TTd, ACAd, STR,
+ACAv, NDB on the right; VISa, PO, LP, CA1, DG on the left).
+
+20.2 The copy, unit by unit
+
+For each session pickle in the parent:
+
+    1. Keep rows of the units table with allen_x < 0.
+    2. Reindex unit_idx to 0 .. n_kept−1.
+    3. Subset spike_counts from shape (n_bins, n_old) to
+       (n_bins, n_kept), in the kept unit_idx order.
+    4. Keep native spike_times / spike_unit_idx only for spikes
+       whose old unit_idx survived, then remap the index.
+    5. Recompute n_units, n_spikes, n_motor_cortex_units
+       (MOp/MOs startswith, on the kept table).
+    6. If n_motor_cortex_units < 5, delete the whole session.
+       (The first draft of this cut used n_units < 5. Every
+       session still had at least 41 total units, so nothing
+       dropped. The intended floor was motor cortex, matching
+       ModelData's admission ticket. KS023 2019-12-10 had 96
+       left-hemisphere units remaining and 0 motor cells.)
+
+No re-binning. No relabel of wheel_paws. Trials keep their parent
+n_bins, leftover_s, and kinematics.
+
+20.3 What the motor floor removed
+
+Exactly one session failed n_motor < 5:
+
+    KS023  2019-12-10  cortexlab
+    eid aad23144-0e52-4eac-80c5-c4ee2decb198
+    parent ModelDataLeft:   354 left-paw trials
+    parent ModelDataRight:   34 right-paw trials
+    after hemi cut: 96 units, 0 MOp/MOs
+
+    ModelDataLeftIpsi:    7,173 − 354 = 6,819 trials
+    ModelDataRightContra: 7,225 −  34 = 7,191 trials
+    units:                9,693 −  96 = 9,597
+
+KS023 is still in both folders. cortexlab recorded this mouse on
+three dates; the other two survived:
+
+    2019-12-06  eid a4000c2f-fa75-4b3e-8f06-a7cf599b87ad
+                234 left-paw / 72 right-paw trials, 210 left-hemi
+                units, 22 MOp/MOs
+    2019-12-08  eid a92c4b1d-46bd-457e-a1f4-414265f0e2d4
+                426 left-paw / 11 right-paw trials, 122 left-hemi
+                units, 13 MOp/MOs
+
+PL033 (hausserlab) 2022-10-10, eid 7f150b7c-c261-46e6-9edb-cc391c9d9f03,
+has exactly 5 left-hemisphere MOp/MOs cells and was kept. That is
+the floor, not a drop.
+
+CSHL058 2020-07-08 lost its 4 right MOs and its 173 other
+right-hemisphere units, and kept 94 left-hemisphere units including
+66 MOs. It remains in both folders (170 left-paw, 146 right-paw
+trials).
+
+20.4 What the two folders are
+
+    ModelDataLeftIpsi
+        32 mice, 52 sessions, 6,819 trials, 9,597 units
+        2,408 MOp/MOs, all left hemisphere
+        wheel_paws = "left" on every trial
+        every unit has allen_x < 0
+        n_units per session min 41 (DY_011 2020-02-08, danlab)
+        max 524 (ZM_2240 2020-01-21, mainenlab) after the hemi
+        cut the max is still ZM_2240's 524 left-hemi units
+        min motor = 5 (PL033 2022-10-10)
+
+    ModelDataRightContra
+        32 mice, 52 sessions, 7,191 trials, 9,597 units
+        the same 9,597 units as LeftIpsi
+        wheel_paws = "right" on every trial
+        every unit has allen_x < 0
+        same session unit counts as LeftIpsi
+        (sessions are the same 52; trials differ)
+
+Labs represented (same 11 as ModelData; wittenlab is gone with
+ibl_witten_19 and ibl_witten_32): mainenlab 7 mice, angelakilab 4,
+churchlandlab 4, churchlandlab_ucla 4, cortexlab 4 (KS023, KS043,
+KS046, KS091; KS051 and KS052 never had pose), danlab 2, hoferlab 2,
+zadorlab 2 (CSH_ZAD_019, CSH_ZAD_026; CSH_ZAD_024 had no stereo),
+hausserlab 1 (PL033), mrsicflogellab 1 (SWC_038), steinmetzlab 1
+(NR_0027).
+
+20.5 Why this is the laterality experiment
+
+A decoder trained on ModelDataLeft still saw, on 354 trials, 52
+right-hemisphere MOs cells that were actually contralateral to the
+left paw. That is a leak of the "easy" pairing into the "hard"
+folder, concentrated in one cortexlab session that is already 14%
+of ModelDataLeft. ModelDataLeftIpsi closes the leak.
+
+A decoder trained on ModelDataRight was already 99.3% contralateral;
+RightContra is that 99.3% made 100% by deleting the same 844
+right-hemisphere cells, including the 4 right MOs on CSHL058 and
+the 52 on KS023 2019-12-10.
+
+The hypothesis from section 19.7 is now testable without a
+hemisphere confound:
+
+    If contralateral CST control dominates this wheel-turn, paw-speed
+    decoding from MOp/MOs should be better on ModelDataRightContra
+    than on ModelDataLeftIpsi, especially in COUPLED bins.
+
+    The comparison must still split by mouse. LeftIpsi is still
+    KS023-heavy (660 remaining left-paw trials on 2019-12-06 and
+    2019-12-08). RightContra is still CSH_ZAD_026 / NR_0027 /
+    NYU-30 heavy.
+
+stored dlc_* / lp_* traces still follow used_paw. Hemisphere purity
+does not fix that.
+
+
+--------------------------------------------------------------------------------
+21. Step K — Right-camera ×2, 2D speed, speedNormalized
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/rescale_paw_speed.py
+Applied to every BehaviorRes folder after LeftIpsi / RightContra
+existed: Database, DatasetFiltered, both discretized copies,
+ModelData, ModelDataLeft, ModelDataRight, ModelDataLeftIpsi,
+ModelDataRightContra. Trial counts did not change.
+
+This step does not drop trials. It changes what the numbers in the
+paw traces mean.
+
+21.1 Why the stored speed was in mixed units
+
+IBL's recording-rig cameras:
+
+    left     1280 × 1024    60 Hz
+    right     640 ×  512   150 Hz
+
+used_paw names the near camera, so left-paw x/y live on the fine
+grid and right-paw x/y live on the coarse grid. 100 px/s on the
+right camera is roughly twice the physical motion of 100 px/s on
+the left camera. Pooling raw speed across ModelDataLeft and
+ModelDataRight, or even across used_paw inside ModelData, treats
+those as the same quantity. They are not.
+
+z made it worse. z = x_near − x_far subtracts a coordinate on one
+grid from a coordinate on the other. Euclidean
+sqrt(vx^2+vy^2+vz^2) then mixes image-plane pixels with that
+disparity. On right-paw trials vz was often the largest term,
+so "speed" was mostly the stereo residual, not the reach.
+
+There is still no millimetre calibration. The honest fixes that do
+not invent one are: (1) put both cameras in left-camera pixels,
+(2) keep speed in the image plane, (3) remove session-and-camera
+scale without deleting within-session vigor.
+
+21.2 What was done to every trial
+
+    1. Right-camera ×2.
+       If used_paw == "right", multiply near-camera x, y, vx, vy
+       by 2. Left-paw image-plane traces are already on the 1280
+       grid and are not scaled.
+       z and vz are rebuilt so the disparity is
+       x_near_scaled − x_far_scaled. Algebra on the stored
+       (pre-scale) traces:
+           left paw:  z_new = 2 z − x,   vz_new = 2 vz − vx
+           right paw: z_new = x + z,     vz_new = vx + vz
+       Then x_right and y_right are doubled. z is still not
+       millimetres. It is now at least in the same pixel units
+       as x.
+
+    2. dlc_speed and lp_speed stay, and become 2D.
+       speed = hypot(vx, vy) after the scale. vz is not in it.
+       The column is not removed. This is the un-normalized
+       speed a decoder can still use if it wants left-camera-
+       equivalent pixels/s.
+
+    3. speedNormalized is added.
+       For each tracker, divide that trial's 2D speed by that
+       session's median speed on samples whose paw_state is
+       COUPLED, computed separately for used_paw left vs right
+       (the near camera). Fallback if a (session, tracker, paw)
+       has fewer than 5 finite coupled samples: that tracker's
+       coupled median over both paws, then that tracker's
+       median of all finite speeds.
+       Stored as:
+           dlc_speedNormalized
+           lp_speedNormalized
+           speedNormalized          LP if the trial has LP,
+                                    else DLC
+           dlc_speed_norm_ref
+           lp_speed_norm_ref        the divisor, also in
+                                    trials.parquet
+
+    4. STILL / COUPLED / DECOUPLED and wheel_paws are NOT
+       recomputed. Those labels were set on native-camera
+       pixels (floors 140 px/s, 100 px/s). Re-thresholding
+       after ×2 would have silently relabeled right-paw
+       movement. speedNormalized uses the old coupled mask
+       and the new 2D scaled speed. That is intentional:
+       "coupled" still means what the videos were labeled
+       as, and the divisor is the typical planted drag in
+       the units we now store.
+
+Do not z-score within a trial. That would set every trial's
+speed std to 1 and delete vigor, which is a motor variable.
+A coupled bin of speedNormalized ≈ 1 is a typical planted
+drag for that session, camera, and tracker. Still stays near
+0. A vigorous flick stays > 1.
+
+fullData.py now applies the ×2 at pose extraction for any
+future rebuild. enrich_and_discretize.py writes 2D speed and
+speedNormalized. The patch script is what the folders on disk
+actually ran.
+
+21.3 What this does and does not fix
+
+Fixed: left vs right camera pixel size in x, y, vx, vy, and
+in 2D speed. Fixed: z no longer inside the speed scalar.
+Fixed: session-and-camera scale, for anyone who uses
+speedNormalized.
+
+Not fixed: millimetres. Not fixed: used_paw vs wheel_paws
+mismatches (the traces still follow used_paw; the ×2 follows
+used_paw, which is the correct camera for those arrays). Not
+fixed: DLC vs LP jitter (use one tracker, or the per-tracker
+normalized series). Not fixed: regime thresholds still live
+in native pixels.
+
+On SWC_038 after the patch, right-paw lp_x doubled (~248 to
+~496), every speed trace matched hypot(vx, vy), and coupled
+speedNormalized had median 1.0 on both paws. Across ModelData,
+median lp_speed_norm_ref is about 545 px/s on left-paw trials
+and 769 px/s on right-paw trials: even after ×2 the typical
+coupled drag is not the same physical number, which is why the
+divisor is per used_paw, not one session scalar.
+
+
+--------------------------------------------------------------------------------
+21. What a ModelDataLeft or ModelDataRight trial contains
+--------------------------------------------------------------------------------
+
+Scalars (trials.parquet):
+
+    mouse_id, lab, session_date, eid, trial_index
+    block_prior, stim_side, choice, choice_ibl, brightness
+    actionTime          firstMovement − stimOn
+    trialDuration       feedback − stimOn
+    reward              always 1
+    outcome             always "reward"
+    rewardVolume
+    used_paw            the old speed heuristic; may disagree with wheel_paws
+    wheel_paws          always "left" in ModelDataLeft, always "right"
+                        in ModelDataRight
+    stimOn_times, feedback_times, firstMovement_times
+    n_wheel_samples, n_dlc_samples, n_lp_samples   (= n_bins)
+    n_spikes, n_units, n_bins, leftover_s
+    n_dlc_state_bins, n_lp_state_bins
+    dlc_speed_norm_ref, lp_speed_norm_ref
+        session median coupled 2D speed for that tracker and
+        used_paw; the divisor inside speedNormalized
+
+In the pickle:
+
+    t_bin_left, t_bin_right
+    wheel_t, wheel_velocity          at t_bin_right, rad/s
+    dlc_* and lp_* position, velocity, 2D speed, state
+    dlc_speedNormalized, lp_speedNormalized
+    speedNormalized                  LP if present, else DLC
+    spike_counts                     (n_bins, n_units)
+    spike_times, spike_unit_idx      native, also kept
+    wheel_paws_source                "lp"
+
+Session-level: units table, n_motor_cortex_units, pids, alignment
+dict (the binning contract), filter note.
+
+The alignment dict is the written promise: 0.02 s bins, origin =
+stimulus onset, leftover dropped, spikes in [left, right),
+continuous traces at the right edge, no extrapolation, states
+majority-voted, and an explicit difference from the paper's 1.2 s
+window.
+
+Important limitation, repeated because it will cause silent wrong
+science: stored dlc_* / lp_* traces follow used_paw, which was
+chosen months of pipeline earlier. On 1,158 ModelDataLeft trials,
+used_paw is "right" even though wheel_paws is "left." On 2,454
+ModelDataRight trials, used_paw is "left" even though wheel_paws is
+"right." The label says which paw did the work; the arrays may be
+the other paw. If you need matching kinematics, restrict to
+used_paw == wheel_paws (6,015 Left; 4,771 Right) or re-extract that
+camera's paw_r.
+
+
+--------------------------------------------------------------------------------
+21. Authors versus us
+--------------------------------------------------------------------------------
+
+A. Scientific question
+
+    Them: Where in the brain is the decision, and can we read it
+          out? Movement is how the decision is reported.
+    Us:   How is the report implemented as a limb action, and can
+          we read THAT out of motor cortex (and friends)? The
+          decision is the reason the action happens, not the thing
+          we decode.
+
+B. Movement variable
+
+    Them: Wheel angular velocity, one signed scalar, same object
+          in every lab. A proxy for the report.
+    Us:   Paw kinematics (x, y in left-camera-equivalent pixels;
+          z as disparity, not in speed; vx, vy, vz; 2D speed =
+          hypot(vx, vy); speedNormalized = speed / session
+          median coupled speed) plus a three-way regime. The
+          wheel is kept to DEFINE coupling and as a baseline
+          target, not as what cortex means.
+
+C. Effector
+
+    Them: None. The wheel has no paw. They noted that some mice use
+          one paw and some use both, then decoded the wheel because
+          they did not expect a simple map onto "laterally specific
+          motor areas."
+    Us:   used_paw (who moved, in pixels), then wheel_paws (who
+          engaged the wheel), then ModelDataLeft (left only,
+          mostly ipsilateral to recorded MOp/MOs) and
+          ModelDataRight (right only, mostly contralateral to
+          recorded MOp/MOs).
+
+D. Time window
+
+    Them: firstMovement − 0.2 to +1.0 s, always 60 bins of 20 ms.
+          Peri-movement, ballistic habit, comparable across labs.
+    Us:   stimOn to reward, variable n_bins of 20 ms, leftover
+          dropped. Keeps still, keeps extra primitives, refuses
+          to pretend long and short trials are time-warped twins.
+
+E. Missing data
+
+    Them: Extrapolate wheel if the 1.2 s window sticks out.
+    Us:   NaN. Do not invent a limb.
+
+F. Trials
+
+    Both: bwm_include, RT 0.08–2.0 s, same freeze.
+    Us additionally, in the modeling copies: pose present, reward
+        only, stereo z, >= 5 MOp/MOs units, no 0% contrast,
+        n_bins <= 500, then left paw or right paw in twin folders.
+
+G. Units
+
+    Both: the IBL three-test isolation QC frozen as
+          clusters.pqt label >= 1 (median amplitude > 50 µV;
+          sliding refractory-period contamination < 10% at 90%
+          confidence; amplitude histogram not truncated,
+          noise_cutoff < 5), spike-sorting revision 2024-05-06.
+          75,708 such units in the full BWM; 13,929 of them in
+          our motor-cortex-cohort Database; 10,537 in
+          ModelDataLeft / ModelDataRight.
+    Us:   admission by motor cortex count; columns still include
+          the rest of the probe. We did not add isolation-distance,
+          L-ratio, or a private SNR cut on top of theirs. We did
+          not pick the hemisphere to match the paw; the grid
+          already had.
+
+H. Motor primitives
+
+    Them: none.
+    Us:   still / coupled / decoupled as a hypothesis about
+          control modes that compose a non-ballistic action.
+
+I. What success looks like
+
+    Them: High decoding of choice across many regions; wheel
+          decoding as a movement control analysis.
+    Us:   A model that predicts paw speed, that does better in
+          coupled than a wheel model does on decoupled, that
+          changes its latent state at regime transitions, that
+          does not get that performance by memorizing one mouse,
+          and that, if contralateral CST control is real for this
+          movement, does better on ModelDataRight than on
+          ModelDataLeft.
+
+
+--------------------------------------------------------------------------------
+22. Limitations you should not paper over
+--------------------------------------------------------------------------------
+
+    Stored kinematics follow used_paw, not always wheel_paws
+        (1,158 mismatched trials in ModelDataLeft; 2,454 in
+        ModelDataRight).
+
+    Stereo z is disparity, not millimetres, even after the
+        right-camera ×2. Speed is 2D hypot(vx, vy) in left-
+        camera-equivalent pixels/s and does not include z.
+        speedNormalized removes session-and-camera scale
+        (median coupled speed per tracker and used_paw) without
+        killing within-session vigor. It is still not millimetres.
+        Cross-session pooling of raw dlc_speed / lp_speed is less
+        wrong than before the ×2, and still worse than using
+        speedNormalized.
+
+    No force, no EMG, no digits. Coupled is "looks planted and the
+        wheel moved," not "measured contact force."
+
+    The three-regime machine is a heuristic. Thresholds were set
+        from videos of a few mice. PawStrats exists so you can
+        fight us.
+
+    97.7% of motor units are left hemisphere. ModelDataLeft is
+        therefore mostly ipsilateral (94.2% of motor unit-trials).
+        ModelDataRight is mostly contralateral (99.3%). That is
+        the recording grid, not a paw-matched implant. KS023 is a
+        contralateral island inside Left. Comparing the two
+        folders without a mouse split confounds paw with which
+        mice like which paw.
+
+    n_bins still varies (8–494 Left, 8–484 Right). That is the
+        behavior. A model must handle it (masking, recurrence, set
+        models, per-bin losses). Do not warp.
+
+    n_units varies by session (41–524). Unit 17 is not a common
+        neuron across mice.
+
+    KS023 is 14% of ModelDataLeft. CSH_ZAD_026 is 12% of
+        ModelDataRight. Pooled numbers without a mouse split are
+        those mice's numbers.
+
+    "Both" was discarded rather than studied. Bimanual control is
+        a quarter of ModelData and possibly the most interesting
+        motor object in the project. Left and Right are
+        simplifications for a first laterality test, not a claim
+        that mice are unimanual.
+
+    We have not, in building this folder, trained the decoder.
+        Everything above is a claim about what the dataset MAKES
+        TESTABLE. It is not a result.
+
+
+--------------------------------------------------------------------------------
+23. Ancestry with counts
+--------------------------------------------------------------------------------
+
+    Public BWM freeze + OpenAlyx
+            |
+            |  39 mice with motor-cortex dates in the freeze
+            |  trials = bwm_include AND RT in [0.08, 2] s
+            |  units  = clusters.pqt label >= 1
+            v
+    Database                          39 mice, 67 sess, 30264 trials, 13929 units
+            |  native wheel + DLC/LP of used_paw + spikes
+            |  then vx,vy,vz, 2D speed, still/coupled/decoupled
+            |  later: right-camera x/y ×2, speed = hypot(vx,vy),
+            |  speedNormalized = speed / session coupled median
+            |
+            |  drop sessions with no pose
+            |  drop error trials
+            v
+    DatasetFiltered                   36 mice, 63 sess, 24571 trials
+            |
+            |  drop 2 sessions with only one side camera
+            |      ibl_witten_19 2020-07-23
+            |      CSH_ZAD_024   2020-06-08
+            v
+    DatasetFiltered                   34 mice, 61 sess, 23783 trials, 12316 units
+            |
+            |  20 ms bins, stimOn -> reward, leftover dropped
+            |  spikes in [left, right); kinematics at right edge
+            v
+    DatasetFilteredDiscretized        34 mice, 61 sess, 23783 trials, 12316 units
+            |
+            |  drop 8 sessions with < 5 MOp/MOs units   (-2920)
+            |  drop brightness == 0                     (-1502)
+            |  drop n_bins > 500                        (  -84)
+            v
+    ModelData                         32 mice, 53 sess, 19277 trials, 10537 units
+            |
+            |  patch wheel_paws = left / right / both
+            v
+    ModelData (labeled)               7173 left, 7225 right, 4879 both
+            |
+            +-- keep wheel_paws == "left"
+            v
+    ModelDataLeft                     32 mice, 53 sess,  7173 trials, 10537 units
+            |                         94.2% of motor unit-trials ipsilateral
+            |
+            +-- keep wheel_paws == "right"
+            v
+    ModelDataRight                    32 mice, 53 sess,  7225 trials, 10537 units
+            |                         99.3% of motor unit-trials contralateral
+            |
+            |  drop units with allen_x > 0; drop session if
+            |  remaining MOp/MOs < 5 (KS023 2019-12-10)
+            v
+    ModelDataLeftIpsi                 32 mice, 52 sess,  6819 trials,  9597 units
+                                      100% left hemisphere, 100% ipsilateral
+    ModelDataRightContra              32 mice, 52 sess,  7191 trials,  9597 units
+                                      100% left hemisphere, 100% contralateral
+
+    After those copies existed, rescale_paw_speed.py patched
+    EVERY folder above in place: right-camera ×2, 2D speed,
+    speedNormalized. No trial dropped.
+
+
+Mice in Database but not in ModelDataLeft / ModelDataRight:
+
+    KS051, KS052, ZM_1897          no pose
+    SWC_038 on 2020-07-30 only     no pose (mouse remains)
+    ibl_witten_19                  no stereo z
+    CSH_ZAD_024                    no stereo z
+    NYU-39                         < 5 motor units (only session)
+    ibl_witten_32                  < 5 motor units (only session)
+
+    sessions only (mouse still present):
+    CSHL060 2020-03-11, CSHL058 2020-07-11, SWC_061 2020-11-23,
+    SWC_043 2020-09-16, SWC_043 2020-09-21, UCLA035 2022-02-24
+
+
+--------------------------------------------------------------------------------
+24. Scripts
+--------------------------------------------------------------------------------
+
+    fullData.py                 Database from OpenAlyx + paper aggregates
+                                (right-camera ×2 at pose extraction, for
+                                any future rebuild)
+    enrich_and_discretize.py    velocity, 2D speed, regimes,
+                                DatasetFiltered, both discretized copies,
+                                speedNormalized on a rebuild
+    label_wheel_paws.py         wheel_paws on every BehaviorRes folder
+    (inline copy to ModelData)  brightness / n_bins / motor-unit cuts
+    (inline copy to ModelDataLeft)   wheel_paws == left
+    (inline copy to ModelDataRight)  wheel_paws == right
+    (inline copy to LeftIpsi / RightContra)
+                                drop allen_x > 0; n_motor >= 5
+    rescale_paw_speed.py        right-camera ×2, 2D speed,
+                                speedNormalized on every folder
+
+Folders of record:
+
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeft
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataRight
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeftIpsi
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataRightContra
+
+
+--------------------------------------------------------------------------------
+25. The last paragraph
+--------------------------------------------------------------------------------
+
+The Brain-Wide Map paper gave the field a standardized decision,
+a standardized wheel, and a map of where that decision can be read
+out. That is a genuine achievement, and we stood on it: same mice,
+same trials, same units, same 20 ms bin.
+
+What they treated as a convenience — the wheel as movement — is,
+for motor cortex, a category error. Cortex does not innervate the
+wheel. It generates hold, free movement, and object-engaged drag,
+in some order, with one paw or two, for a variable amount of real
+time. Those are intermediate primitives that compose a report which
+only LOOKS like a single left-or-right answer in the experimenter's
+log.
+
+They knew the paws were not interchangeable. They wrote that some
+mice use one paw and some use both, that the turn is not ballistic,
+and that one should not expect a simple map onto laterally specific
+motor areas. Then they decoded the wheel. We split the effectors
+instead.
+
+ModelDataLeft and ModelDataRight are the datasets you get if you
+take that sentence seriously: video not just encoder, paw not just
+wheel, regimes not just speed, stimulus-to-reward not a 1.2 s
+cookie, one effector not a mixture, variable length not a warp,
+and laterality not an average. Left is the ipsilateral folder,
+because IBL put almost all motor cortex in the left hemisphere and
+we kept left-paw work. Right is the contralateral folder, same
+cells, the other paw. Whether that anatomical default actually
+governs a learned wheel spin is the test those two folders exist
+to run.
+
+This file is not that result. It is why the folders are shaped so
+that the result, when someone trains the model, is about a limb,
+a hemisphere, and not a proxy.
+
+End of write-up.

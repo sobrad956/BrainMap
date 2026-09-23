@@ -1,0 +1,140 @@
+subject,dataset_mouse_id,lab,n_sessions,n_probes,n_good_units,mouse_regions_with_good_units,n_regions_mouse,n_sessions_raw_lfp,n_sessions_dlc,n_sessions_lightning_pose,n_sessions_dlc_and_lightning_pose,n_sessions_no_pose_keypoints,n_trials_total,n_trials_bwm_include,n_trials_excluded_from_bwm,bwm_trial_inclusion_fraction
+NYU-11,sub-NYU-11,angelakilab,2,3,340,"CNU, CTXsp, HPF, Isocortex, OLF, TH",6,2,2,2,2,0,990,640,350,0.646465
+NYU-12,sub-NYU-12,angelakilab,4,6,655,"CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",8,4,4,4,4,0,2132,1033,1099,0.484522
+NYU-21,sub-NYU-21,angelakilab,2,4,368,"CNU, HY, Isocortex, TH",4,2,2,2,2,0,1393,839,554,0.602297
+NYU-30,sub-NYU-30,angelakilab,3,4,398,"CNU, CTXsp, Isocortex, OLF",4,3,3,3,3,0,2434,1801,633,0.739934
+NYU-37,sub-NYU-37,angelakilab,5,9,1278,"CB, CNU, HB, HPF, HY, Isocortex, MB, TH",8,5,5,5,5,0,2455,1692,763,0.689206
+NYU-39,sub-NYU-39,angelakilab,5,10,694,"CNU, CTXsp, HB, HPF, Isocortex, MB, OLF, TH",8,5,5,5,5,0,2698,2048,650,0.759081
+NYU-40,sub-NYU-40,angelakilab,4,8,806,"CB, HB, HPF, Isocortex, MB",5,4,4,4,4,0,1959,989,970,0.504849
+NYU-45,sub-NYU-45,angelakilab,3,6,701,"CB, HB, HPF, Isocortex, MB, OLF, TH",7,3,3,3,3,0,1415,556,859,0.392933
+NYU-46,sub-NYU-46,angelakilab,4,5,225,"CB, CNU, CTXsp, Isocortex, OLF",5,4,4,4,4,0,1849,910,939,0.492158
+NYU-47,sub-NYU-47,angelakilab,3,6,480,"CB, CNU, HB, Isocortex, MB, TH",6,3,3,3,3,0,1523,949,574,0.623112
+NYU-48,sub-NYU-48,angelakilab,3,6,557,"CB, CNU, HB, HPF, Isocortex, MB, TH",7,3,3,3,3,0,1875,1343,532,0.716267
+NYU-65,sub-NYU-65,angelakilab,3,6,715,"CB, HB, HPF, Isocortex, TH",5,3,3,3,3,0,1445,847,598,0.586159
+CSHL045,sub-CSHL045,churchlandlab,5,7,731,"CB, CNU, HB, HPF, HY, Isocortex, MB, TH",8,5,5,5,5,0,3950,2681,1269,0.678734
+CSHL047,sub-CSHL047,churchlandlab,2,4,304,"CNU, HPF, Isocortex, MB, OLF, TH",6,2,2,2,2,0,1121,663,458,0.591436
+CSHL049,sub-CSHL049,churchlandlab,4,6,581,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,4,4,4,4,0,2880,1911,969,0.663542
+CSHL051,sub-CSHL051,churchlandlab,1,2,133,"HPF, Isocortex, MB, TH",4,1,1,1,1,0,510,320,190,0.627451
+CSHL052,sub-CSHL052,churchlandlab,5,8,593,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,5,5,5,5,0,4393,2816,1577,0.64102
+CSHL053,sub-CSHL053,churchlandlab,4,5,664,"CB, HB, HPF, Isocortex, MB, TH",6,4,4,4,4,0,2560,1019,1541,0.398047
+CSHL054,sub-CSHL054,churchlandlab,1,2,119,"HB, HPF, Isocortex, MB",4,1,1,1,1,0,855,342,513,0.4
+CSHL055,sub-CSHL055,churchlandlab,1,2,171,"CNU, CTXsp, HPF, HY, Isocortex, TH",6,1,1,1,1,0,771,531,240,0.688716
+CSHL058,sub-CSHL058,churchlandlab,3,6,569,"CNU, HPF, Isocortex, MB, OLF, TH",6,3,3,3,3,0,1676,1232,444,0.735084
+CSHL059,sub-CSHL059,churchlandlab,5,9,646,"CNU, CTXsp, HPF, Isocortex, MB, OLF, TH",7,5,5,5,5,0,2994,1788,1206,0.597194
+CSHL060,sub-CSHL060,churchlandlab,5,9,1154,"CB, CNU, HB, HPF, HY, Isocortex, MB, OLF",8,5,5,5,5,0,3405,2390,1015,0.701909
+MFD_05,sub-MFD_05,churchlandlab_ucla,3,3,481,"CB, HB, HPF, Isocortex, MB",5,3,3,3,3,0,1837,780,1057,0.424605
+MFD_06,sub-MFD_06,churchlandlab_ucla,4,4,543,"HB, HPF, MB",3,4,4,4,4,0,2954,2088,866,0.706838
+MFD_07,sub-MFD_07,churchlandlab_ucla,3,3,560,"CB, HB, HPF, Isocortex, MB, TH",6,3,3,3,3,0,2361,1677,684,0.710292
+MFD_08,sub-MFD_08,churchlandlab_ucla,2,2,436,"CB, HB, HPF, Isocortex, MB",5,2,2,2,2,0,1529,473,1056,0.309353
+MFD_09,sub-MFD_09,churchlandlab_ucla,1,1,291,"HPF, Isocortex, TH",3,1,1,1,1,0,569,403,166,0.70826
+UCLA005,sub-UCLA005,churchlandlab_ucla,1,1,53,"HPF, MB",2,1,1,1,1,0,772,577,195,0.747409
+UCLA006,sub-UCLA006,churchlandlab_ucla,1,1,314,"HPF, Isocortex, TH",3,1,1,1,1,0,748,415,333,0.554813
+UCLA011,sub-UCLA011,churchlandlab_ucla,1,1,62,"HPF, HY, Isocortex, TH",4,1,1,1,1,0,764,573,191,0.75
+UCLA012,sub-UCLA012,churchlandlab_ucla,1,1,98,TH,1,1,1,1,1,0,719,579,140,0.805285
+UCLA014,sub-UCLA014,churchlandlab_ucla,1,1,99,"HPF, MB",2,1,1,1,1,0,581,372,209,0.640275
+UCLA015,sub-UCLA015,churchlandlab_ucla,1,1,133,"HPF, Isocortex, MB, TH",4,1,1,1,1,0,610,472,138,0.77377
+UCLA017,sub-UCLA017,churchlandlab_ucla,1,1,257,"HPF, Isocortex, MB",3,1,1,1,1,0,665,456,209,0.685714
+UCLA030,sub-UCLA030,churchlandlab_ucla,1,1,343,Isocortex,1,1,1,1,1,0,505,356,149,0.70495
+UCLA033,sub-UCLA033,churchlandlab_ucla,3,4,584,"CB, HB, HPF, Isocortex, MB",5,3,3,3,3,0,2143,1249,894,0.582828
+UCLA034,sub-UCLA034,churchlandlab_ucla,4,6,1193,"CNU, HB, HPF, HY, Isocortex, MB, OLF, TH",8,4,4,4,4,0,1852,1249,603,0.674406
+UCLA035,sub-UCLA035,churchlandlab_ucla,2,4,452,"CNU, Isocortex, OLF",3,2,2,2,2,0,1750,951,799,0.543429
+UCLA036,sub-UCLA036,churchlandlab_ucla,1,2,304,"HPF, Isocortex, MB, TH",4,1,1,1,1,0,476,293,183,0.615546
+UCLA037,sub-UCLA037,churchlandlab_ucla,4,5,805,"HPF, HY, Isocortex, MB, TH",5,4,4,4,4,0,2194,1420,774,0.64722
+UCLA044,sub-UCLA044,churchlandlab_ucla,2,2,201,"CB, HPF, Isocortex, MB",4,2,2,2,2,0,1261,578,683,0.458366
+UCLA048,sub-UCLA048,churchlandlab_ucla,1,2,162,"HPF, Isocortex, MB, TH",4,1,1,1,1,0,458,272,186,0.593886
+UCLA049,sub-UCLA049,churchlandlab_ucla,2,4,375,"CNU, HPF, Isocortex, MB, TH",5,2,2,2,2,0,910,535,375,0.587912
+UCLA052,sub-UCLA052,churchlandlab_ucla,1,1,93,"HPF, Isocortex, MB",3,1,1,1,1,0,436,269,167,0.616972
+KS014,sub-KS014,cortexlab,3,5,538,"HPF, Isocortex, MB",3,3,3,3,3,0,1876,1306,570,0.696162
+KS016,sub-KS016,cortexlab,3,6,349,"HB, HPF, HY, Isocortex, MB, TH",6,3,3,3,3,0,1742,1242,500,0.712974
+KS022,sub-KS022,cortexlab,1,2,89,"HB, HPF, HY, MB, TH",5,1,1,1,1,0,826,494,332,0.598063
+KS023,sub-KS023,cortexlab,4,8,823,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,4,4,4,4,0,2809,2105,704,0.749377
+KS042,sub-KS042,cortexlab,2,4,362,"CNU, CTXsp, Isocortex, MB, OLF",5,2,2,2,2,0,1149,775,374,0.6745
+KS043,sub-KS043,cortexlab,2,4,257,"CB, CNU, HB, HPF, Isocortex, MB, TH",7,2,2,2,2,0,1095,817,278,0.746119
+KS044,sub-KS044,cortexlab,2,4,340,"CNU, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",9,2,2,2,2,0,1257,806,451,0.641209
+KS045,sub-KS045,cortexlab,1,2,171,"CB, HB, MB",3,1,0,0,0,1,404,243,161,0.601485
+KS046,sub-KS046,cortexlab,4,8,814,"CNU, CTXsp, HPF, Isocortex, MB, OLF",6,4,4,4,4,0,2887,2136,751,0.739868
+KS051,sub-KS051,cortexlab,3,4,224,"CNU, HPF, Isocortex, TH",4,3,2,2,2,1,1298,880,418,0.677966
+KS052,sub-KS052,cortexlab,1,2,91,"Isocortex, OLF",2,1,0,0,0,1,691,524,167,0.758321
+KS055,sub-KS055,cortexlab,2,4,598,"HPF, Isocortex, MB",3,2,1,1,1,1,923,694,229,0.751896
+KS084,sub-KS084,cortexlab,1,2,131,"HPF, HY, Isocortex, TH",4,1,1,1,1,0,437,251,186,0.574371
+KS086,sub-KS086,cortexlab,2,3,257,"CNU, CTXsp, HPF, Isocortex, MB, OLF, TH",7,2,2,2,2,0,1103,699,404,0.633726
+KS091,sub-KS091,cortexlab,2,4,221,"CNU, CTXsp, HPF, Isocortex, OLF, TH",6,2,2,2,2,0,1492,1012,480,0.678284
+KS094,sub-KS094,cortexlab,4,7,623,"HPF, Isocortex, OLF, TH",4,4,4,4,4,0,2165,1426,739,0.658661
+KS096,sub-KS096,cortexlab,5,8,725,"CB, CTXsp, HB, HPF, Isocortex, MB, TH",7,5,5,5,5,0,3460,2601,859,0.751734
+DY_008,sub-DY_008,danlab,2,2,250,"CNU, HPF, Isocortex, TH",4,2,2,2,2,0,880,554,326,0.629545
+DY_009,sub-DY_009,danlab,9,9,1187,"CB, HB, HPF, HY, Isocortex, MB, TH",7,9,9,9,9,0,3907,2780,1127,0.711543
+DY_010,sub-DY_010,danlab,5,5,517,"HPF, HY, Isocortex, MB, TH",5,5,5,5,5,0,2588,1810,778,0.699382
+DY_011,sub-DY_011,danlab,4,4,267,"CNU, HPF, Isocortex, TH",4,4,4,4,4,0,2024,1619,405,0.799901
+DY_013,sub-DY_013,danlab,3,4,275,"CB, CNU, HB, HPF, Isocortex, MB, TH",7,3,3,3,3,0,1242,859,383,0.691626
+DY_014,sub-DY_014,danlab,7,14,1091,"CNU, HPF, HY, Isocortex, OLF, TH",6,7,7,7,7,0,4340,3622,718,0.834562
+DY_016,sub-DY_016,danlab,5,10,1514,"CB, CNU, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",10,5,5,5,5,0,2461,1635,826,0.664364
+DY_018,sub-DY_018,danlab,3,6,496,"HB, HPF, HY, Isocortex, MB, TH",6,3,3,3,3,0,1658,1223,435,0.737636
+DY_020,sub-DY_020,danlab,8,16,1934,"CB, CNU, HB, HPF, HY, Isocortex, MB, TH",8,8,8,8,8,0,4714,2949,1765,0.625583
+PL015,sub-PL015,hausserlab,5,5,396,"CTXsp, HB, HPF, Isocortex, MB, OLF, TH",7,5,5,5,5,0,2936,1933,1003,0.658379
+PL016,sub-PL016,hausserlab,1,1,155,"HB, MB",2,1,1,1,1,0,426,232,194,0.544601
+PL017,sub-PL017,hausserlab,7,8,832,"CB, HB, HPF, HY, Isocortex, MB, TH",7,7,6,6,6,1,4346,2977,1369,0.684998
+PL024,sub-PL024,hausserlab,1,1,126,"CNU, CTXsp, HPF",3,1,1,1,1,0,416,307,109,0.737981
+PL030,sub-PL030,hausserlab,8,8,1241,"CB, CNU, HB, HPF, HY, MB, TH",7,8,8,8,8,0,3845,2743,1102,0.713394
+PL031,sub-PL031,hausserlab,5,5,351,"CNU, CTXsp, HPF, Isocortex, MB, OLF, TH",7,5,5,5,5,0,2817,1283,1534,0.455449
+PL033,sub-PL033,hausserlab,13,13,1104,"CNU, CTXsp, HPF, HY, Isocortex, TH",6,13,13,13,13,0,7501,4234,3267,0.564458
+PL034,sub-PL034,hausserlab,3,3,124,"HPF, HY, TH",3,3,3,3,3,0,2180,1323,857,0.606881
+PL035,sub-PL035,hausserlab,4,4,267,"HB, HPF, Isocortex, MB",4,4,4,4,4,0,2090,1152,938,0.551196
+PL037,sub-PL037,hausserlab,6,6,932,"HB, HPF, Isocortex, MB",4,6,6,6,6,0,3685,2215,1470,0.601085
+PL050,sub-PL050,hausserlab,9,11,1282,"HB, HPF, Isocortex, MB, TH",5,9,9,9,9,0,6649,4365,2284,0.65649
+SWC_042,sub-SWC_042,hoferlab,2,3,234,"HPF, Isocortex, TH",3,2,2,2,2,0,1027,646,381,0.629017
+SWC_043,sub-SWC_043,hoferlab,7,10,1352,"CNU, CTXsp, HPF, HY, Isocortex, OLF, TH",7,7,7,7,7,0,4518,3101,1417,0.686366
+SWC_060,sub-SWC_060,hoferlab,3,6,404,"CNU, HPF, HY, MB, TH",5,3,3,3,3,0,1732,1301,431,0.751155
+SWC_061,sub-SWC_061,hoferlab,3,6,483,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,3,3,3,3,0,1785,1203,582,0.67395
+SWC_066,sub-SWC_066,hoferlab,2,2,22,"CB, CTXsp, HPF",3,2,2,2,2,0,1348,1048,300,0.777448
+ZFM-01576,sub-ZFM-01576,mainenlab,2,3,537,"CB, HB, HPF, Isocortex, MB, TH",6,2,2,2,2,0,1855,1206,649,0.650135
+ZFM-01577,sub-ZFM-01577,mainenlab,3,5,641,"CB, HB, HPF, Isocortex, MB, TH",6,3,3,3,3,0,1899,1388,511,0.730911
+ZFM-01592,sub-ZFM-01592,mainenlab,3,5,935,"CB, CTXsp, HB, HPF, HY, OLF, TH",7,3,3,3,3,0,2726,1939,787,0.711299
+ZFM-01935,sub-ZFM-01935,mainenlab,4,5,692,"CNU, CTXsp, HPF, HY, Isocortex, MB, TH",7,4,4,4,4,0,3150,1790,1360,0.568254
+ZFM-01936,sub-ZFM-01936,mainenlab,5,6,827,"CNU, HPF, HY, Isocortex, OLF, TH",6,5,5,5,5,0,2570,1501,1069,0.584047
+ZFM-01937,sub-ZFM-01937,mainenlab,2,2,217,"CNU, Isocortex",2,2,2,2,2,0,1233,933,300,0.756691
+ZFM-02368,sub-ZFM-02368,mainenlab,1,2,372,"CNU, HPF, HY, Isocortex, TH",5,1,1,1,1,0,408,271,137,0.664216
+ZFM-02369,sub-ZFM-02369,mainenlab,1,2,474,"CB, HB, HPF, Isocortex, TH",5,1,1,1,1,0,733,377,356,0.514325
+ZFM-02370,sub-ZFM-02370,mainenlab,2,2,356,"CNU, CTXsp, Isocortex, OLF",4,2,2,2,2,0,1367,1011,356,0.739576
+ZFM-02372,sub-ZFM-02372,mainenlab,2,3,247,"CB, HB, HPF, HY, MB, TH",6,2,2,2,2,0,1068,829,239,0.776217
+ZFM-02373,sub-ZFM-02373,mainenlab,1,2,367,"HPF, Isocortex, TH",3,1,1,1,1,0,424,277,147,0.653302
+ZFM-04308,sub-ZFM-04308,mainenlab,2,3,253,"CB, HPF, Isocortex, MB",4,2,2,2,2,0,817,503,314,0.615667
+ZM_1897,sub-ZM_1897,mainenlab,2,3,668,"HPF, Isocortex, OLF, TH",4,2,0,0,0,2,961,766,195,0.797086
+ZM_1898,sub-ZM_1898,mainenlab,2,2,203,"CNU, CTXsp, OLF, TH",4,2,2,2,2,0,1398,703,695,0.502861
+ZM_2240,sub-ZM_2240,mainenlab,4,6,1153,"CNU, HPF, HY, Isocortex, MB, OLF, TH",7,4,4,4,4,0,2777,1885,892,0.67879
+ZM_2241,sub-ZM_2241,mainenlab,5,9,1550,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,5,5,5,5,0,3647,2383,1264,0.653414
+ZM_2245,sub-ZM_2245,mainenlab,1,2,201,"CNU, HPF, HY, Isocortex, MB, TH",6,1,1,1,1,0,872,680,192,0.779817
+ZM_3003,sub-ZM_3003,mainenlab,2,4,271,"CNU, HPF, HY, Isocortex, MB, TH",6,2,2,2,2,0,1236,901,335,0.728964
+SWC_038,sub-SWC_038,mrsicflogellab,3,6,724,"CNU, CTXsp, HPF, Isocortex, MB, OLF, TH",7,3,2,2,2,1,2257,1553,704,0.688082
+SWC_039,sub-SWC_039,mrsicflogellab,1,2,207,"CB, CNU, CTXsp, HB, HPF",5,1,1,1,1,0,403,260,143,0.645161
+SWC_052,sub-SWC_052,mrsicflogellab,7,13,802,"CB, HB, HPF, Isocortex, MB, TH",6,7,7,7,7,0,4068,2429,1639,0.597099
+SWC_053,sub-SWC_053,mrsicflogellab,3,5,256,"CB, HB, HPF, MB",4,3,3,3,3,0,1533,870,663,0.567515
+SWC_054,sub-SWC_054,mrsicflogellab,6,10,1039,"CB, HB, HPF, HY, Isocortex, MB, TH",7,6,6,6,6,0,3915,2779,1136,0.709834
+SWC_058,sub-SWC_058,mrsicflogellab,4,7,778,"CB, HB, HPF, Isocortex, TH",5,4,4,4,4,0,2872,1816,1056,0.632312
+SWC_065,sub-SWC_065,mrsicflogellab,1,1,59,"CB, HB",2,1,1,1,1,0,839,634,205,0.755662
+NR_0017,sub-NR_0017,steinmetzlab,1,1,60,"HPF, HY, TH",3,1,1,1,1,0,911,678,233,0.744237
+NR_0019,sub-NR_0019,steinmetzlab,3,5,459,"HPF, HY, Isocortex, MB, TH",5,3,3,3,3,0,1959,1554,405,0.793262
+NR_0020,sub-NR_0020,steinmetzlab,4,7,700,"CTXsp, HPF, Isocortex, MB, OLF, TH",6,4,4,4,4,0,2573,2033,540,0.790128
+NR_0021,sub-NR_0021,steinmetzlab,3,6,384,"CNU, HPF, Isocortex, MB, OLF, TH",6,3,3,3,3,0,1653,1227,426,0.742287
+NR_0024,sub-NR_0024,steinmetzlab,4,7,576,"CNU, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",9,4,4,4,4,0,2426,1462,964,0.602638
+NR_0027,sub-NR_0027,steinmetzlab,4,7,630,"CNU, CTXsp, HPF, HY, Isocortex, MB, OLF, TH",8,4,4,4,4,0,4119,2528,1591,0.613741
+NR_0028,sub-NR_0028,steinmetzlab,5,7,943,"HB, HPF, Isocortex, MB",4,5,5,5,5,0,4324,3240,1084,0.749306
+NR_0029,sub-NR_0029,steinmetzlab,5,5,115,"HPF, HY, MB, TH",4,5,5,5,5,0,2191,1594,597,0.727522
+NR_0031,sub-NR_0031,steinmetzlab,2,4,390,"HPF, Isocortex, MB, TH",4,2,2,2,2,0,893,619,274,0.693169
+ibl_witten_13,sub-ibl_witten_13,wittenlab,3,4,567,"CNU, HPF, HY, Isocortex, MB, TH",6,3,2,2,2,1,2420,1788,632,0.738843
+ibl_witten_17,sub-ibl_witten_17,wittenlab,3,3,153,"CB, CNU, HB, Isocortex, TH",5,3,2,2,2,1,2237,1589,648,0.710326
+ibl_witten_18,sub-ibl_witten_18,wittenlab,3,3,327,"CNU, CTXsp, Isocortex, OLF, TH",5,3,3,3,3,0,2373,1392,981,0.586599
+ibl_witten_19,sub-ibl_witten_19,wittenlab,3,4,295,"CNU, Isocortex, MB, OLF",4,3,3,3,3,0,1688,1232,456,0.729858
+ibl_witten_20,sub-ibl_witten_20,wittenlab,3,4,635,"CB, HB, HPF, Isocortex, MB",5,3,3,3,3,0,2879,2000,879,0.694686
+ibl_witten_25,sub-ibl_witten_25,wittenlab,1,2,308,"CB, HB, HPF, Isocortex",4,1,1,1,1,0,563,353,210,0.626998
+ibl_witten_26,sub-ibl_witten_26,wittenlab,5,8,900,"CB, CNU, CTXsp, HB, HPF, Isocortex, TH",7,5,5,5,5,0,3804,1829,1975,0.48081
+ibl_witten_27,sub-ibl_witten_27,wittenlab,6,11,962,"CB, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",9,6,5,5,5,1,4118,2838,1280,0.689169
+ibl_witten_29,sub-ibl_witten_29,wittenlab,9,11,881,"CB, CNU, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",10,9,9,9,9,0,6241,4731,1510,0.758052
+ibl_witten_32,sub-ibl_witten_32,wittenlab,1,1,33,"CNU, Isocortex, OLF",3,1,1,1,1,0,406,144,262,0.35468
+CSH_ZAD_001,sub-CSH_ZAD_001,zadorlab,1,1,50,"HY, MB, TH",3,1,1,1,1,0,854,358,496,0.419204
+CSH_ZAD_011,sub-CSH_ZAD_011,zadorlab,3,6,458,"HB, HPF, Isocortex, MB, TH",5,3,1,1,1,2,1933,1423,510,0.736161
+CSH_ZAD_019,sub-CSH_ZAD_019,zadorlab,4,8,798,"HPF, HY, Isocortex, MB, TH",5,4,4,4,4,0,3460,2206,1254,0.637572
+CSH_ZAD_022,sub-CSH_ZAD_022,zadorlab,8,12,1387,"CB, CTXsp, HB, HPF, HY, Isocortex, MB, OLF, TH",9,8,7,7,7,1,7464,4114,3350,0.551179
+CSH_ZAD_024,sub-CSH_ZAD_024,zadorlab,1,2,380,"CNU, Isocortex, OLF",3,1,1,1,1,0,751,492,259,0.655126
+CSH_ZAD_025,sub-CSH_ZAD_025,zadorlab,7,12,1676,"CB, CNU, HB, HPF, HY, Isocortex, MB, TH",8,7,7,7,7,0,5514,4249,1265,0.770584
+CSH_ZAD_026,sub-CSH_ZAD_026,zadorlab,6,11,1726,"CNU, CTXsp, HB, HPF, Isocortex, MB, OLF, TH",8,6,6,6,6,0,4569,2948,1621,0.645218
+CSH_ZAD_029,sub-CSH_ZAD_029,zadorlab,7,14,1916,"CB, CNU, CTXsp, HB, HPF, Isocortex, MB, OLF, TH",9,7,7,7,7,0,8463,7767,696,0.91776

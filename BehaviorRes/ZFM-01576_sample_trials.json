@@ -1,0 +1,146 @@
+[
+  {
+    "label": "short",
+    "eid": "9e9c6fc0-4769-4d83-9ea4-b59a1230510e",
+    "trial_index_in_cache": 64,
+    "stim_side": "right",
+    "used_paw": "left",
+    "paw_feature": {
+      "left": "paw_r",
+      "right": "paw_l"
+    },
+    "stimOn_times": 505.015960020505,
+    "feedback_times": 505.21643997050523,
+    "firstMovement_times": 505.10824134000075,
+    "original_duration_s": 0.200479950000215,
+    "slowdown": 10,
+    "output_duration_s": 2.00479950000215,
+    "output_fps": 15.076884571227637,
+    "n_stitched_frames": 30,
+    "sample": "/Users/Stefan/Desktop/BehaviorRes/Sample_short.mp4",
+    "frame_shape": [
+      1664,
+      3472,
+      3
+    ],
+    "paw_states_csv": "/Users/Stefan/Desktop/BehaviorRes/Sample_short_paw_states.csv",
+    "dlc_state_fraction": {
+      "still": 0.0,
+      "coupled": 0.5,
+      "decoupled": 0.5
+    },
+    "lp_state_fraction": {
+      "still": 0.0,
+      "coupled": 0.5,
+      "decoupled": 0.5
+    }
+  },
+  {
+    "label": "medium1",
+    "eid": "9e9c6fc0-4769-4d83-9ea4-b59a1230510e",
+    "trial_index_in_cache": 238,
+    "stim_side": "left",
+    "used_paw": "left",
+    "paw_feature": {
+      "left": "paw_r",
+      "right": "paw_l"
+    },
+    "stimOn_times": 2072.857826822073,
+    "feedback_times": 2073.2468879120734,
+    "firstMovement_times": 2073.079241340002,
+    "original_duration_s": 0.38906109000026845,
+    "slowdown": 10,
+    "output_duration_s": 3.8906109000026845,
+    "output_fps": 15.076884571227637,
+    "n_stitched_frames": 59,
+    "sample": "/Users/Stefan/Desktop/BehaviorRes/Sample_medium1.mp4",
+    "frame_shape": [
+      1664,
+      3472,
+      3
+    ],
+    "paw_states_csv": "/Users/Stefan/Desktop/BehaviorRes/Sample_medium1_paw_states.csv",
+    "dlc_state_fraction": {
+      "still": 0.5416666666666666,
+      "coupled": 0.0,
+      "decoupled": 0.4583333333333333
+    },
+    "lp_state_fraction": {
+      "still": 0.5,
+      "coupled": 0.20833333333333334,
+      "decoupled": 0.2916666666666667
+    }
+  },
+  {
+    "label": "medium2",
+    "eid": "9e9c6fc0-4769-4d83-9ea4-b59a1230510e",
+    "trial_index_in_cache": 393,
+    "stim_side": "left",
+    "used_paw": "left",
+    "paw_feature": {
+      "left": "paw_r",
+      "right": "paw_l"
+    },
+    "stimOn_times": 3627.834446943628,
+    "feedback_times": 3628.3794257736286,
+    "firstMovement_times": 3628.2202413400037,
+    "original_duration_s": 0.544978830000673,
+    "slowdown": 10,
+    "output_duration_s": 5.44978830000673,
+    "output_fps": 15.076884571227637,
+    "n_stitched_frames": 82,
+    "sample": "/Users/Stefan/Desktop/BehaviorRes/Sample_medium2.mp4",
+    "frame_shape": [
+      1664,
+      3472,
+      3
+    ],
+    "paw_states_csv": "/Users/Stefan/Desktop/BehaviorRes/Sample_medium2_paw_states.csv",
+    "dlc_state_fraction": {
+      "still": 0.5454545454545454,
+      "coupled": 0.30303030303030304,
+      "decoupled": 0.15151515151515152
+    },
+    "lp_state_fraction": {
+      "still": 0.5151515151515151,
+      "coupled": 0.18181818181818182,
+      "decoupled": 0.30303030303030304
+    }
+  },
+  {
+    "label": "long",
+    "eid": "9e9c6fc0-4769-4d83-9ea4-b59a1230510e",
+    "trial_index_in_cache": 508,
+    "stim_side": "right",
+    "used_paw": "left",
+    "paw_feature": {
+      "left": "paw_r",
+      "right": "paw_l"
+    },
+    "stimOn_times": 4618.6100594746185,
+    "feedback_times": 4623.246062494623,
+    "firstMovement_times": 4618.884241340004,
+    "original_duration_s": 4.636003020004864,
+    "slowdown": 10,
+    "output_duration_s": 46.36003020004864,
+    "output_fps": 15.076884571227637,
+    "n_stitched_frames": 698,
+    "sample": "/Users/Stefan/Desktop/BehaviorRes/Sample_long.mp4",
+    "frame_shape": [
+      1664,
+      3472,
+      3
+    ],
+    "paw_states_csv": "/Users/Stefan/Desktop/BehaviorRes/Sample_long_paw_states.csv",
+    "dlc_state_fraction": {
+      "still": 0.8920863309352518,
+      "coupled": 0.05755395683453238,
+      "decoupled": 0.050359712230215826
+    },
+    "lp_state_fraction": {
+      "still": 0.8884892086330936,
+      "coupled": 0.07194244604316546,
+      "decoupled": 0.039568345323741004
+    }
+  }
+]
