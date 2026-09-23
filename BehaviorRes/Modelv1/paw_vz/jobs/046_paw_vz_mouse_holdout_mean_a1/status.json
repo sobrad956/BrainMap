@@ -1,0 +1,15 @@
+{
+  "job": 46,
+  "tag": "paw_vz_mouse_holdout_mean_a1",
+  "slurm_job_id": "367950",
+  "slurm_array_task_id": "46",
+  "task": "mouse_holdout",
+  "pool": "mean",
+  "ablation": "a1",
+  "target": "paw_vz",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 21,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:35:11.829190+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "job": 2,
+  "tag": "wheel_speed_session_holdout_mean",
+  "slurm_job_id": "367888",
+  "slurm_array_task_id": "2",
+  "task": "session_holdout",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "wheel_speed",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 11,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:25:47.025107+00:00"
+}

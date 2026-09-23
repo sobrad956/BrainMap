@@ -1,0 +1,366 @@
+[19:29:20] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[19:29:20] loading 52 sessions from ModelDataRightContra
+[19:29:21] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[19:29:21] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[19:29:21] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[19:29:21] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[19:29:21] ==== trial_holdout ====
+[19:29:21]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[19:29:21] -- trial_holdout / mean / A1
+[19:29:22]   mean_a1 params=37762  device=mps  Control A1 (no xyz/region)
+[19:29:27]   train mean_a1  n_tr=5022 n_val=685
+[19:30:53]     mean_a1 epoch 01  train=1.7889  val=1.5522
+[19:32:11]     mean_a1 epoch 02  train=1.5753  val=1.5219
+[19:33:21]     mean_a1 epoch 03  train=1.5447  val=1.5141
+[19:34:31]     mean_a1 epoch 04  train=1.5406  val=1.5028
+[19:35:40]     mean_a1 epoch 05  train=1.5358  val=1.4993
+[19:36:49]     mean_a1 epoch 06  train=1.5302  val=1.4825
+[19:37:59]     mean_a1 epoch 07  train=1.5158  val=1.4853
+[19:39:08]     mean_a1 epoch 08  train=1.5199  val=1.4831
+[19:40:15]     mean_a1 epoch 09  train=1.5099  val=1.4759
+[19:41:23]     mean_a1 epoch 10  train=1.5059  val=1.4737
+[19:42:31]     mean_a1 epoch 11  train=1.5003  val=1.5080
+[19:43:42]     mean_a1 epoch 12  train=1.5029  val=1.5005
+[19:44:51]     mean_a1 epoch 13  train=1.4998  val=1.4641
+[19:46:01]     mean_a1 epoch 14  train=1.4945  val=1.4556
+[19:47:10]     mean_a1 epoch 15  train=1.4869  val=1.4534
+[19:48:20]     mean_a1 epoch 16  train=1.4968  val=1.4658
+[19:49:32]     mean_a1 epoch 17  train=1.4919  val=1.4587
+[19:50:42]     mean_a1 epoch 18  train=1.4858  val=1.4739
+[19:51:51]     mean_a1 epoch 19  train=1.4873  val=1.4520
+[19:53:01]     mean_a1 epoch 20  train=1.4873  val=1.4607
+[19:54:10]     mean_a1 epoch 21  train=1.4844  val=1.4458
+[19:55:22]     mean_a1 epoch 22  train=1.4836  val=1.4745
+[19:56:32]     mean_a1 epoch 23  train=1.4851  val=1.4439
+[19:57:43]     mean_a1 epoch 24  train=1.4770  val=1.4488
+[19:58:52]     mean_a1 epoch 25  train=1.4764  val=1.4455
+[20:00:03]     mean_a1 epoch 26  train=1.4763  val=1.4386
+[20:01:14]     mean_a1 epoch 27  train=1.4775  val=1.4528
+[20:02:23]     mean_a1 epoch 28  train=1.4720  val=1.4444
+[20:03:35]     mean_a1 epoch 29  train=1.4703  val=1.4437
+[20:04:43]     mean_a1 epoch 30  train=1.4687  val=1.4380
+[20:05:53]     mean_a1 epoch 31  train=1.4681  val=1.4334
+[20:07:05]     mean_a1 epoch 32  train=1.4658  val=1.4601
+[20:08:15]     mean_a1 epoch 33  train=1.4748  val=1.4265
+[20:09:27]     mean_a1 epoch 34  train=1.4590  val=1.4321
+[20:10:38]     mean_a1 epoch 35  train=1.4654  val=1.4361
+[20:11:48]     mean_a1 epoch 36  train=1.4599  val=1.4274
+[20:12:58]     mean_a1 epoch 37  train=1.4628  val=1.4451
+[20:14:07]     mean_a1 epoch 38  train=1.4540  val=1.4229
+[20:15:17]     mean_a1 epoch 39  train=1.4602  val=1.4251
+[20:16:27]     mean_a1 epoch 40  train=1.4548  val=1.4283
+[20:16:27]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[20:16:27]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[20:16:27] -- trial_holdout / attn / A1
+[20:16:27]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[20:16:27]   train attn_a1  n_tr=5022 n_val=685
+[20:17:41]     attn_a1 epoch 01  train=1.8060  val=1.5600
+[20:18:52]     attn_a1 epoch 02  train=1.5633  val=1.5341
+[20:20:04]     attn_a1 epoch 03  train=1.5417  val=1.5182
+[20:21:15]     attn_a1 epoch 04  train=1.5360  val=1.4926
+[20:22:24]     attn_a1 epoch 05  train=1.5219  val=1.4551
+[20:23:34]     attn_a1 epoch 06  train=1.5056  val=1.4592
+[20:24:43]     attn_a1 epoch 07  train=1.4986  val=1.4597
+[20:25:53]     attn_a1 epoch 08  train=1.4986  val=1.4585
+[20:27:03]     attn_a1 epoch 09  train=1.4897  val=1.4403
+[20:28:10]     attn_a1 epoch 10  train=1.4822  val=1.4437
+[20:29:19]     attn_a1 epoch 11  train=1.4884  val=1.4146
+[20:30:27]     attn_a1 epoch 12  train=1.4820  val=1.4449
+[20:31:37]     attn_a1 epoch 13  train=1.4734  val=1.4107
+[20:32:48]     attn_a1 epoch 14  train=1.4751  val=1.4262
+[20:33:57]     attn_a1 epoch 15  train=1.4648  val=1.4046
+[20:35:08]     attn_a1 epoch 16  train=1.4657  val=1.4146
+[20:36:16]     attn_a1 epoch 17  train=1.4606  val=1.4040
+[20:37:23]     attn_a1 epoch 18  train=1.4638  val=1.4108
+[20:38:39]     attn_a1 epoch 19  train=1.4588  val=1.4399
+[20:39:55]     attn_a1 epoch 20  train=1.4614  val=1.4262
+[20:41:10]     attn_a1 epoch 21  train=1.4619  val=1.3981
+[20:42:23]     attn_a1 epoch 22  train=1.4590  val=1.4285
+[20:43:38]     attn_a1 epoch 23  train=1.4654  val=1.3967
+[20:44:54]     attn_a1 epoch 24  train=1.4519  val=1.4124
+[20:46:05]     attn_a1 epoch 25  train=1.4534  val=1.4006
+[20:47:17]     attn_a1 epoch 26  train=1.4453  val=1.4071
+[20:48:29]     attn_a1 epoch 27  train=1.4523  val=1.3955
+[20:49:40]     attn_a1 epoch 28  train=1.4453  val=1.3883
+[20:50:53]     attn_a1 epoch 29  train=1.4456  val=1.4027
+[20:52:05]     attn_a1 epoch 30  train=1.4421  val=1.3990
+[20:53:17]     attn_a1 epoch 31  train=1.4420  val=1.3936
+[20:54:28]     attn_a1 epoch 32  train=1.4411  val=1.4047
+[20:55:41]     attn_a1 epoch 33  train=1.4450  val=1.3905
+[20:55:41]     early stop at epoch 33
+[20:55:41]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[20:55:41]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[20:55:41] ==== session_holdout ====
+[20:55:41]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[20:55:41] -- session_holdout / mean / A1
+[20:55:41]   mean_a1 params=37762  device=mps  Control A1 (no xyz/region)
+[20:55:41]   train mean_a1  n_tr=4853 n_val=662
+[20:56:56]     mean_a1 epoch 01  train=1.7940  val=1.5871
+[20:58:09]     mean_a1 epoch 02  train=1.5986  val=1.5821
+[20:59:15]     mean_a1 epoch 03  train=1.5710  val=1.6094
+[21:00:20]     mean_a1 epoch 04  train=1.5604  val=1.5421
+[21:01:25]     mean_a1 epoch 05  train=1.5551  val=1.5600
+[21:02:30]     mean_a1 epoch 06  train=1.5476  val=1.5518
+[21:03:33]     mean_a1 epoch 07  train=1.5472  val=1.5280
+[21:04:39]     mean_a1 epoch 08  train=1.5455  val=1.5745
+[21:05:43]     mean_a1 epoch 09  train=1.5383  val=1.5209
+[21:06:46]     mean_a1 epoch 10  train=1.5285  val=1.5240
+[21:07:47]     mean_a1 epoch 11  train=1.5208  val=1.5261
+[21:08:48]     mean_a1 epoch 12  train=1.5222  val=1.5129
+[21:09:48]     mean_a1 epoch 13  train=1.5223  val=1.5077
+[21:10:49]     mean_a1 epoch 14  train=1.5115  val=1.5423
+[21:11:49]     mean_a1 epoch 15  train=1.5117  val=1.5208
+[21:12:47]     mean_a1 epoch 16  train=1.5095  val=1.5173
+[21:13:47]     mean_a1 epoch 17  train=1.5075  val=1.5000
+[21:14:49]     mean_a1 epoch 18  train=1.5026  val=1.5042
+[21:23:40]     mean_a1 epoch 19  train=1.5031  val=1.5018
+[21:24:55]     mean_a1 epoch 20  train=1.4983  val=1.5175
+[21:26:04]     mean_a1 epoch 21  train=1.5047  val=1.4934
+[21:27:12]     mean_a1 epoch 22  train=1.4981  val=1.5226
+[21:28:20]     mean_a1 epoch 23  train=1.5011  val=1.5444
+[21:29:28]     mean_a1 epoch 24  train=1.4974  val=1.4954
+[21:30:37]     mean_a1 epoch 25  train=1.4941  val=1.4946
+[21:31:45]     mean_a1 epoch 26  train=1.4910  val=1.4955
+[21:31:45]     early stop at epoch 26
+[21:31:47]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[21:31:47]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[21:31:47] -- session_holdout / attn / A1
+[21:31:47]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[21:31:47]   train attn_a1  n_tr=4853 n_val=662
+[21:32:53]     attn_a1 epoch 01  train=1.7760  val=1.5726
+[21:33:59]     attn_a1 epoch 02  train=1.5686  val=1.5529
+[21:35:09]     attn_a1 epoch 03  train=1.5694  val=1.5649
+[21:36:24]     attn_a1 epoch 04  train=1.5531  val=1.5924
+[21:37:26]     attn_a1 epoch 05  train=1.5504  val=1.5326
+[21:38:36]     attn_a1 epoch 06  train=1.5403  val=1.5977
+[21:39:46]     attn_a1 epoch 07  train=1.5377  val=1.5665
+[21:40:58]     attn_a1 epoch 08  train=1.5183  val=1.5035
+[21:42:07]     attn_a1 epoch 09  train=1.5121  val=1.5111
+[21:43:17]     attn_a1 epoch 10  train=1.5091  val=1.4909
+[21:44:21]     attn_a1 epoch 11  train=1.4944  val=1.4927
+[22:12:18] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[22:12:18] loading 52 sessions from ModelDataRightContra
+[22:12:19] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[22:12:19] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[22:12:19] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[22:12:19] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[22:12:19] ==== trial_holdout ====
+[22:12:19]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[22:12:19] -- trial_holdout / mean / A1
+[22:12:19]   cache hit trial_holdout/mean_a1
+[22:12:20]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[22:12:20]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[22:12:20] -- trial_holdout / attn / A1
+[22:12:20]   cache hit trial_holdout/attn_a1
+[22:12:21]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[22:12:21]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[22:12:21] ==== session_holdout ====
+[22:12:21]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[22:12:21] -- session_holdout / mean / A1
+[22:12:21]   cache hit session_holdout/mean_a1
+[22:12:22]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[22:12:22]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[22:12:22] -- session_holdout / attn / A1
+[22:12:22]   resume session_holdout/attn_a1 from epoch 11
+[22:12:22]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[22:12:31]   train attn_a1  n_tr=4853 n_val=662
+[22:13:49]     attn_a1 epoch 12  train=1.5020  val=1.4937
+[22:19:08] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[22:19:08] loading 52 sessions from ModelDataRightContra
+[22:19:09] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[22:19:09] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[22:19:09] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[22:19:09] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[22:19:09] ==== trial_holdout ====
+[22:19:09]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[22:19:09] -- trial_holdout / mean / A1
+[22:19:09]   cache hit trial_holdout/mean_a1
+[22:19:10]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[22:19:10]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[22:19:10] -- trial_holdout / attn / A1
+[22:19:10]   cache hit trial_holdout/attn_a1
+[22:19:10]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[22:19:10]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[22:19:10] ==== session_holdout ====
+[22:19:10]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[22:19:10] -- session_holdout / mean / A1
+[22:19:10]   cache hit session_holdout/mean_a1
+[22:19:12]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[22:19:12]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[22:19:12] -- session_holdout / attn / A1
+[22:19:12]   resume session_holdout/attn_a1 from epoch 12
+[22:19:12]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[22:19:14]   train attn_a1  n_tr=4853 n_val=662
+[22:20:34]     attn_a1 epoch 13  train=1.4961  val=1.4908
+[22:20:53] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[22:20:53] loading 52 sessions from ModelDataRightContra
+[22:20:54] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[22:20:54] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[22:20:54] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[22:20:54] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[22:20:54] ==== trial_holdout ====
+[22:20:54]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[22:20:54] -- trial_holdout / mean / A1
+[22:20:54]   cache hit trial_holdout/mean_a1
+[22:20:55]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[22:20:55]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[22:20:55] -- trial_holdout / attn / A1
+[22:20:55]   cache hit trial_holdout/attn_a1
+[22:20:55]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[22:20:55]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[22:20:55] ==== session_holdout ====
+[22:20:55]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[22:20:55] -- session_holdout / mean / A1
+[22:20:55]   cache hit session_holdout/mean_a1
+[22:20:56]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[22:20:56]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[22:20:56] -- session_holdout / attn / A1
+[22:20:56]   resume session_holdout/attn_a1 from epoch 13
+[22:20:56]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[22:20:58]   train attn_a1  n_tr=4853 n_val=662
+[22:22:13] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[22:22:13] loading 52 sessions from ModelDataRightContra
+[22:22:14] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[22:22:14] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[22:22:14] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[22:22:14] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[22:22:14] ==== trial_holdout ====
+[22:22:14]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[22:22:14] -- trial_holdout / mean / A1
+[22:22:14]   cache hit trial_holdout/mean_a1
+[22:22:15]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[22:22:15]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[22:22:15] -- trial_holdout / attn / A1
+[22:22:15]   cache hit trial_holdout/attn_a1
+[22:22:15]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[22:22:15]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[22:22:15] ==== session_holdout ====
+[22:22:15]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[22:22:15] -- session_holdout / mean / A1
+[22:22:15]   cache hit session_holdout/mean_a1
+[22:22:16]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[22:22:16]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[22:22:16] -- session_holdout / attn / A1
+[22:22:16]   resume session_holdout/attn_a1 from epoch 13
+[22:22:16]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[22:22:18]   train attn_a1  n_tr=4853 n_val=662
+[22:24:01] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[22:24:01] loading 52 sessions from ModelDataRightContra
+[22:24:02] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[22:24:02] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[22:24:02] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[22:24:02] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[22:24:02] ==== trial_holdout ====
+[22:24:02]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[22:24:02] -- trial_holdout / mean / A1
+[22:24:02]   cache hit trial_holdout/mean_a1
+
+# detached restart
+[23:57:08] Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region
+[23:57:08] loading 52 sessions from ModelDataRightContra
+[23:57:09] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[23:57:09] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[23:57:09] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[23:57:09] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[23:57:09] ==== trial_holdout ====
+[23:57:09]   areas=11  train_eids=52  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[23:57:09] -- trial_holdout / mean / A1
+[23:57:09]   cache hit trial_holdout/mean_a1
+[23:57:14]    wheel_speed  R²=+0.427  trialR²=+0.261  RMSE=0.710  r=0.683
+[23:57:14]    paw_speed    R²=+0.296  trialR²=+0.160  RMSE=507.515  r=0.545
+[23:57:14] -- trial_holdout / attn / A1
+[23:57:14]   cache hit trial_holdout/attn_a1
+[23:57:14]    wheel_speed  R²=+0.419  trialR²=+0.276  RMSE=0.714  r=0.681
+[23:57:14]    paw_speed    R²=+0.291  trialR²=+0.192  RMSE=509.118  r=0.540
+[23:57:14] ==== session_holdout ====
+[23:57:14]   areas=11  train_eids=51  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[23:57:14] -- session_holdout / mean / A1
+[23:57:14]   cache hit session_holdout/mean_a1
+[23:57:16]    wheel_speed  R²=+0.583  trialR²=+0.499  RMSE=0.682  r=0.768
+[23:57:16]    paw_speed    R²=+0.197  trialR²=-1.173  RMSE=355.579  r=0.640
+[23:57:16] -- session_holdout / attn / A1
+[23:57:16]   resume session_holdout/attn_a1 from epoch 13
+[23:57:16]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[23:57:20]   train attn_a1  n_tr=4853 n_val=662
+[23:58:49]     attn_a1 epoch 14  train=1.4941  val=1.4898
+[00:00:02]     attn_a1 epoch 15  train=1.4944  val=1.4881
+[00:01:10]     attn_a1 epoch 16  train=1.4778  val=1.4896
+[00:02:15]     attn_a1 epoch 17  train=1.4885  val=1.4771
+[00:03:21]     attn_a1 epoch 18  train=1.4778  val=1.5091
+[00:04:25]     attn_a1 epoch 19  train=1.4816  val=1.4859
+[00:05:28]     attn_a1 epoch 20  train=1.4827  val=1.4694
+[00:06:30]     attn_a1 epoch 21  train=1.4718  val=1.4731
+[00:07:37]     attn_a1 epoch 22  train=1.4687  val=1.4743
+[00:08:45]     attn_a1 epoch 23  train=1.4721  val=1.4807
+[00:09:54]     attn_a1 epoch 24  train=1.4767  val=1.4852
+[00:11:04]     attn_a1 epoch 25  train=1.4633  val=1.4718
+[00:11:04]     early stop at epoch 25
+[00:11:04]    wheel_speed  R²=+0.547  trialR²=+0.476  RMSE=0.710  r=0.750
+[00:11:04]    paw_speed    R²=+0.126  trialR²=-1.279  RMSE=370.977  r=0.625
+[00:11:05] ==== mouse_holdout ====
+[00:11:05]   areas=11  train_eids=51  y_mean=[  0.6057763 406.0867   ] y_std=[  0.9436881 649.12634  ]
+[00:11:05] -- mouse_holdout / mean / A1
+[00:11:05]   mean_a1 params=37762  device=mps  Control A1 (no xyz/region)
+[00:11:05]   train mean_a1  n_tr=4735 n_val=646
+[00:12:15]     mean_a1 epoch 01  train=1.8382  val=1.7134
+[00:13:30]     mean_a1 epoch 02  train=1.6366  val=1.6022
+[00:14:39]     mean_a1 epoch 03  train=1.5653  val=1.5961
+[00:15:45]     mean_a1 epoch 04  train=1.5589  val=1.6079
+[00:16:52]     mean_a1 epoch 05  train=1.5517  val=1.5731
+[00:17:58]     mean_a1 epoch 06  train=1.5375  val=1.5609
+[00:19:06]     mean_a1 epoch 07  train=1.5243  val=1.5378
+[00:20:17]     mean_a1 epoch 08  train=1.5238  val=1.5348
+[00:21:24]     mean_a1 epoch 09  train=1.5068  val=1.5276
+[00:22:32]     mean_a1 epoch 10  train=1.5068  val=1.5257
+[00:23:38]     mean_a1 epoch 11  train=1.5054  val=1.5225
+[00:24:46]     mean_a1 epoch 12  train=1.5024  val=1.5297
+[00:25:53]     mean_a1 epoch 13  train=1.5038  val=1.5466
+[00:27:01]     mean_a1 epoch 14  train=1.4977  val=1.5162
+[00:28:08]     mean_a1 epoch 15  train=1.4898  val=1.5061
+[00:29:12]     mean_a1 epoch 16  train=1.4913  val=1.5057
+[00:30:18]     mean_a1 epoch 17  train=1.4936  val=1.5369
+[00:31:22]     mean_a1 epoch 18  train=1.4848  val=1.5081
+[00:32:29]     mean_a1 epoch 19  train=1.4918  val=1.5106
+[00:33:35]     mean_a1 epoch 20  train=1.4853  val=1.5338
+[00:34:39]     mean_a1 epoch 21  train=1.4822  val=1.5188
+[00:34:39]     early stop at epoch 21
+[00:34:40]    wheel_speed  R²=+0.271  trialR²=+0.274  RMSE=0.813  r=0.533
+[00:34:40]    paw_speed    R²=+0.262  trialR²=-9.656  RMSE=500.225  r=0.513
+[00:34:40] -- mouse_holdout / attn / A1
+[00:34:40]   attn_a1 params=37826  device=mps  Control A1 (no xyz/region)
+[00:34:40]   train attn_a1  n_tr=4735 n_val=646
+[00:35:42]     attn_a1 epoch 01  train=1.8082  val=1.6293
+[00:36:44]     attn_a1 epoch 02  train=1.5664  val=1.6053
+[00:37:47]     attn_a1 epoch 03  train=1.5565  val=1.6016
+[00:38:49]     attn_a1 epoch 04  train=1.5443  val=1.5761
+[00:39:50]     attn_a1 epoch 05  train=1.5458  val=1.5437
+[00:40:53]     attn_a1 epoch 06  train=1.5193  val=1.5425
+[00:41:58]     attn_a1 epoch 07  train=1.5157  val=1.5324
+[00:43:03]     attn_a1 epoch 08  train=1.4929  val=1.5254
+[00:44:06]     attn_a1 epoch 09  train=1.4928  val=1.4955
+[00:45:12]     attn_a1 epoch 10  train=1.4748  val=1.5066
+[00:46:15]     attn_a1 epoch 11  train=1.4723  val=1.4852
+[00:47:21]     attn_a1 epoch 12  train=1.4731  val=1.4871
+[00:48:25]     attn_a1 epoch 13  train=1.4650  val=1.4671
+[00:49:31]     attn_a1 epoch 14  train=1.4731  val=1.4986
+[00:50:40]     attn_a1 epoch 15  train=1.4584  val=1.5033
+[00:51:47]     attn_a1 epoch 16  train=1.4528  val=1.4787
+[00:52:55]     attn_a1 epoch 17  train=1.4614  val=1.4777
+[00:54:02]     attn_a1 epoch 18  train=1.4614  val=1.4797
+[00:54:02]     early stop at epoch 18
+[00:54:04]    wheel_speed  R²=+0.212  trialR²=+0.177  RMSE=0.845  r=0.504
+[00:54:04]    paw_speed    R²=+0.216  trialR²=-8.680  RMSE=515.327  r=0.474
+[00:54:06] wrote /Users/Stefan/Desktop/BehaviorRes/Modelv1
+           task pool      target ablation       r2       rmse        mae  pearson  n_bins  mean_trial_r2  median_trial_r2  n_trials
+  trial_holdout mean wheel_speed       a1 0.426589   0.709520   0.484507 0.682891    1016       0.261280         0.637916        45
+  trial_holdout mean   paw_speed       a1 0.295560 507.514587 310.183411 0.544541    1016       0.159948         0.337559        45
+  trial_holdout attn wheel_speed       a1 0.418870   0.714279   0.492069 0.681150    1016       0.276197         0.507217        45
+  trial_holdout attn   paw_speed       a1 0.291101 509.118408 303.360596 0.539613    1016       0.191992         0.296545        45
+session_holdout mean wheel_speed       a1 0.583100   0.681705   0.447085 0.767654    4694       0.498817         0.718875       237
+session_holdout mean   paw_speed       a1 0.197045 355.578613 236.928146 0.640452    4694      -1.172563         0.081898       237
+session_holdout attn wheel_speed       a1 0.547479   0.710231   0.484253 0.749694    4694       0.476051         0.679820       237
+session_holdout attn   paw_speed       a1 0.125994 370.977173 259.737915 0.625358    4694      -1.279243         0.067535       237
+  mouse_holdout mean wheel_speed       a1 0.270961   0.812843   0.540108 0.532772    8433       0.274168         0.447807       371
+  mouse_holdout mean   paw_speed       a1 0.261620 500.224731 321.243439 0.512888    8433      -9.656479         0.329544       371
+  mouse_holdout attn wheel_speed       a1 0.211845   0.845156   0.553912 0.504339    8433       0.177124         0.301543       371
+  mouse_holdout attn   paw_speed       a1 0.216362 515.327209 324.995758 0.473978    8433      -8.679563         0.268079       371

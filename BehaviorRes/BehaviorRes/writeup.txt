@@ -1,0 +1,1174 @@
+================================================================================
+How ModelDataLeft was generated
+An exhaustive account of every source, cut, alignment choice, and label
+================================================================================
+
+This document explains, from a standing start, how the folder
+
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeft
+
+came to exist. It does not assume you know the International Brain Laboratory
+(IBL), the Brain-Wide Map (BWM) paper, DeepLabCut, Lightning Pose, or any of
+the intermediate folders under BehaviorRes. If a decision was made along the
+way, it is named as a decision, and the reason is given.
+
+The short version, which the rest of this file unpacks, is:
+
+    public BWM data
+        -> motor-cortex cohort sessions
+        -> Database (native-rate trials)
+        -> DatasetFiltered (pose present, rewarded trials only, stereo z)
+        -> DatasetFilteredDiscretized (those trials on a 20 ms grid)
+        -> ModelData (drop 0% contrast, drop extremely long trials, drop
+           sessions with fewer than 5 motor-cortex units)
+        -> wheel_paws labels (left / right / both)
+        -> ModelDataLeft (keep only trials labeled left)
+
+ModelDataLeft is not a new recording. It is a nested subset of the same
+trials, with derived kinematics, spike counts, and paw-use labels attached.
+
+Current size of ModelDataLeft:
+
+    32 mice
+    53 sessions
+    7,173 trials
+    10,537 units (of which 2,464 are in MOp or MOs)
+    20 ms bins
+    every trial has wheel_paws = "left"
+
+The parent set ModelData has 19,277 trials. ModelDataLeft is the 7,173 of
+those (37.2%) whose wheel-turning paw was labeled left.
+
+
+--------------------------------------------------------------------------------
+0. What we were trying to do
+--------------------------------------------------------------------------------
+
+The scientific aim stated at the start of this project was: take spike trains
+from mice that have motor-cortex recordings in the IBL Brain-Wide Map, and
+eventually predict paw and wheel speed.
+
+That aim forces several dataset choices that have nothing to do with
+machine-learning architecture:
+
+    1. We only wanted BWM sessions that actually recorded motor cortex, not
+       the entire 12-lab map.
+    2. We only wanted the trial definition and the units that the BWM paper
+       itself used, so that a later comparison to published decoding numbers
+       would not be confounded by a different inclusion rule.
+    3. We needed the paw, not just the wheel, so we had to pull video tracking
+       (DeepLabCut and Lightning Pose) in addition to the paper's aggregates.
+    4. Trials are different lengths, sessions have different numbers of
+       neurons, and probes sit in different places. Those mismatches were
+       kept honest rather than hidden: we did not time-warp trials onto a
+       common length, and we did not pretend unit 17 in mouse A is unit 17
+       in mouse B.
+    5. Later, for modeling, we wanted a cleaner, more homogeneous table:
+       visible contrast, not-pathologically-long trials, enough motor units,
+       and (for ModelDataLeft) a single paw.
+
+Every later cut is in service of that aim. Cuts that were considered and
+rejected are also recorded below, because "we did not do X" is as much a
+decision as "we did Y".
+
+
+--------------------------------------------------------------------------------
+1. The original public data (what "the original dataset" is)
+--------------------------------------------------------------------------------
+
+Nothing in BehaviorRes is a raw electrophysiology file we recorded. Everything
+starts from IBL's frozen Brain-Wide Map release.
+
+1.1 The paper freeze
+
+The BWM paper froze a list of insertions (probe-in-session) in
+
+    /Users/Stefan/Desktop/2023_12_bwm_release.csv
+
+Each row is one probe in one session. The important columns for us are
+subject (mouse name), date, eid (session UUID), pid (probe UUID), and
+probe_name (probe00 or probe01). One session can have two probes, so the
+number of rows in that CSV is larger than the number of sessions.
+
+1.2 The trial table the paper actually used
+
+Trial events were taken from the public aggregate
+
+    aggregates/2024_Q2_IBL_et_al_BWM/trials.pqt
+
+downloaded from OpenAlyx / AWS and stored locally as
+
+    /Users/Stefan/Desktop/trials.pqt
+
+This table already has, for every BWM session:
+
+    stimOn_times, firstMovement_times, feedback_times
+    contrastLeft, contrastRight
+    probabilityLeft          (the block prior: 0.2, 0.5, or 0.8)
+    choice                   (IBL convention: 1 = left, -1 = right, 0 = nogo)
+    feedbackType             (1 = reward, -1 = error, 0 = no feedback)
+    rewardVolume
+    bwm_include              (the paper's own trial-inclusion flag)
+
+Decision: use this aggregate and the paper's bwm_include flag, rather than
+re-deriving inclusion from raw ALF trial files. Reason: we wanted the same
+trials the paper decoded, not a private reimplementation of their QC.
+
+1.3 The unit table the paper actually used
+
+Well-isolated neurons were taken from
+
+    /Users/Stefan/Desktop/clusters.pqt
+
+same public tag 2024_Q2_IBL_et_al_BWM. The paper's unit QC is the column
+"label". We kept units with label >= 1.
+
+Decision: label >= 1, not "all clusters" and not a stricter custom SNR cut.
+Reason: that is the BWM paper's published unit set. A custom cut would have
+made spike-based decoding incomparable to the paper.
+
+1.4 Live session data (wheel, video, spikes)
+
+The aggregates do not contain wheel traces, paw keypoints, or spike trains.
+Those were loaded session-by-session from the public OpenAlyx API:
+
+    base URL  https://openalyx.internationalbrainlab.org
+    password  international
+
+using IBL's ONE client and SessionLoader / SpikeSortingLoader. Files are
+cached locally under the ONE cache directory (on this machine,
+~/Downloads/ONE/openalyx.internationalbrainlab.org). Spike sorting used
+revision 2024-05-06, matching the BWM freeze.
+
+1.5 The motor-cortex cohort
+
+The BWM recorded many brain areas. We did not want all of them. The cohort
+was restricted to mice that have at least one insertion in motor cortex,
+listed in
+
+    /Users/Stefan/Desktop/MOUSELAB/BWM_2023_12_mice_with_motor_cortex_recordings.csv
+
+That CSV was built earlier from the same freeze by asking which BWM
+(subject, date) pairs have good units in MOp (primary motor) or MOs
+(secondary motor). It names 39 mice and, across their motor-cortex session
+dates, 67 sessions.
+
+Decision: define the cohort by (mouse, date) in that CSV, then look up the
+eid in 2023_12_bwm_release.csv. Reason: we wanted every BWM session on those
+dates for those mice, including probes that are not themselves in motor
+cortex, because a session often has a second probe in striatum, thalamus,
+etc. The session is the unit of recording; the motor-cortex CSV is only the
+admission ticket.
+
+If a (subject, date) in the CSV had failed to match an eid, the builder
+would have aborted. It matched 39 mice and 67 sessions, which is what the
+CSV promised.
+
+The 39 mice are:
+
+    NYU-21, NYU-30, NYU-37, NYU-39, NYU-48,
+    CSHL049, CSHL058, CSHL059, CSHL060,
+    UCLA033, UCLA034, UCLA035, UCLA037,
+    KS023, KS043, KS046, KS051, KS052, KS091,
+    DY_011, DY_014, PL033,
+    SWC_043, SWC_061, SWC_038,
+    ZFM-01576, ZFM-01936, ZFM-01937, ZFM-02370,
+    ZM_1897, ZM_2240, ZM_2241, ZM_2245,
+    NR_0027,
+    ibl_witten_19, ibl_witten_32,
+    CSH_ZAD_019, CSH_ZAD_024, CSH_ZAD_026
+
+Not all of these survive into ModelDataLeft. The rest of this file says
+exactly who is dropped, and why.
+
+
+--------------------------------------------------------------------------------
+2. Step A — Build Database (native-rate, paper trials, paper units)
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/fullData.py
+Output: /Users/Stefan/Desktop/BehaviorRes/Database
+
+This is the "original dataset" in the sense of "the first folder we built
+from public IBL data." It is not filtered for modeling. It is the warehouse.
+
+2.1 Which trials go in
+
+For each of the 67 eids, every row in trials.pqt for that eid is loaded.
+A sequential trial_index is assigned in that table's order (0, 1, 2, ...
+over the full session, including trials we are about to drop). Then a trial
+is KEPT only if ALL of the following hold:
+
+    (a) bwm_include is True
+    (b) actionTime = firstMovement_times - stimOn_times is between 0.08 s
+        and 2.0 s inclusive
+    (c) stimOn_times, feedback_times, and firstMovement_times are all finite
+    (d) trialDuration = feedback_times - stimOn_times is > 0
+
+Decision: RT window 0.08–2.0 s. Reason: this is the BWM paper's reaction-time
+window for decoding. Trials that never move, or move after 2 s, are outside
+the paper's analyzed set. We did not invent a different RT cut.
+
+Decision: keep error trials (feedbackType = -1) in Database. Reason: Database
+is the warehouse. Filtering to rewarded trials happens later, in
+DatasetFiltered, because the modeling target is successful paw/wheel behavior
+and error trials have a different feedback event.
+
+Decision: keep trials even if pose is missing. Reason: same warehouse logic.
+A session with no DLC/LP still has wheel and spikes. Those sessions are
+dropped only when we copy to DatasetFiltered.
+
+After these cuts, Database contains 30,264 trials, 39 mice, 67 sessions,
+13,929 units. Of those trials, 25,952 are rewarded (feedbackType = 1)
+and 4,312 are errors (feedbackType = −1). DatasetFiltered later keeps
+only the rewarded ones, and only from sessions that have pose.
+
+2.2 Trial clock
+
+Every time series stored on a trial is expressed in seconds relative to
+stimulus onset:
+
+    t = 0                at stimOn_times
+    t = actionTime       at firstMovement_times
+    t = trialDuration    at feedback_times (reward or error)
+
+Absolute session times (stimOn_times, feedback_times, firstMovement_times)
+are also stored as scalars, so one can always go back to the session clock.
+
+2.3 Stimulus side and brightness
+
+IBL Gabor stimuli are specified as contrastLeft and contrastRight. Only one
+is finite on a given trial (except pathological rows). We mapped:
+
+    stim_side = "left"  if contrastLeft is finite and contrastRight is not
+    stim_side = "right" if contrastRight is finite and contrastLeft is not
+    brightness = the finite contrast, so one of
+                 0.0, 0.0625, 0.125, 0.25, 1.0
+                 i.e. 0%, 6.25%, 12.5%, 25%, 100%
+
+Decision: store brightness as the contrast on the side that actually had the
+stimulus, not as a signed contrast. Reason: later we wanted to group trials
+by difficulty (0% vs 100%) independently of left/right. Side is a separate
+field (stim_side).
+
+0% contrast ("no stimulus", catch-like) is a real BWM condition. It is kept
+in Database and DatasetFiltered. It is removed only at ModelData, because
+those trials are systematically longer and are a different computational
+problem (detect absence, not a visible Gabor).
+
+2.4 Choice, reward, block
+
+    choice       : "left" / "right" / "nogo"  (mapped from IBL 1 / -1 / 0)
+    choice_ibl   : the raw integer, kept so nothing is lost
+    reward       : 1 or -1 from feedbackType
+    outcome      : "reward" / "error" / "no_feedback"
+    block_prior  : probabilityLeft (0.2, 0.5, 0.8)
+    rewardVolume : microlitres, 0 if missing
+
+2.5 Wheel
+
+SessionLoader.load_wheel(fs=1000) gives a 1000 Hz trace of signed angular
+velocity in radians per second. For each kept trial we stored the samples
+whose timestamps fall in [stimOn, feedback], shifted so t=0 is stimOn:
+
+    wheel_t, wheel_velocity
+
+Decision: store SessionLoader velocity, not a finite difference of wheel
+position that we computed ourselves. Reason: that is the BWM decoding
+target's native representation. The encoding GLM in some IBL papers uses a
+different wheel feature (previous-value difference of position). We
+deliberately used the decoding representation.
+
+If wheel failed to load, the arrays are empty.
+
+2.6 Pose (DLC and Lightning Pose)
+
+Two independent trackers exist on IBL side cameras:
+
+    DeepLabCut        (dlc)
+    Lightning Pose    (lightningPose)
+
+Each side camera labels, among other body parts, paw_r and paw_l. The IBL
+convention, which we followed and did not reinvent, is:
+
+    On a given side camera, paw_r is the paw CLOSER to that camera
+    (the "near" paw). paw_l is the paw farther from that camera.
+
+    Therefore:
+        left-camera  paw_r  = the animal's LEFT paw
+        right-camera paw_r  = the animal's RIGHT paw
+
+    The same anatomical paw's far view is paw_l on the opposite camera.
+
+Likelihood threshold: any keypoint with likelihood < 0.95 is set to NaN
+before anything is computed. Decision: 0.95 is the IBL/brainbox default
+used throughout IBL pose QC. We did not loosen it to keep more points, and
+we did not tighten it. NaNs are not interpolated across long gaps.
+
+We try to load both cameras. If stereo fails, we try left only, then right
+only. Sessions can therefore have:
+
+    both cameras   -> x, y, and a stereo z
+    one camera     -> x, y, and z = NaN
+    no pose        -> empty paw arrays
+
+Stereo z is not a millimetre reconstruction. It is
+
+    z = x_near - x_far
+
+the horizontal disparity of the SAME anatomical paw in the two side views,
+used as a mediolateral proxy. This session set has no body-camera paw
+tracking and no camera-calibration datasets on OpenAlyx, so we did not
+pretend to have 3D millimetres.
+
+Decision: store times even when x/y are NaN in the windowing of positions
+(window_xyz does not require finite values). Downstream velocity code then
+skips non-finite samples. Reason: keeping the camera clock makes later
+interpolation onto a 20 ms grid well-defined.
+
+2.7 The first paw-side label: used_paw
+
+For each trial we needed to pick WHICH paw's (x, y, z) to store, because we
+did not at that stage save both paws (the pickles would have doubled). The
+rule, function select_used_paw in fullData.py, is:
+
+    Compute mean image-plane speed of left-camera paw_r and of right-camera
+    paw_r over [stimOn, feedback].
+    If the left near-paw is faster or tied, label the trial "left".
+    If the right near-paw is faster, label "right".
+    If only one camera exists, use that camera's side.
+    Try DLC first; if that returns None, try Lightning Pose.
+
+Decision: a per-trial movement heuristic, not a mouse-level "dominant paw"
+from metadata. Reason: IBL does not ship a paw-dominance field, and mice
+do use the non-preferred paw on some trials. This label is called used_paw
+and is NOT the same as the later wheel_paws label (section 8). used_paw
+answers "which near paw moved more in pixels per second." It does not
+answer "which paw turned the wheel," and it will happily pick a paw that is
+wiggling against the body.
+
+Decision: ties go to left (left_speed >= right_speed). Reason: we needed a
+deterministic tie-break; left is the IBL-typical paw. This bias is real and
+is one reason we later built wheel_paws.
+
+The stored dlc_* and lp_* traces on the trial are the kinematics of that
+one chosen paw, not both.
+
+2.8 Units and spikes
+
+For each probe in the session:
+
+    SpikeSortingLoader.load_spike_sorting(revision="2024-05-06",
+                                          good_units=True)
+    merge clusters with channels
+    keep clusters with label >= 1
+    further restrict to UUIDs that appear in clusters.pqt for this (eid, pid)
+    with label >= 1
+
+The second restriction (intersection with the freeze table) is the actual
+BWM unit set. The first is a practical prefilter. Units from probe00 and
+probe01 are concatenated; unit_idx is 0 .. n_units-1 in that concatenated
+order. Spikes are stored per trial as times relative to stimOn, plus
+spike_unit_idx into that session-level unit table.
+
+Decision: n_units is a session constant. Every trial in a session has the
+same neurons. We never dropped units trial-by-trial. Reason: a neuron that
+does not fire on a trial is a zero, not a missing feature.
+
+Brain area is the Allen acronym at the cluster (MOp5, CP, etc.). CCF
+coordinates are IBL metres:
+
+    allen_x = ML  (negative = left hemisphere)
+    allen_y = AP  (positive = anterior)
+    allen_z = DV  (more negative = ventral)
+
+also stored as micrometres.
+
+2.9 On-disk layout (this layout is reused by every later folder)
+
+    BehaviorRes/Database/
+        manifest.json
+        trials.parquet          (one row per trial, scalars only)
+        units.parquet           (one row per unit, with eid)
+        sessions/
+            <eid>.pkl           (full payload: units table + all trial arrays)
+            <eid>_trials.parquet
+            <eid>_units.parquet
+            <eid>.ok.json
+
+Pickles hold the arrays. Parquet indexes are for counting and joining
+without unpickling.
+
+Database after this step: 39 mice, 67 sessions, 30,264 trials, 13,929 units.
+
+
+--------------------------------------------------------------------------------
+3. Step B — Native-rate paw velocity and STILL / COUPLED / DECOUPLED
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/enrich_and_discretize.py
+(the first half of that script)
+
+The warehouse traces were positions. For prediction we wanted:
+
+    signed velocity vx, vy, vz
+    scalar speed
+    a three-way behavioural state: still / coupled / decoupled
+
+These were computed at the NATIVE camera times (not yet 20 ms), using only
+the windowed trial traces already in the pickle. We did not go back to
+full-session pose for this step.
+
+3.1 Velocity
+
+For each of x, y, z:
+
+    Gaussian-smooth with sigma = 20 ms in time
+        (sigma in samples = 0.02 / median_dt, floored at 0.5)
+    then np.gradient against time, only inside contiguous finite segments
+    of length >= 3
+
+Decision: 20 ms Gaussian. Reason: it matches the BWM decoding bin and the
+ZFM-01576_behavior.py prototype. It is a smoothing scale, not a bin yet.
+
+Speed:
+
+    3D  sqrt(vx^2 + vy^2 + vz^2)  when vz is finite
+    2D  hypot(vx, vy)             when vz is NaN (no stereo)
+
+Decision: 2D fallback rather than dropping the trial. Reason: some sessions
+have only one side camera; xy tracking is still a paw. Those sessions were
+later removed from the filtered set for a different reason (no z at all),
+but the native traces still have a defined speed.
+
+The same computation is done independently on DLC and on Lightning Pose,
+producing dlc_vx/vy/vz/speed and lp_vx/vy/vz/speed.
+
+3.2 STILL / COUPLED / DECOUPLED
+
+This heuristic was written for the ZFM-01576 video overlays and then reused.
+It is NOT from the BWM paper. The paper had no paw-state target. That is a
+new decision, and it is the most judgement-heavy rule in the pipeline.
+
+Image y increases downward, so contact with the wheel is a LARGE y (the paw
+is low in the image). Lift is a decrease in y relative to a slowly adapting
+"recent contact height."
+
+Per sample, after interpolating wheel angular velocity onto the paw times:
+
+    paw speed = hypot(vx, vy)          (image-plane, px/s)
+    v_still   = clip(max(0.12 * p95_speed, 140), 140, 320) px/s
+    omega_move = clip(max(0.10 * p95_|wheel|, 0.30), 0.30, 1.00) rad/s
+
+    contact baseline: exponential tracker that follows y downward quickly
+    (time constant 40 ms) and upward slowly (280 ms)
+    lift = baseline - y
+    lift_thr = max(14 px, 4.5 * early_y_std)
+
+    STILL:      not moving much, default
+    COUPLED:    paw moving AND wheel moving AND not lifted
+    DECOUPLED:  lifted, OR moving while the wheel is idle, OR a mostly
+                vertical swipe
+
+Then a ~60 ms majority-vote smoother and a 45 ms minimum dwell, so one-frame
+flickers are not states.
+
+Decision: adaptive thresholds from that trial's own p95, with floors. Reason:
+cameras differ in resolution and fps (left ~60 Hz, right ~150 Hz), so a
+fixed px/s cut would not mean the same physical motion. The floors (140 px/s,
+0.30 rad/s) stop a dead-still trial from calling jitter "movement."
+
+Decision: use 2D speed for the state machine, not 3D. Reason: z is noisier
+and missing on some sessions; coupling to the wheel is an image-plane drag
+plus wheel velocity.
+
+These states are stored as dlc_paw_state and lp_paw_state on the native
+trial (one label per camera frame).
+
+
+--------------------------------------------------------------------------------
+4. Step C — DatasetFiltered (drop no-pose sessions and error trials)
+--------------------------------------------------------------------------------
+
+Same script, still enrich_and_discretize.py, writing
+
+    BehaviorRes/DatasetFiltered
+
+Rule, applied per Database session:
+
+    KEEP the session if at least one trial has DLC or LP samples
+    KEEP a trial if reward == 1
+
+Decision: drop whole sessions with no pose, rather than keeping their wheel
+and spikes. Reason: the stated goal is paw speed from spikes. A session with
+empty paw arrays cannot supply a target.
+
+Sessions that disappear entirely here (no DLC and no Lightning Pose):
+
+    KS051
+    KS052
+    ZM_1897
+    SWC_038  on 2020-07-30  (SWC_038's other dates do have pose)
+
+Decision: keep only positive-reward trials. Reason: error trials end in a
+timeout or incorrect feedback; the stimOn-to-feedback interval is a different
+behavioural epoch, and the user asked for rewarded behaviour. Database still
+has the errors if they are ever needed.
+
+Immediately after this copy, DatasetFiltered (and its discretized twin)
+had 36 mice, 63 sessions, and 24,571 rewarded pose trials. The stereo cut
+in the next section then removed two of those sessions. The rebuild in
+enrich_and_discretize had rewritten DatasetFiltered from Database; the
+stereo deletion happened after that rewrite.
+
+
+--------------------------------------------------------------------------------
+5. Step D — Remove sessions that lack stereo z (filtered folders only)
+--------------------------------------------------------------------------------
+
+Stereo z needs BOTH side cameras. Two sessions in the filtered set had pose
+on only one camera:
+
+    ibl_witten_19  2020-07-23
+        eid 65f5c9b4-4440-48b9-b914-c593a5184a18
+        right camera only
+
+    CSH_ZAD_024    2020-06-08
+        eid 8207abc6-6b23-4762-92b4-82e05bed5143
+        left camera only
+
+xy existed. z was NaN for every sample. 3D speed therefore collapsed to 2D
+for the entire session.
+
+Decision: delete those two sessions from DatasetFiltered and
+DatasetFilteredDiscretized, but KEEP them in Database and
+DatabaseDiscretized. Reason: the user asked for that specifically after we
+reported which sessions lacked stereo. The warehouse stays complete; the
+modeling copies require a 3D-capable paw.
+
+After this deletion, indexes were rebuilt. DatasetFiltered (and its
+discretized twin) then had:
+
+    34 mice, 61 sessions, 23,783 trials, 12,316 units
+
+Mice lost entirely from the filtered tree (no remaining session):
+ibl_witten_19 and CSH_ZAD_024, on top of KS051, KS052, ZM_1897 already gone
+for no pose. SWC_038 remains via its 2020-07-31 and 2020-08-01 sessions.
+
+
+--------------------------------------------------------------------------------
+6. Step E — Discretize onto a 20 ms grid
+--------------------------------------------------------------------------------
+
+Script: enrich_and_discretize.py (second half)
+Outputs:
+
+    BehaviorRes/DatabaseDiscretized
+    BehaviorRes/DatasetFilteredDiscretized
+
+ModelDataLeft is a descendant of DatasetFilteredDiscretized, not of the
+native-rate DatasetFiltered. The native folders still exist; they are not
+what ModelDataLeft contains.
+
+6.1 Why 20 ms
+
+The BWM paper decoded in 20 ms bins. There is no deep biophysical reason that
+20 ms is the "true" scale of motor cortex; it is the paper's choice, it is
+coarse enough to have counts rather than empty bins for typical firing
+rates, and it is fine enough to follow a reach. We used 20 ms so that a
+later decoder is in the same currency as the paper.
+
+The paper's wheel decoder did something we did NOT copy: it used a FIXED
+window, firstMovement − 0.2 s to firstMovement + 1.0 s, which is exactly
+60 bins of 20 ms. That makes every trial the same length. Our trials are
+stimOn → reward, and T varies (hundreds of milliseconds to many seconds).
+A fixed 1.2 s window would either clip long trials or pad short ones with
+pre-stim or post-reward time we did not want.
+
+Decision: keep the paper's 20 ms BIN, drop the paper's FIXED WINDOW.
+Window = [stimOn, feedback). Length varies. This was an explicit new
+decision, written into the session payload under "alignment".
+
+6.2 How the grid is laid out
+
+    T = trialDuration
+    n_bins = floor(T / 0.02)
+    leftover_s = T - n_bins * 0.02     (always in [0, 0.02))
+    t_bin_left  = 0, 0.02, 0.04, ..., (n_bins-1)*0.02
+    t_bin_right = t_bin_left + 0.02
+
+The leftover tail shorter than 20 ms is DROPPED. We do not stretch bins.
+We do not add a partial bin.
+
+Decision: drop leftover rather than stretch. Reason: stretching
+linspace(0.02, T, ceil(T/0.02)) would make dt ≠ 20 ms, which defeats the
+point of matching the paper's sampling interval. Two leftover values that
+look like 0.02 are floating-point; the true max leftover is just under 0.02.
+
+6.3 Spikes vs continuous targets (causality)
+
+This is the alignment that matters for "spikes predict paw speed."
+
+    Spike counts in bin i: spikes with t in [t_bin_left[i], t_bin_right[i])
+        left-closed, right-open, same as numpy/BWM bincount.
+
+    Wheel velocity, paw x/y/z/vx/vy/vz/speed: linearly interpolated at
+        t_bin_right[i], i.e. the RIGHT EDGE of the bin.
+
+    Therefore every spike counted in the bin occurs strictly before the
+    behaviour sample for that bin.
+
+That is the BWM decoding convention (interval_begs + binsize), not the
+encoding-GLM convention.
+
+Decision: do NOT extrapolate. If the native trace does not cover
+t_bin_right, the interpolated value is NaN. The paper used
+fill_value='extrapolate' because their fixed window sometimes stuck out
+past the observed support. Our window is inside stimOn–feedback by
+construction, but pose can still have holes (likelihood < 0.95). NaN is
+honest; extrapolation would invent paw speed.
+
+6.4 Categorical states on the grid
+
+Native still/coupled/decoupled labels are majority-voted inside each 20 ms
+bin. Ties: the sample closest to the right edge. Empty bin: code -1, label
+"none".
+
+6.5 spike_counts
+
+Array of shape (n_bins, n_units), dtype uint16, counts per unit per bin.
+n_units is the session's unit count, same for every trial in the session.
+n_bins is the trial's bin count, different across trials.
+
+We verified after the fact that within a trial, every timeseries
+(t_bin_*, wheel, dlc_*, lp_*, spike_counts along axis 0) has the same
+n_bins. Across trials they do not, and are not supposed to.
+
+6.6 What we refused to do
+
+    Time-warp each trial onto a fixed number of bins. Paw speed is a
+    physical rate in real time. Stretching a 280 ms trial and a 2 s trial
+    onto the same grid would destroy the 20 ms meaning.
+
+    Pad every trial to the global max n_bins (~65,000, from a handful of
+    broken feedback_times). That would dominate memory and the loss.
+
+DatasetFilteredDiscretized after this step: still 34 mice, 61 sessions,
+23,783 trials, 12,316 units, now with n_bins, leftover_s, t_bin_left/right,
+interpolated continuous traces, binned states, and spike_counts.
+
+n_bins in that set ranged from 8 to 65,004. Median 18, mode 14, p90 = 51.
+The insane maximum is a bad feedback_times, not a 20-minute decision. That
+is why ModelData later caps n_bins.
+
+
+--------------------------------------------------------------------------------
+7. Step F — ModelData (the modeling table, still both paws)
+--------------------------------------------------------------------------------
+
+Source: DatasetFilteredDiscretized
+Output: BehaviorRes/ModelData
+
+This is the first folder built specifically as a modeling set rather than a
+warehouse. Three cuts, applied in this order:
+
+    (1) Drop entire sessions with fewer than 5 motor-cortex units
+    (2) Drop remaining trials with brightness == 0
+    (3) Drop remaining trials with n_bins > 500
+
+7.1 What "motor cortex" means here
+
+    brain_area starts with "MOp" or "MOs"
+
+That includes layers: MOp5, MOs6a, MOp2/3, etc. It does NOT include FRP
+(frontal pole), even though FRP is nearby and some sessions have FRP units.
+
+Decision: MOp/MOs only, not FRP, not "any frontal." Reason: the cohort CSV
+was defined by MOp/MOs; FRP is a different area. The startswith rule is
+deliberate so that MOp2/3 counts and a bare "MOp" would count.
+
+Unit count is a SESSION property. If a session has 4 MOs units, EVERY trial
+in that session is below the cut. We do not drop some trials and keep
+others for this rule.
+
+Decision: threshold 5 motor units, not 1 and not 20. Reason: 1 is enough to
+say "there is a motor cell" but not enough to decode a population. 20 would
+have thrown away sessions that are still usable. 5 is the floor we already
+knew existed in the filtered set (PL033 2022-10-10 has exactly 5 and was
+kept). It is a judgement call.
+
+Eight sessions failed this cut and were not copied into ModelData:
+
+    mouse            date        motor units   trials in filtered set
+    ibl_witten_32    2021-07-21       1              134
+    CSHL060          2020-03-11       3              629
+    CSHL058          2020-07-11       3              238
+    SWC_061          2020-11-23       4              452
+    SWC_043          2020-09-21       2              308
+    SWC_043          2020-09-16       4              378
+    UCLA035          2022-02-24       2              330
+    NYU-39           2021-05-12       1              451
+
+    Total trials removed with those sessions: 2,920
+
+Mice that disappear entirely (they had no other session left):
+
+    NYU-39
+    ibl_witten_32
+
+CSHL060, CSHL058, SWC_061, SWC_043, UCLA035 remain via other dates.
+
+Decision: when we KEEP a session, we keep ALL of its units, not only MOp/MOs.
+Reason: the cut is an admission ticket ("enough motor cortex to be in the
+modeling set"), not a feature mask. A later model can still select motor
+columns. Throwing away striatal/thalamic units at copy time would have been
+irreversible.
+
+After this cut: 20,863 trials in 53 sessions, 32 mice.
+
+7.2 Drop 0% brightness
+
+On the remaining sessions, drop trials with brightness == 0.0 (exactly;
+these values are 0, 0.0625, 0.125, 0.25, 1.0 with no fuzz).
+
+    1,502 trials dropped here
+
+(The original filtered set had 1,707 zero-contrast trials; 205 of those
+lived in the eight sessions already removed, so they are not counted
+again here. Sequential remaining after this cut: 20,863 − 1,502 = 19,361.)
+
+Decision: drop 0% rather than keep it as a fifth condition. Reason: those
+trials are a different task (no visible Gabor), they are the longest and
+most heavy-tailed (median n_bins 31 vs 16 at 100%), and they are only 7% of
+the filtered set. The user asked for this cut when creating ModelData.
+
+7.3 Drop n_bins > 500
+
+    84 trials dropped here
+    n_bins == 500 did not occur; the cut is strictly greater than 500
+    remaining max n_bins = 494, min = 8
+
+Among the 53 sessions that passed the motor-unit cut, 108 trials had
+n_bins > 500. Twenty-four of those were also brightness == 0, so they
+had already been removed by cut (2). The remaining 84 are the ones this
+cut actually deleted. Sequential remaining: 19,361 − 84 = 19,277, which
+is ModelData.
+
+Decision: 500 bins = 10 seconds of complete 20 ms bins. That is far above
+p99 of the filtered set (300 bins) and far below the pathological 65,004.
+It removes broken feedback_times without touching ordinary long-RT trials
+(the BWM RT cap is already 2.0 s; n_bins > 500 means the reward came much
+later than firstMovement, i.e. a bad interval, not a slow mouse).
+
+We did not cap or truncate those trials to 500 bins. We dropped them.
+Truncation would have silently changed trialDuration.
+
+7.4 What ModelData is
+
+    32 mice, 53 sessions, 19,277 trials, 10,537 units
+    brightness in {0.0625, 0.125, 0.25, 1.0}
+    n_bins in [8, 494]
+    every session has >= 5 MOp/MOs units (median 39, max 226)
+    still contains left-paw, right-paw, and both-paw trials
+    still 20 ms discretized, same alignment as DatasetFilteredDiscretized
+
+Brightness counts in ModelData:
+
+    6.25%   3,589
+    12.5%   4,545
+    25%     5,281
+    100%    5,862
+
+
+--------------------------------------------------------------------------------
+8. Step G — Label which paw(s) actually turn the wheel (wheel_paws)
+--------------------------------------------------------------------------------
+
+Script: /Users/Stefan/Desktop/label_wheel_paws.py
+
+This step did not create a new folder. It PATCHED every existing folder:
+
+    Database
+    DatasetFiltered
+    DatabaseDiscretized
+    DatasetFilteredDiscretized
+    ModelData
+
+(ModelDataLeft did not exist yet.)
+
+8.1 Why used_paw was not enough
+
+used_paw (section 2.7) is "which near paw had higher mean pixel speed."
+Looking at videos, the other paw often moves but is held against the body
+and does not turn the wheel. A speed comparison cannot tell coupling from
+a body-held wiggle. The user asked for an explicit left / right / both
+label based on whether the paw contributes to wheel turning, and said we
+would have to look at the OTHER paw's DLC and Lightning Pose keypoints,
+which were not stored on the trial.
+
+8.2 Reloading both paws
+
+For each Database session we reloaded full DLC and Lightning Pose from
+OpenAlyx (cache hits). For each trial we took:
+
+    left  paw = left-camera  paw_r
+    right paw = right-camera paw_r
+
+i.e. both NEAR paws, the same anatomical mapping as before. We did not use
+the far view (paw_l) for this label; far tracking is worse, and the near
+view is the one that sees contact with the wheel on that side.
+
+Wheel traces already stored on the trial (relative to stimOn) were reused.
+We did not interpolate 6.5-million-sample full-session wheels per trial.
+
+8.3 "Contributes to turning the wheel"
+
+For each paw, at native camera times inside [stimOn, feedback]:
+
+    compute vx, vy as in section 3.1
+    interpolate wheel velocity onto those times
+    run the STILL/COUPLED/DECOUPLED machine from section 3.2
+    coupled_s = total time spent in COUPLED
+    speed     = mean image-plane speed over the trial (px/s)
+
+A paw CONTRIBUTES if and only if:
+
+    coupled_s  >= 0.080 s     (80 ms, ~5 frames at 60 Hz)
+    AND speed  >= 100 px/s
+
+Decision: 80 ms. Reason: the state machine already has a 45 ms min dwell;
+80 ms is a bit more than that, so a single flicker of "coupled" does not
+count as turning the wheel. It is still short enough that a brief real
+reach counts.
+
+Decision: 100 px/s mean speed. Reason: on a stereotyped left-paw mouse
+(ZFM-01576) the other paw's mean speed is ~8–21 px/s (body-held). Real
+reaches are 160–340 px/s. 100 sits between those. The coupled state already
+requires instantaneous speed above ~140 px/s, but the TRIAL MEAN can be
+lower because of still periods; 100 is a second filter on "this paw was
+actually doing something," not a restatement of v_still.
+
+If BOTH paws contribute:
+
+    both, but only if min(coupled_s) / max(coupled_s) >= 0.40
+
+    If the ratio is below 0.40, the weaker paw is treated as a hitchhiker
+    and the label is the stronger paw.
+
+Decision: 0.40 ratio. Reason: 80 ms of coupled on the other paw while the
+primary paw is coupled for 400 ms is not bimanual turning; it is a twitch
+during a one-paw reach. 40% is a judgement call, diagnosed on three
+sessions (ZFM-01576 left-dominant, ZM_2241 right-dominant, CSH_ZAD_026
+mixed) before running all 67 sessions.
+
+If only one paw contributes: that paw.
+If neither contributes: fall back to used_paw, so we never invent a third
+scheme for "we cannot tell."
+If there is no pose at all: wheel_paws is None. In Database that is 1,682
+trials, exactly the four no-pose sessions (KS051, KS052, ZM_1897, and
+SWC_038 2020-07-30). Those sessions are not in ModelData, so ModelData
+and ModelDataLeft have zero unlabeled trials.
+
+8.4 DLC vs Lightning Pose
+
+Each tracker produces its own left/right metrics and its own label.
+We then pick:
+
+    Lightning Pose if it has a usable trace on at least one paw
+    else DLC
+    else used_paw
+
+Decision: prefer LP. Reason: on the diagnostic sessions, DLC's "other paw"
+was noisier (e.g. ZM_2241 other-paw speed 78 px/s DLC vs 35 px/s LP). LP is
+the cleaner tracker in this IBL release. In ModelDataLeft this is not a
+hope: every one of the 7,173 trials has wheel_paws_source == "lp".
+
+Decision: we did NOT require both trackers to agree on "both." That would
+have been more conservative and would have undercounted bimanual trials.
+We trusted LP.
+
+8.5 Result on ModelData, before the left-only copy
+
+    left   7,173   (37.2%)
+    right  7,225   (37.5%)
+    both   4,879   (25.3%)
+    none   0
+
+used_paw and wheel_paws disagree often: thousands of trials that used_paw
+called left are wheel_paws right or both, and vice versa. That is the
+point of the second label. used_paw is still on the trial; we did not
+overwrite it.
+
+Mice are not all left-paw animals. ZFM-01576 is 97% left; ZM_2241 is 95%
+right; UCLA034 is 74% both. ModelDataLeft will therefore be a STRONGLY
+unbalanced subsample of mice, not a random 37% of trials.
+
+
+--------------------------------------------------------------------------------
+9. Step H — ModelDataLeft (keep wheel_paws == left)
+--------------------------------------------------------------------------------
+
+Source: BehaviorRes/ModelData
+Output: BehaviorRes/ModelDataLeft
+When: after wheel_paws had already been written onto ModelData
+
+Operation, session by session:
+
+    load the ModelData pickle
+    keep trials whose wheel_paws == "left"
+    if at least one trial remains, write the session into ModelDataLeft
+    do not drop units
+    do not re-discretize
+    do not re-label paws
+    rebuild trials.parquet, units.parquet, manifest.json
+
+No session in ModelData had zero left-paw trials, so all 53 sessions and
+all 32 mice remain. What changes is the NUMBER OF TRIALS PER SESSION.
+
+    ModelData:      19,277 trials
+    ModelDataLeft:   7,173 trials
+
+Examples of how lopsided that is (ModelDataLeft trials / ModelData trials):
+
+    ZFM-01576   486 / 503   (97% left; this is the stereotyped left-paw mouse)
+    KS023      1014 / 1320  (77%; largest absolute contributor, 14.1% of
+                             ModelDataLeft by itself)
+    NYU-30      681 / 1521
+    CSH_ZAD_026 667 / 1786
+    ZM_2241       5 / 441   (this mouse is right-paw; 5 left trials remain)
+    NYU-48        3 / 427
+
+Full left-trial counts in ModelDataLeft, largest first:
+
+    KS023 1014, NYU-30 681, CSH_ZAD_026 667, DY_011 508, PL033 508,
+    ZFM-01576 486, SWC_038 321, KS046 318, CSHL059 264, SWC_043 235,
+    ZM_2245 200, CSH_ZAD_019 188, ZM_2240 173, CSHL058 170, CSHL049 159,
+    DY_014 129, ZFM-01937 128, ZFM-01936 126, UCLA035 124, KS043 121,
+    NYU-21 109, SWC_061 102, CSHL060 90, ZFM-02370 86, UCLA037 70,
+    NR_0027 39, NYU-37 38, UCLA034 38, KS091 38, UCLA033 35,
+    ZM_2241 5, NYU-48 3
+
+Brightness inside ModelDataLeft (still no 0%):
+
+    6.25%   1,434
+    12.5%   1,713
+    25%     1,937
+    100%    2,089
+
+n_bins inside ModelDataLeft: min 8, median 18, max 494. n_units per
+session: min 41, max 524. Every trial has reward == 1.
+
+Decision: keep sessions with 3 or 5 left trials rather than dropping mice
+below some trial count. Reason: the user asked for the subset of left-paw
+trials, not a further "enough left trials per mouse" cut. Dropping ZM_2241
+and NYU-48 would have been a new modeling decision that was not requested.
+Those two mice are statistically almost absent and should be treated as
+such in any decoder, but they are in the folder.
+
+Decision: do not subset spike_counts to motor units, and do not subset to
+left-paw-preferring units. The arrays are still (n_bins, n_units) with the
+session's full BWM unit list. A left-paw trial still sees every recorded
+neuron.
+
+Decision: do not re-window or re-bin. n_bins, leftover, interpolations, and
+spike_counts are exactly those from DatasetFilteredDiscretized, already
+copied into ModelData. ModelDataLeft is a row filter.
+
+The filter note in ModelDataLeft/manifest.json is:
+
+    source = BehaviorRes/ModelData
+    filter.wheel_paws = left
+    n_trials_in  = 19277
+    n_trials_out = 7173
+
+
+--------------------------------------------------------------------------------
+10. What a single ModelDataLeft trial actually contains
+--------------------------------------------------------------------------------
+
+Scalars (also in trials.parquet):
+
+    mouse_id, lab, session_date, eid, trial_index
+    block_prior, stim_side, choice, choice_ibl, brightness
+    actionTime          (= firstMovement - stimOn, seconds)
+    trialDuration       (= feedback - stimOn, seconds)
+    reward              (= 1, always, because DatasetFiltered)
+    outcome             (= "reward")
+    rewardVolume
+    used_paw            (the old speed heuristic; may be "right" even here)
+    wheel_paws          (= "left", always, in this folder)
+    stimOn_times, feedback_times, firstMovement_times
+    n_wheel_samples, n_dlc_samples, n_lp_samples   (all equal n_bins)
+    n_spikes, n_units, n_bins, leftover_s
+    n_dlc_state_bins, n_lp_state_bins
+
+In the pickle, additionally:
+
+    t_bin_left, t_bin_right          (seconds from stimOn)
+    wheel_t, wheel_velocity          (at t_bin_right, rad/s)
+    dlc_t/x/y/z/vx/vy/vz/speed       (at t_bin_right)
+    lp_t/x/y/z/vx/vy/vz/speed        (at t_bin_right)
+    dlc_paw_state, dlc_paw_state_code
+    lp_paw_state,  lp_paw_state_code
+    spike_counts                     (n_bins, n_units)
+    spike_times, spike_unit_idx      (native relative times, also kept)
+    wheel_paws_source                ("lp" on all 7,173 trials)
+
+The session pickle also stores:
+
+    units                            (the session's BWM unit table)
+    n_units, n_motor_cortex_units
+    pids, probe_names
+    alignment                        (the binning contract, quoted below)
+    filter                           (how this session got into ModelDataLeft)
+    notes, version, enrich_version, disc_version
+
+The alignment dict on every discretized session is the written contract
+for how spikes and behaviour share a clock. It records binsize 0.02 s,
+origin = stimulus onset, window = [0, floor(T/0.02)*0.02), leftover
+dropped, spike counts on [left, right), continuous traces interpolated
+at the right edge with no extrapolation, paw state majority-voted in the
+bin, and the explicit difference from the paper's fixed 1.2 s window.
+
+Important: the stored dlc_* / lp_* traces are still the paw chosen by
+used_paw at Database-build time. If used_paw is "right" on a trial that
+wheel_paws later called "left", the stored kinematics are the RIGHT paw's
+trace, even though the trial is in ModelDataLeft. The label wheel_paws
+was computed from a fresh load of BOTH near paws; the stored arrays were
+not rewritten. That is a real limitation. If you need left-paw kinematics
+on every ModelDataLeft trial, you must either re-extract left-camera paw_r
+or restrict to the subset where used_paw == "left" as well
+(6,015 of 7,173 ModelDataLeft trials have used_paw == "left"; 1,158 have
+used_paw == "right" but wheel_paws == "left").
+
+The session-level units table is unchanged from ModelData: every BWM unit
+on that probe set, with area and CCF coordinates.
+
+
+--------------------------------------------------------------------------------
+11. Complete ancestry with counts
+--------------------------------------------------------------------------------
+
+    Public BWM freeze + OpenAlyx
+            |
+            |  cohort = 39 mice with motor-cortex BWM dates
+            |  trials = bwm_include AND RT in [0.08, 2] s
+            |  units  = clusters.pqt label >= 1
+            v
+    Database                          39 mice, 67 sess, 30264 trials, 13929 units
+            |  native wheel + DLC/LP of used_paw + spikes
+            |  then vx,vy,vz,speed and still/coupled/decoupled
+            |
+            |  drop sessions with no pose
+            |  drop error trials (keep reward == 1)
+            v
+    DatasetFiltered                   (then 36 mice / 63 sess, before stereo cut)
+            |
+            |  drop 2 sessions with only one side camera (no stereo z)
+            |      ibl_witten_19 2020-07-23
+            |      CSH_ZAD_024   2020-06-08
+            v
+    DatasetFiltered                   34 mice, 61 sess, 23783 trials, 12316 units
+            |
+            |  20 ms bins, stimOn -> reward, leftover dropped
+            |  spikes in [left, right); kinematics at right edge
+            v
+    DatasetFilteredDiscretized        34 mice, 61 sess, 23783 trials, 12316 units
+            |
+            |  drop 8 sessions with < 5 MOp/MOs units   (-2920 trials)
+            |  drop brightness == 0                     (-1502 trials)
+            |  drop n_bins > 500                        ( -84 trials)
+            v
+    ModelData                         32 mice, 53 sess, 19277 trials, 10537 units
+            |
+            |  patch wheel_paws = left / right / both
+            |      (reload both near paws, coupled+speed rule, prefer LP)
+            v
+    ModelData (labeled)               same size; 7173 left, 7225 right, 4879 both
+            |
+            |  keep wheel_paws == "left"
+            v
+    ModelDataLeft                     32 mice, 53 sess,  7173 trials, 10537 units
+
+
+Mice in Database but not in ModelDataLeft:
+
+    KS051, KS052, ZM_1897          no pose
+    SWC_038 on 2020-07-30 only     no pose (mouse remains via other dates)
+    ibl_witten_19                  no stereo z
+    CSH_ZAD_024                    no stereo z
+    NYU-39                         < 5 motor units (only session)
+    ibl_witten_32                  < 5 motor units (only session)
+
+    and, as sessions only (mouse still present):
+    CSHL060 2020-03-11, CSHL058 2020-07-11, SWC_061 2020-11-23,
+    SWC_043 2020-09-16, SWC_043 2020-09-21, UCLA035 2022-02-24
+
+
+--------------------------------------------------------------------------------
+12. Decisions, collected in one place
+--------------------------------------------------------------------------------
+
+Kept from the BWM paper, on purpose
+    motor-cortex cohort from the freeze
+    bwm_include trials
+    RT 0.08–2.0 s
+    units with clusters.pqt label >= 1
+    spike-sorting revision 2024-05-06
+    20 ms bin width
+    IBL choice/feedback integers decoded with the paper's mapping
+    pose likelihood >= 0.95
+    wheel = SessionLoader signed rad/s
+    near-paw = paw_r on that camera
+
+New relative to the paper
+    window is stimOn -> reward, not firstMovement-0.2 -> +1.0
+    variable n_bins, leftover < 20 ms dropped, no stretching
+    no extrapolation of kinematics
+    paw xyz, velocity, speed, and STILL/COUPLED/DECOUPLED
+    stereo z = x_near - x_far
+    used_paw speed heuristic, then later wheel_paws coupling heuristic
+    DatasetFiltered / ModelData / ModelDataLeft as nested modeling copies
+
+Judgement calls (not forced by the paper or by the user, but made and
+logged)
+    DatasetFiltered: pose session required, reward == 1
+    stereo-missing sessions out of filtered only
+    ModelData: >= 5 MOp/MOs units, MOp/MOs startswith, FRP excluded
+    ModelData: drop 0% contrast
+    ModelData: drop n_bins > 500 rather than truncate
+    ModelData: keep all units in admitted sessions
+    wheel_paws: coupled >= 80 ms, mean speed >= 100 px/s, ratio >= 0.40
+    wheel_paws: prefer Lightning Pose
+    wheel_paws: fall back to used_paw if neither paw contributes
+    ModelDataLeft: keep even mice with 3–5 left trials
+    ModelDataLeft: do not rewrite stored kinematics to the left paw
+
+Known limitations that follow from those decisions
+    stored dlc/lp traces follow used_paw, not necessarily wheel_paws
+    left hemisphere dominates motor coverage; left paw is often ipsilateral
+        to the recorded MOp/MOs
+    "both" is a heuristic; videos in BehaviorRes/PawStrats exist so a human
+        can disagree
+    n_bins still varies (8–494); a model must handle variable T
+    n_units still varies by session (41–524 in ModelDataLeft)
+    KS023 is 14% of ModelDataLeft; a pooled decoder will be pulled toward
+        that mouse unless you weight or split by mouse
+
+
+--------------------------------------------------------------------------------
+13. Scripts that implement this
+--------------------------------------------------------------------------------
+
+    fullData.py                 Database from OpenAlyx + paper aggregates
+    enrich_and_discretize.py    velocity, states, DatasetFiltered,
+                                both discretized copies
+    label_wheel_paws.py         wheel_paws on every BehaviorRes folder
+    (inline copy to ModelData)  brightness / n_bins / motor-unit cuts
+    (inline copy to ModelDataLeft)  wheel_paws == left
+
+Folder of record for modeling left-paw trials:
+
+    /Users/Stefan/Desktop/BehaviorRes/ModelDataLeft
+
+End of write-up.

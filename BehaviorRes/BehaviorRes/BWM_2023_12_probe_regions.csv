@@ -1,0 +1,699 @@
+pid,probe_regions_with_good_units,probe_region_good_unit_counts,n_regions_probe
+00a824c0-e060-495f-9ebc-79c82fef4c67,"Isocortex, MB",Isocortex:35; MB:32,2
+00a96dee-1e8b-44cc-9cc3-aca704d2b594,"HB, MB",HB:129; MB:55,2
+00c425fd-ec3e-4cd2-b8af-c0bc0c4bdd44,"HPF, Isocortex, OLF",HPF:44; Isocortex:43; OLF:5,3
+0143d3fe-79c2-4922-8332-62c3e4e0ba85,MB,MB:28,1
+01864e9d-0dbe-41d4-9e3a-0285348ecfc1,"HB, MB",HB:44; MB:38,2
+01937b3b-8719-43c3-b5bd-14e6b0cf2802,"HB, CB",HB:175; CB:35,2
+0228bcfd-632e-49bd-acd4-c334cf9213e9,CB,CB:127,1
+02328ef5-47d4-4690-b020-04b6315aa2d6,"CNU, OLF",CNU:79; OLF:16,2
+0259543e-1ca3-48e7-95c9-53f9e4c9bfcc,"CTXsp, TH, HPF, OLF",CTXsp:12; TH:8; HPF:1; OLF:1,4
+02cc03e4-8015-4050-bb42-6c832091febb,"MB, Isocortex, HPF",MB:108; Isocortex:19; HPF:15,3
+0393f34c-a2bd-4c01-99c9-f6b4ec6e786d,"Isocortex, MB, HPF",Isocortex:60; MB:37; HPF:18,3
+03c42ea1-1e04-4a3e-9b04-46d8568dcd02,"HB, CB",HB:104; CB:77,2
+03d2d8d1-a116-4763-8425-4ef7b1c1bd35,"Isocortex, CTXsp, OLF",Isocortex:114; CTXsp:55; OLF:4,3
+04690e35-ab38-41db-982c-50cbdf8d0dd1,"TH, HY, OLF, CNU, CTXsp",TH:48; HY:14; OLF:6; CNU:2; CTXsp:1,5
+04c9890f-2276-4c20-854f-305ff5c9b6cf,"HB, CB",HB:94; CB:3,2
+04db6b9e-a80c-4507-a98e-ad76294ac444,"CB, MB, HB",CB:125; MB:45; HB:42,3
+0566938b-245d-4e5f-89ee-59d53a44f065,"HB, HPF",HB:68; HPF:12,2
+05ccc92c-fcb0-4e92-84d3-de033890c7a8,"CTXsp, CNU, Isocortex",CTXsp:20; CNU:10; Isocortex:3,3
+05ec6af9-6c83-422d-91a3-ba815fa65e92,"HB, CB",HB:24; CB:16,2
+0685d767-80a2-49b6-a51a-0e9b1dd7a14d,"HB, MB, CB",HB:90; MB:3; CB:2,3
+069c2674-80b0-44b4-a3d9-28337512967f,"MB, HB",MB:115; HB:26,2
+06b677d6-b074-4444-bd4a-3235a310e6e0,"CB, MB",CB:139; MB:87,2
+06c6741e-9f2a-4114-8ca9-0dc5ccc951e6,"Isocortex, OLF",Isocortex:38; OLF:30,2
+06cb2ee3-0fb8-4ace-acbe-19c716f3ca40,"CNU, HY, Isocortex",CNU:48; HY:21; Isocortex:2,3
+06d42449-d6ac-4c35-8f85-24ecfbc08bc1,"CNU, Isocortex",CNU:76; Isocortex:4,2
+071f02e7-752a-4094-af79-8dd764e9d85d,"TH, Isocortex, HPF",TH:107; Isocortex:15; HPF:9,3
+0777b1bf-964b-49b7-888b-8a6c9df09c3b,"CNU, Isocortex",CNU:12; Isocortex:2,2
+07abb39b-063b-4ef8-b3ab-963c6a1b5cc5,"MB, HB",MB:109; HB:1,2
+07c79864-6fff-4e72-9fce-1c982e3457f9,"HPF, TH",HPF:26; TH:19,2
+082187a0-121f-47d5-962a-a9ad467e7124,CNU,CNU:15,1
+0851db85-2889-4070-ac18-a40e8ebd96ba,"TH, Isocortex, HPF",TH:22; Isocortex:9; HPF:2,3
+08ed0b3c-9f94-4c1f-8522-3d42a642a6b0,"CNU, OLF, CTXsp, Isocortex",CNU:20; OLF:12; CTXsp:11; Isocortex:3,4
+0909252c-3ad0-413f-96f5-7eff885b50aa,"HB, MB",HB:66; MB:17,2
+091392a5-73f6-40f3-8552-fa917cf96deb,"TH, Isocortex",TH:80; Isocortex:13,2
+0925fb1b-cf83-4f55-bfb7-aa52f993a404,"CB, HB",CB:32; HB:2,2
+099c0519-640b-4eb7-867c-998dc337579d,"TH, Isocortex, HPF, HY",TH:10; Isocortex:6; HPF:5; HY:3,4
+09b62a15-dd8b-4f47-881f-d3f1e5ea5ff4,"TH, HPF",TH:9; HPF:1,2
+0a0184b3-9e1a-4c36-98f4-00ae3beb8f01,"HPF, Isocortex",HPF:101; Isocortex:23,2
+0a45a464-a909-4b7c-a3e0-cd6cfb4262e4,"MB, HB, HPF",MB:88; HB:87; HPF:1,3
+0a85a28b-e9e3-44ec-ad4d-88ba9116ff63,"HPF, TH",HPF:50; TH:5,2
+0aafb6f1-6c10-4886-8f03-543988e02d9e,"MB, Isocortex, HPF",MB:49; Isocortex:24; HPF:9,3
+0b877123-0902-4432-b789-c4c6cc681df4,"Isocortex, HPF, MB, TH",Isocortex:33; HPF:8; MB:1; TH:1,4
+0b8ea3ec-e75b-41a1-9442-64f5fbc11a5a,"TH, Isocortex, HY, HPF",TH:180; Isocortex:22; HY:13; HPF:7,4
+0c15a331-09ac-445c-837f-6afb5e377e56,Isocortex,Isocortex:343,1
+0c42a3d2-beb7-4b7b-a9b5-1eea6c51e1f4,"Isocortex, CNU, TH",Isocortex:40; CNU:16; TH:16,3
+0ce74616-abf8-47c2-86d9-f821cd25efd3,CB,CB:137,1
+0dfc64c5-80bc-43b6-a7c4-2fb6e638e9f3,"CNU, OLF, Isocortex",CNU:140; OLF:37; Isocortex:13,3
+0e8d3cb3-2e4c-47a0-8bb4-65d2cc3161c6,"Isocortex, TH, HPF",Isocortex:20; TH:12; HPF:1,3
+0eb65305-bb95-4bf1-a154-1b810c0cff25,"TH, Isocortex, HPF, HY",TH:55; Isocortex:26; HPF:23; HY:5,4
+0ece5c6a-7d1e-4365-893d-ac1cc04f1d7b,"HB, CB",HB:76; CB:24,2
+0f306cdc-878a-4ea0-9e91-b97736731637,"MB, TH, HPF",MB:16; TH:3; HPF:1,3
+0fa33419-e7b9-4d00-8cab-3b51f93ecf0c,"Isocortex, HPF, MB",Isocortex:52; HPF:3; MB:2,3
+0fcb5f66-4d56-4247-8413-aef51e484e67,"HB, CB",HB:184; CB:57,2
+0ffa052a-fe3f-46c2-999d-43bd56b7826e,"TH, HY, Isocortex",TH:71; HY:6; Isocortex:5,3
+100433fa-2c59-4432-8295-aa27657fe3fb,"Isocortex, HPF",Isocortex:68; HPF:3,2
+10ef1dcd-093c-4839-8f38-90a25edefb49,MB,MB:43,1
+10f59add-706e-41d0-87ed-9a55eb138a66,"HB, CB",HB:30; CB:1,2
+117f0d28-3cc0-4837-9e3e-46db5bc3e662,"CNU, Isocortex",CNU:47; Isocortex:1,2
+11a5a93e-58a9-4ed0-995e-52279ec16b98,"TH, Isocortex, HPF",TH:188; Isocortex:20; HPF:19,3
+11f70c37-a546-439a-9fb7-da6b6ebfb0cb,CB,CB:119,1
+12c0f3a9-518e-4dac-9651-5d95c2b4730f,"HPF, Isocortex",HPF:39; Isocortex:7,2
+134e8241-f5d7-4ad7-a8c0-11b34f2eedc3,"TH, Isocortex",TH:10; Isocortex:2,2
+143dd7cf-6a47-47a1-906d-927ad7fe9117,"TH, HPF, Isocortex",TH:74; HPF:7; Isocortex:2,3
+15a2a63f-739d-4eb0-ab8f-fc95b6299b68,"HB, MB",HB:41; MB:36,2
+16799c7a-e395-435d-a4c4-a678007e1550,"TH, Isocortex, HPF",TH:86; Isocortex:26; HPF:12,3
+16ad5eef-3fa6-4c75-9296-29bf40c5cfaa,CB,CB:179,1
+176b4fe3-f570-4d9f-9e25-a5d218f75c8b,"HPF, CB, Isocortex",HPF:20; CB:7; Isocortex:2,3
+179ce6d0-e348-4257-b718-e58dd4134589,"HB, MB",HB:73; MB:41,2
+17fa2600-6349-4b6f-a7e4-d8ea5558fa12,HPF,HPF:142,1
+180d278e-1a49-42da-a624-24aa14b57a4e,"Isocortex, MB, HPF",Isocortex:67; MB:50; HPF:16,3
+1841cf1f-725d-499e-ab8e-7f6fc8c308b6,HPF,HPF:34,1
+1878c999-d523-474a-9d4e-8dde53d7324c,"HPF, CTXsp, CNU",HPF:34; CTXsp:29; CNU:5,3
+188fe7d5-fd1c-494f-88bc-672d77b9779e,"Isocortex, TH, HPF",Isocortex:34; TH:17; HPF:12,3
+18be19f9-6ca5-4fc8-9220-ba43c3e75905,"MB, TH, HPF, OLF",MB:124; TH:21; HPF:2; OLF:1,4
+18d316bf-d322-4c5c-814e-a58147f7bf5f,"HPF, Isocortex",HPF:72; Isocortex:11,2
+19137f8d-0f3b-4923-93ad-f741758e1b2e,"MB, HPF, Isocortex",MB:44; HPF:25; Isocortex:10,3
+19c5b0d5-a255-47ff-9f8d-639e634a7b61,Isocortex,Isocortex:58,1
+19c9caea-2df8-4097-92f8-0a2bad055948,"CNU, OLF, CTXsp",CNU:80; OLF:25; CTXsp:14,3
+19e0bf1e-018e-40cb-9acd-af8f0f66bd4a,HPF,HPF:40,1
+1a166c4f-4c53-422e-8473-b3cff85e6750,"MB, Isocortex, HPF",MB:60; Isocortex:30; HPF:17,3
+1a276285-8b0e-4cc9-9f0a-a3a002978724,"Isocortex, CNU, CTXsp, OLF",Isocortex:81; CNU:47; CTXsp:30; OLF:1,4
+1a60a6e1-da99-4d4e-a734-39b1d4544fad,"TH, HPF, Isocortex",TH:94; HPF:17; Isocortex:6,3
+1a924329-65aa-465d-b201-c2dd898aebd0,"TH, HPF, HY",TH:109; HPF:17; HY:1,3
+1ab86a7f-578b-4a46-9c9c-df3be97abcca,"Isocortex, CNU",Isocortex:48; CNU:43,2
+1bd85dab-7a53-49d1-acd4-e82f9fd07cf6,"HPF, Isocortex",HPF:105; Isocortex:62,2
+1bf5c05b-3654-4d5c-bac9-2b96edd12adf,"CNU, Isocortex, OLF",CNU:113; Isocortex:93; OLF:78,3
+1c4e2ebd-59da-4527-9700-b4b2dad6dfb2,"CB, HB",CB:49; HB:31,2
+1ca6cd06-1ed5-45af-b73a-017d5e7cff48,"CTXsp, HPF, OLF, TH",CTXsp:18; HPF:14; OLF:13; TH:13,4
+1d237afc-ac2f-4bac-a163-a397fe09819f,"TH, HY, CNU",TH:24; HY:8; CNU:6,3
+1d547041-230a-4af3-ba6a-7287de2bdec3,"CB, MB",CB:33; MB:27,2
+1df6ebb3-9d16-4c0f-96cc-e1b1596d2006,"Isocortex, OLF",Isocortex:43; OLF:10,2
+1e104bf4-7a24-4624-a5b2-c2c8289c0de7,"HPF, CTXsp, OLF",HPF:77; CTXsp:17; OLF:5,3
+1e176f17-d00f-49bb-87ff-26d237b525f1,"TH, HPF, Isocortex",TH:37; HPF:12; Isocortex:10,3
+1ef94d02-d51a-491f-a313-1bb5238d6b8b,CNU,CNU:142,1
+1f555fc6-5067-428b-a284-da6fb0b6b3a0,"Isocortex, MB",Isocortex:24; MB:15,2
+1f5d62cb-814f-4ab2-b6af-7557ea04d56a,"MB, HPF, Isocortex",MB:50; HPF:30; Isocortex:15,3
+1fa9efcf-def3-40b1-86ae-ca411da98ef2,"HPF, Isocortex",HPF:89; Isocortex:6,2
+1ff5ce1f-5500-444b-ad5f-70f90dd22ac3,"HPF, Isocortex, CNU",HPF:21; Isocortex:2; CNU:1,3
+20469b30-1cd8-4078-9883-a840a0f6d787,"Isocortex, CNU, OLF",Isocortex:39; CNU:19; OLF:9,3
+2122d807-13ab-494e-a1cc-e55cf24d3e9f,"Isocortex, TH",Isocortex:44; TH:16,2
+2201eb05-aebe-4bda-905e-b5cc1baf3840,"CB, HB",CB:105; HB:6,2
+220bca21-4cf8-43f1-a213-71645899c571,"TH, HPF, HY",TH:45; HPF:10; HY:6,3
+22609d51-0a6a-425d-a3ef-eeb43a9ba350,"HPF, Isocortex",HPF:217; Isocortex:5,2
+22f26d69-0b30-450e-9618-ee801b720e0a,"TH, HY, HPF",TH:24; HY:6; HPF:2,3
+234c9e15-79a4-4e8a-8263-8b06cfbcbe7d,"HB, CB",HB:108; CB:18,2
+2400a2fa-0335-480b-ac8d-a478171f3a55,"MB, HPF, HB",MB:55; HPF:5; HB:2,3
+24149f5c-2984-4b48-922b-3cd1452cd4bd,"MB, HB",MB:72; HB:54,2
+2564dc27-4eda-4fc3-a151-c13475796ee1,"Isocortex, CNU, HY",Isocortex:127; CNU:75; HY:5,3
+257d0357-76ed-4220-8d50-68da6efda72d,"Isocortex, HPF, MB",Isocortex:23; HPF:19; MB:1,3
+25a9182c-4795-4768-af47-98975d2d2a8a,"HB, MB",HB:116; MB:3,2
+25e75514-43e1-4c07-9fea-581bd203b55c,"HB, CB",HB:13; CB:9,2
+26118c10-35dd-4ab1-9f0f-b9a89a1da070,"CNU, Isocortex",CNU:57; Isocortex:25,2
+26af22bb-b295-4a45-8ed3-1700604c0708,"CNU, Isocortex",CNU:47; Isocortex:36,2
+27109779-1b15-4d74-893f-08216d231307,"MB, HPF, Isocortex, HB",MB:68; HPF:17; Isocortex:17; HB:2,4
+2781c08e-a356-4a0d-8c28-4f94d1c87f69,"HB, CB",HB:131; CB:46,2
+27bac116-ea57-4512-ad35-714a62d259cd,"MB, Isocortex, HPF",MB:67; Isocortex:32; HPF:30,3
+291fcd13-b629-49c0-baf8-57ed1351050e,"HB, CB",HB:34; CB:14,2
+29418b18-4db6-436f-a85e-b0f1d38d2e62,"HPF, Isocortex",HPF:135; Isocortex:57,2
+298e2a70-9801-45f0-b91c-d6bb9718427e,"Isocortex, OLF",Isocortex:128; OLF:55,2
+2a7caaa4-1710-49a1-ade4-db0a986ae6f5,"CNU, Isocortex",CNU:59; Isocortex:26,2
+2aea57ac-d3d0-4a09-b6fa-0aa9d58d1e11,"TH, Isocortex, HPF",TH:49; Isocortex:29; HPF:10,3
+2b3c3126-11f3-4a8e-aa44-2f965bf8ab9c,"CNU, Isocortex",CNU:77; Isocortex:46,2
+2c401cbd-b95c-4ebe-8a83-92b55ab49542,"Isocortex, OLF",Isocortex:33; OLF:5,2
+2cbb5bc7-edbd-431e-a931-21e466d20dec,MB,MB:55,1
+2ce1d485-ebce-41a2-a5ce-aa109d5a13a3,"Isocortex, OLF, CNU",Isocortex:223; OLF:74; CNU:2,3
+2d2cdf86-4a0c-42d8-aed3-5b187f160013,"Isocortex, CNU, OLF",Isocortex:43; CNU:21; OLF:1,3
+2d544e7f-c8af-46b5-aaa0-caf0ad4d63a1,CB,CB:107,1
+2e720cee-05cc-440e-a24b-13794b1ac01d,"HB, CB, MB",HB:144; CB:11; MB:2,3
+3017e4dc-2150-43ad-9b08-b95b48ba8dfa,"TH, CNU, OLF, CTXsp, HY",TH:41; CNU:24; OLF:9; CTXsp:7; HY:1,5
+30ac1320-d671-46fc-87ef-875cdfc6b4eb,"MB, HPF",MB:77; HPF:9,2
+30dfb8c6-9202-43fd-a92d-19fe68602b6f,"CB, HB",CB:20; HB:13,2
+310c60b6-d68f-4018-a86a-3668ce296837,"Isocortex, CNU, CTXsp",Isocortex:72; CNU:40; CTXsp:5,3
+31258665-fbe8-4599-9c5f-dbc0eeee9c51,"MB, HB, HPF",MB:62; HB:57; HPF:1,3
+31811232-52ef-456c-9772-5021c00b2bc9,"TH, HPF, HY, Isocortex",TH:17; HPF:9; HY:6; Isocortex:1,4
+31d8dfb1-71fd-4c53-9229-7cd48bee07e4,"OLF, Isocortex",OLF:77; Isocortex:25,2
+31f0400a-71f5-436c-ada4-dce50627dc73,"TH, CTXsp, CNU",TH:30; CTXsp:27; CNU:7,3
+3220377b-f53e-412d-a859-ef8ccb8f0a40,"HY, MB, TH",HY:38; MB:35; TH:11,3
+3282a590-8688-44fc-9811-cdf8b80d9a80,Isocortex,Isocortex:78,1
+3283d8ec-1436-4529-8a16-941bbf65c91d,"CNU, HY, HPF, Isocortex",CNU:122; HY:17; HPF:3; Isocortex:2,4
+32e30a72-5f18-4aff-81c3-4553531b2d75,"TH, Isocortex, CNU",TH:41; Isocortex:6; CNU:1,3
+335d689e-4d98-4532-b01b-7f7da89863c4,"TH, HY",TH:176; HY:23,2
+33cde267-919e-4c4d-9105-814787499837,MB,MB:86,1
+3530526e-e690-4222-878f-0f9f401fa759,"HPF, CTXsp, OLF",HPF:63; CTXsp:9; OLF:1,3
+35897454-8702-4dc4-9865-7f01fa65f355,"HB, CB",HB:26; CB:7,2
+362823e7-5514-41d3-a31d-4b73f91ad3d0,"HB, MB",HB:90; MB:52,2
+36362f75-96d8-4ed4-a728-5e72284d0995,"TH, HPF, HY",TH:135; HPF:11; HY:5,3
+366dabe3-2790-4511-a7dc-023a1ad9df75,"HB, CB",HB:18; CB:7,2
+3675290c-8134-4598-b924-83edb7940269,"MB, HB",MB:26; HB:1,2
+367ea4c4-d1b7-47a6-9f18-5d0df9a3f4de,CB,CB:11,1
+37137b1d-34d4-4183-9796-abfc9ffb6abe,CB,CB:94,1
+379105fd-dbb1-40d9-8a51-ae5a8ef8df04,"CNU, OLF, CTXsp",CNU:69; OLF:19; CTXsp:12,3
+38124fca-a0ac-4b58-8e8b-84a2357850e6,"TH, Isocortex, HPF",TH:117; Isocortex:58; HPF:53,3
+38981973-20de-44e5-8717-efcf88642502,"HB, CB",HB:99; CB:6,2
+38e9e5b8-db29-4158-a09d-cc1de4a1365a,"HB, MB, HPF",HB:92; MB:7; HPF:6,3
+39180bcb-13e5-46f9-89e1-8ea2cba22105,"CNU, CTXsp, HPF",CNU:31; CTXsp:2; HPF:2,3
+39883ded-f5a2-4f4f-a98e-fb138eb8433e,"HB, CB",HB:126; CB:28,2
+3a37fb5c-3e96-4a0e-ac63-2eeec6744588,"CB, HB",CB:163; HB:28,2
+3b729602-20d5-4be8-a10e-24bde8fc3092,"TH, CNU, Isocortex",TH:59; CNU:2; Isocortex:2,3
+3bd1f88b-4e0c-43a6-9483-3305e82f2fae,"HB, CB, Isocortex, MB",HB:44; CB:10; Isocortex:9; MB:3,4
+3c283107-7012-48fc-a6c2-ed096b23974f,"MB, HB",MB:117; HB:2,2
+3c9c3757-32dd-40cf-83ec-5e21731ce9c5,"MB, HB",MB:70; HB:64,2
+3ccb2d59-9e94-48e6-9e72-0b7b96bd3f9b,"HB, CB",HB:95; CB:11,2
+3d3d5a5e-df26-43ee-80b6-2d72d85668a5,"MB, TH, Isocortex, HPF",MB:61; TH:29; Isocortex:24; HPF:17,4
+3e7618b8-34ca-4e48-ba3a-0e0f88a43131,"TH, Isocortex, HY",TH:20; Isocortex:5; HY:2,3
+3eb6e6e0-8a57-49d6-b7c9-f39d5834e682,"TH, Isocortex, HPF",TH:192; Isocortex:57; HPF:13,3
+3fd2d2b3-9415-4b6e-b392-40427fb1c388,"CNU, Isocortex",CNU:142; Isocortex:18,2
+3fded122-619c-4e65-aadd-d5420978d167,"MB, HPF, Isocortex",MB:47; HPF:13; Isocortex:11,3
+4037a618-e6ba-4142-a6d2-3e32ef25fd1b,"HB, CB",HB:112; CB:28,2
+41b9162e-df67-4321-b2e6-02ff851816c5,"TH, HY",TH:202; HY:39,2
+41dc1107-fbcb-4174-a262-19928c355018,"TH, CNU, HY",TH:75; CNU:18; HY:3,3
+41ea689a-7e05-463b-915a-90e63b8c0572,"Isocortex, OLF",Isocortex:98; OLF:6,2
+4279e354-a6b8-4eff-8245-7c8723b07834,"CNU, Isocortex, OLF, CTXsp",CNU:57; Isocortex:18; OLF:9; CTXsp:2,4
+43436b4b-0431-407f-b83d-d657ec22b5c6,"MB, Isocortex",MB:84; Isocortex:32,2
+4364cabe-a27c-4bd5-b398-1d068aca47cf,"Isocortex, HPF, MB",Isocortex:29; HPF:13; MB:12,3
+437f43e1-9c8f-4be9-ac89-97885b0e03d0,"CB, HB, MB",CB:36; HB:28; MB:28,3
+43b9b189-5221-46a0-928a-e137bc326534,"HB, CB",HB:40; CB:9,2
+43d4f889-4b05-44df-8306-ea10f854776f,"Isocortex, HPF, TH",Isocortex:16; HPF:3; TH:1,3
+4431f9fd-aaa8-4b10-905c-0c6869ea1088,"CB, HB",CB:102; HB:102,2
+44f5caad-c703-4279-866b-0303e57d2a7f,"HB, HPF, MB, Isocortex",HB:28; HPF:26; MB:8; Isocortex:4,4
+44fc463b-405f-4048-9242-ac018b9f50f7,"TH, Isocortex, HPF",TH:122; Isocortex:24; HPF:21,3
+450cea3b-9289-4708-9df2-a2518bdc4b59,"CNU, Isocortex",CNU:11; Isocortex:7,2
+45c49ba2-a113-4446-9c6d-9b049c1f9f74,"TH, CNU, OLF",TH:38; CNU:34; OLF:1,3
+45e7731f-4a43-45d5-9029-c080150bc596,"Isocortex, CNU, OLF",Isocortex:111; CNU:43; OLF:20,3
+461ecb39-ab58-4a6c-acd7-22da5b4b4b22,"TH, HPF",TH:39; HPF:4,2
+46448da7-ad7b-4ca8-b3ab-2d1d47439cbf,MB,MB:67,1
+46630957-63fd-4d0d-a2ba-8766f0796db8,"CTXsp, CNU, Isocortex",CTXsp:40; CNU:24; Isocortex:15,3
+46cd9c0a-39de-4aeb-90a6-86a2fda0b1a4,"MB, HB",MB:94; HB:51,2
+47403ac7-6635-4477-9477-18ff605ff5d4,"MB, HB",MB:37; HB:4,2
+4755877d-fd14-42b3-bc15-e1996d153015,"CNU, HY",CNU:81; HY:1,2
+4762e8ed-4d94-4fd7-9522-e927f5ffca74,HPF,HPF:37,1
+478de1ce-d7e7-4221-9365-2abdc6e88fb6,"MB, Isocortex, HPF",MB:83; Isocortex:42; HPF:26,3
+47be9ae4-290f-46ab-b047-952bc3a1a509,"CNU, CTXsp, OLF",CNU:67; CTXsp:64; OLF:8,3
+4836a465-c691-4852-a0b1-dcd2b1ce38a1,"MB, HPF, Isocortex",MB:36; HPF:27; Isocortex:8,3
+485b50c8-71e1-4654-9a07-64395c15f5ed,"MB, HPF, Isocortex, TH",MB:46; HPF:26; Isocortex:2; TH:1,4
+4994543f-20e8-4421-adca-8739984e07ad,"TH, HPF, HY, MB",TH:108; HPF:50; HY:19; MB:12,4
+49a86b2e-3db4-42f2-8da8-7ebb7e482c70,"Isocortex, OLF",Isocortex:127; OLF:4,2
+49c2ea3d-2b50-4e8a-b124-9e190960784e,HPF,HPF:151,1
+4b93a168-0f3b-4124-88fa-a57046ca70e1,"TH, HPF, Isocortex",TH:32; HPF:5; Isocortex:5,3
+4c04120d-523a-4795-ba8f-49dbb8d9f63a,"Isocortex, MB, HPF",Isocortex:62; MB:28; HPF:26,3
+4d2e7e49-5b08-4914-afa6-fd311d957082,"MB, HY",MB:9; HY:1,2
+4e6dfe08-cab0-4a05-903b-94283cb9f8e7,"CB, MB, HB",CB:57; MB:7; HB:3,3
+4ea45238-55b1-4d54-ba92-efa47feb9f57,CB,CB:60,1
+4f10fbb7-57be-427b-bb1d-a19bd31dc27b,"TH, Isocortex, HPF",TH:52; Isocortex:7; HPF:6,3
+4f46198d-c54d-4627-9e4e-3c8fd4c3c070,CNU,CNU:10,1
+4f922a5b-5014-455d-8cd5-7caed78af615,"HPF, TH, HY",HPF:41; TH:3; HY:1,3
+5011eba9-8926-4a73-b729-579d02676d25,"CNU, Isocortex",CNU:76; Isocortex:59,2
+501ab543-9d02-4085-956d-22b9b3eeb543,"TH, Isocortex, HPF, HY",TH:131; Isocortex:52; HPF:35; HY:25,4
+50445b30-f4ef-4405-b014-1d792ddfed88,"MB, HB",MB:29; HB:11,2
+507b20cf-4ab0-4f55-9a81-88b02839d127,"OLF, CNU, Isocortex, CTXsp",OLF:66; CNU:35; Isocortex:19; CTXsp:2,4
+50ebb677-e4a3-4421-b74f-1997a9cd1ad1,MB,MB:30,1
+50f1512d-dd41-4a0c-b3ab-b0564f0424d7,"HPF, MB, TH",HPF:51; MB:22; TH:2,3
+511afaa5-fdc4-4166-b4c0-4629ec5e652e,CB,CB:191,1
+5135e93f-2f1f-4301-9532-b5ad62548c49,"TH, HPF, Isocortex",TH:58; HPF:22; Isocortex:3,3
+516b2043-0176-49a3-a986-132b3d02f28a,"CNU, HY",CNU:90; HY:28,2
+523f8301-4f56-4faf-ab33-a9ff11331118,"TH, HPF",TH:113; HPF:13,2
+5245b505-d0e7-4942-94d1-b33a084fab03,Isocortex,Isocortex:226,1
+530f1670-9412-44ac-afdb-935d46bcaad3,"MB, Isocortex",MB:68; Isocortex:8,2
+531423f6-d36d-472b-8234-c8f7b8293f79,"TH, Isocortex, HPF, MB",TH:23; Isocortex:21; HPF:14; MB:2,4
+532bb33e-f22f-454a-ba1f-561d1578b250,"MB, HPF, Isocortex",MB:67; HPF:36; Isocortex:11,3
+53b3a7c6-ae42-49da-b69c-69e55a43a427,"Isocortex, HPF, MB, TH",Isocortex:26; HPF:19; MB:15; TH:4,4
+53b58cc3-8d88-4257-aa63-48da088f2091,"TH, CNU",TH:29; CNU:28,2
+53ecbf4f-e0d8-4fe6-a852-8b934a37a1c2,MB,MB:184,1
+54455bff-7afd-4a16-835f-f79b7c30bae9,Isocortex,Isocortex:18,1
+5458cb27-d065-4626-bcd8-1aa775e1115e,"Isocortex, OLF, CNU",Isocortex:45; OLF:21; CNU:3,3
+54c8f5de-83d7-49b9-9b4c-67fe0f07289b,HPF,HPF:87,1
+55001cb4-e10f-4657-9760-1228b590a69c,"TH, HY, HPF, MB",TH:112; HY:15; HPF:9; MB:7,4
+55423355-281c-41f2-8ef7-5aa098ffbbed,"Isocortex, CTXsp",Isocortex:130; CTXsp:19,2
+5544da75-8d34-47cb-9092-1f91e713e79c,"Isocortex, HPF",Isocortex:96; HPF:38,2
+567b4da5-6ee6-4300-9f40-442930c2b1ca,"HB, MB",HB:96; MB:60,2
+56f2a378-78d2-4132-b3c8-8c1ba82be598,"TH, HPF",TH:69; HPF:3,2
+57656bee-e32e-4848-b924-0f6f18cfdfb1,"MB, HPF, Isocortex",MB:45; HPF:9; Isocortex:8,3
+577e4741-4b15-4e91-b81b-61304a09bfb5,"CB, HB",CB:38; HB:13,2
+578ca001-8cf5-4d30-b58f-1d574eaf808a,"MB, Isocortex",MB:39; Isocortex:12,2
+57acb640-4f64-4a89-bedf-69351a3aea75,"OLF, Isocortex",OLF:50; Isocortex:23,2
+57c5856a-c7bd-4d0f-87c6-37005b1484aa,"HB, CB",HB:139; CB:60,2
+5810514e-2a86-4a34-b7bd-1e4b0b601295,TH,TH:59,1
+58b271d5-f728-4de8-b2ae-51908931247c,CB,CB:121,1
+594664af-9033-4651-861d-2be9277c9866,"Isocortex, MB, HPF",Isocortex:54; MB:42; HPF:1,3
+59b7a543-8827-4157-a4f6-d5d0e50fdf39,"MB, HPF, Isocortex",MB:36; HPF:14; Isocortex:1,3
+5a2f99aa-d3f5-469d-882e-0a16ee869746,CNU,CNU:136,1
+5a34d971-1cb3-4f0e-8dfe-e51e2313a668,"Isocortex, OLF",Isocortex:311; OLF:84,2
+5a4740a3-8e93-495d-b6cf-83dccba01d7a,"CB, HB",CB:227; HB:21,2
+5a5a2320-3b0d-485d-aba2-dc96357e00d8,"TH, Isocortex",TH:29; Isocortex:8,2
+5a9f8899-556a-43ea-892d-5e35b969ff38,CTXsp,CTXsp:3,1
+5b489aee-75e8-42af-aca6-3026d9a54c2d,"HB, CB",HB:86; CB:35,2
+5bfcf68f-4e0b-46f8-a9e3-8e919d5ddd1c,"TH, CNU, HPF",TH:50; CNU:19; HPF:5,3
+5c278ffe-6452-4c36-b17f-2050c74e13b1,CNU,CNU:23,1
+5d570bf6-a4c6-4bf1-a14b-2c878c84ef0e,"HB, MB",HB:197; MB:13,2
+5d9a5895-0f28-416c-a6d6-3e781658ea57,CB,CB:34,1
+5e84c8e7-236f-4a64-a944-dc4a17c64f1d,"TH, CNU",TH:67; CNU:1,2
+5e8ac11b-959a-49ab-a6a3-8a3397e1df0e,CNU,CNU:50,1
+5eebb5d6-cf9b-49a0-b297-0701c4d90173,"TH, HPF, HY",TH:24; HPF:9; HY:2,3
+5f7766ce-8e2e-410c-9195-6bf089fea4fd,CB,CB:108,1
+5fd00035-89d6-4e7c-bb26-f103388b731d,"OLF, Isocortex, CNU",OLF:83; Isocortex:74; CNU:16,3
+6104a953-589c-4661-bed9-a81ccef7d0be,"CB, HB",CB:88; HB:21,2
+61ed1a53-2f33-4a83-82ba-ec7dfa65bf60,"HPF, Isocortex",HPF:80; Isocortex:33,2
+623bb859-eb7c-4739-ba18-28ecad1d9fbb,"TH, HPF, MB",TH:59; HPF:22; MB:15,3
+625a7bc9-00cf-44f6-a508-3ed89d23ba3a,"HPF, Isocortex",HPF:157; Isocortex:44,2
+6292dc98-e2f1-45de-b045-56d98fdaca75,"HPF, Isocortex, OLF, CTXsp",HPF:43; Isocortex:8; OLF:8; CTXsp:3,4
+62a97aee-9f8b-40be-9ea7-f785ede30df8,"Isocortex, OLF, CNU",Isocortex:182; OLF:34; CNU:2,3
+63435e73-6a72-4007-b0da-03e6473e6870,"Isocortex, HPF",Isocortex:4; HPF:2,2
+63517fd4-ece1-49eb-9259-371dc30b1dd6,"TH, Isocortex, HPF, HY",TH:150; Isocortex:35; HPF:27; HY:4,4
+6358854e-51d2-47de-a278-5cbfd155feb6,"CNU, Isocortex",CNU:185; Isocortex:74,2
+63679ae2-6c87-495b-b888-a7273e545636,"CB, HB",CB:201; HB:95,2
+63a32e5c-f63a-450d-85cb-140947b67eaf,"MB, HPF, Isocortex",MB:25; HPF:15; Isocortex:8,3
+642a3373-6fee-4f2a-b8d6-38dd42ada763,MB,MB:29,1
+64aadf54-d662-4934-8c08-cad14ee5b69f,"CB, HB",CB:160; HB:36,2
+64d04585-67e7-4320-baad-8d4589fd18f7,HPF,HPF:82,1
+64f4afa4-ec5f-4ad6-ab28-415a9a8098ed,"HPF, OLF, CTXsp",HPF:26; OLF:9; CTXsp:8,3
+6506252f-1141-4e11-8816-4db01b71dda0,"OLF, CTXsp, HPF",OLF:42; CTXsp:28; HPF:24,3
+6638cfb3-3831-4fc2-9327-194b76cf22e1,"OLF, Isocortex",OLF:125; Isocortex:25,2
+664de6d9-bba2-424b-b76c-bb61900c015f,"OLF, CNU, CTXsp",OLF:40; CNU:17; CTXsp:4,3
+66f810a8-b18d-4b54-9f28-2964dfceccad,"TH, HY",TH:23; HY:2,2
+6728ddac-63ba-4e63-9884-395c7c16c7a3,"CB, MB, HB",CB:55; MB:33; HB:30,3
+675952a4-e8b3-4e82-a179-cc970d5a8b01,"CNU, OLF, CTXsp",CNU:84; OLF:29; CTXsp:18,3
+688606f8-9733-46f2-8331-b2dd84c5d385,"CNU, Isocortex, OLF",CNU:114; Isocortex:47; OLF:6,3
+68c98fb2-402b-4670-9b3b-0c77619998ea,HPF,HPF:51,1
+68f06c5f-8566-4a4f-a4b1-ab8398724913,"CB, HB",CB:68; HB:52,2
+68f5f1e4-5e88-4aa5-8a1a-94b691adb11e,"CNU, OLF",CNU:84; OLF:10,2
+6925a312-966c-4e41-b79e-4594da57a2ee,"CB, HB",CB:77; HB:14,2
+695476f6-4c14-4a2f-b658-948514629079,"TH, Isocortex",TH:60; Isocortex:28,2
+697d9e03-edc6-430a-ae76-94628c510161,"MB, Isocortex",MB:69; Isocortex:39,2
+6981808a-357c-4ffd-9989-33160ba9e256,"MB, HY",MB:183; HY:5,2
+69f42a9c-095d-4a25-bca8-61a9869871d3,"TH, Isocortex, HPF, MB",TH:50; Isocortex:31; HPF:15; MB:3,4
+6a098711-5423-4072-8909-7cff0e2d4531,"HB, CB, MB",HB:9; CB:4; MB:3,3
+6a22a5b4-79ec-4b3c-b023-1ec7b4a2b675,"CNU, Isocortex, HPF",CNU:60; Isocortex:60; HPF:4,3
+6a7544a8-d3d4-44a1-a9c6-7f4d460feaac,MB,MB:19,1
+6aa08c75-8ee5-457d-9794-b89ee1c4453f,"MB, HPF",MB:28; HPF:2,2
+6ad5a0a6-362a-4aec-8743-2e91469b0b62,"OLF, Isocortex, CNU",OLF:156; Isocortex:144; CNU:12,3
+6b6af675-e1ef-43a6-b408-95cfc71fe2cc,"TH, Isocortex, HPF",TH:99; Isocortex:40; HPF:20,3
+6bd246d2-b2c2-4a88-ac44-1a3e0facbaee,"MB, HPF, Isocortex, TH",MB:41; HPF:9; Isocortex:3; TH:1,4
+6be21156-33b0-4f70-9a0f-65b3e3cd6d4a,"TH, HPF, Isocortex",TH:74; HPF:13; Isocortex:7,3
+6d24683c-da42-4610-baf0-7ceee7014394,"TH, Isocortex, HPF",TH:177; Isocortex:18; HPF:17,3
+6d3b68e0-3efd-4b03-b747-16e44118a0a9,"MB, HY, TH",MB:38; HY:6; TH:1,3
+6d9b6393-6729-4a15-ad08-c6838842a074,"MB, HPF, Isocortex",MB:42; HPF:19; Isocortex:17,3
+6eb8be8d-d089-43c6-b2e4-a6558ca16dcf,"Isocortex, TH",Isocortex:74; TH:24,2
+6efc58a4-e1cd-4eca-9205-7e4898cc1f8b,"CNU, Isocortex",CNU:38; Isocortex:12,2
+6fc4d73c-2071-43ec-a756-c6c6d8322c8b,"TH, HPF",TH:55; HPF:5,2
+701026df-e170-4ca7-88aa-eb0b95ef6ba1,HPF,HPF:65,1
+703f2cd2-377a-48ec-979a-135863169671,MB,MB:7,1
+70da415f-444d-4148-ade7-a1f58a16fcf8,"TH, Isocortex, HPF",TH:73; Isocortex:27; HPF:10,3
+72274871-80e5-4fb9-be1a-bb04acebb1de,"HPF, Isocortex",HPF:13; Isocortex:7,2
+727ff7c4-d63f-4bd8-9888-f134a25b874f,"MB, Isocortex",MB:29; Isocortex:21,2
+72c095b0-c7ab-4e22-a4aa-4163102de553,"HB, CB",HB:102; CB:53,2
+7332e6cf-9847-4aca-b2e3-d864989dd0fb,"HB, CB",HB:106; CB:16,2
+73ff4936-8cd3-4a75-a772-f563e67d249d,"CNU, Isocortex",CNU:33; Isocortex:16,2
+7441d0df-ef9b-419b-ae4d-b9bd7c2f17cb,CB,CB:30,1
+749cb2b7-e57e-4453-a794-f6230e4d0226,"Isocortex, OLF",Isocortex:133; OLF:30,2
+7587e3bb-dd11-4853-b48b-feab0b56ae05,"HB, CB",HB:130; CB:31,2
+769b42dc-acf3-4079-b09e-ec979568d297,"MB, Isocortex, HPF",MB:44; Isocortex:6; HPF:5,3
+76c5c1a1-3617-4727-9f75-d975c9a08203,"HB, CB",HB:73; CB:12,2
+76de0e1a-30aa-4713-9fe5-25ad2dff653f,"MB, HPF, TH",MB:23; HPF:21; TH:12,3
+76f16631-cbf7-4883-9437-4e8d8c4f34a3,"CB, HB",CB:82; HB:3,2
+77121d92-6dde-4243-ab54-0a99efa22e99,"TH, HY",TH:163; HY:28,2
+7791ee46-5c13-4d1b-8518-5602dcb8666b,"HB, MB, HPF, Isocortex",HB:27; MB:25; HPF:5; Isocortex:1,4
+779fbed1-4b0e-4d7d-8882-6650690221a0,"CNU, TH",CNU:92; TH:69,2
+784c5282-2749-48ca-b211-100d0b24e29b,"HB, CB",HB:157; CB:9,2
+789fd2ee-c755-46c5-9c6f-260092520216,"CB, HB",CB:173; HB:31,2
+7909c0aa-c074-4e19-aabf-b8167c682a5b,"CB, HB, MB",CB:3; HB:2; MB:1,3
+79628a45-c2e3-4206-97df-4c91edaff90f,"Isocortex, CNU",Isocortex:57; CNU:36,2
+799d899d-c398-4e81-abaf-1ef4b02d5475,"HPF, Isocortex",HPF:34; Isocortex:28,2
+79b2e46e-e2ee-446e-b875-9aff03ef52d2,"Isocortex, CNU",Isocortex:67; CNU:56,2
+79e56114-a12b-4571-bee3-a5cdd2145ea1,"HB, CB",HB:34; CB:4,2
+79f44ba1-c931-4346-82eb-f628a9374045,"TH, Isocortex",TH:61; Isocortex:44,2
+79fbd14b-bfad-4b28-90a9-3019bf72336f,"Isocortex, CNU",Isocortex:27; CNU:13,2
+7a620688-66cb-44d3-b79b-ccac1c8ba23e,"TH, Isocortex, HPF",TH:69; Isocortex:33; HPF:25,3
+7b05cccc-44f6-4491-a0ea-e38d6e95513d,"Isocortex, OLF, CTXsp",Isocortex:40; OLF:29; CTXsp:22,3
+7bc16ab1-1b0d-4f52-9e4b-210106ea344c,"HB, CB",HB:119; CB:52,2
+7bd5627e-b02e-47f1-b476-4bf8eaa726b3,"CNU, Isocortex",CNU:87; Isocortex:38,2
+7be00744-2e27-4062-8f56-3969e24e9990,"TH, Isocortex, HPF",TH:146; Isocortex:92; HPF:22,3
+7beb9419-113d-4e47-938c-68ab2657031e,"TH, HPF, Isocortex, MB",TH:23; HPF:15; Isocortex:12; MB:1,4
+7c11adc6-adbd-484f-8ae9-13946285e3f8,"HB, CB",HB:61; CB:14,2
+7c94d733-b913-4064-83f2-37422712204c,"Isocortex, CNU",Isocortex:66; CNU:51,2
+7cb5128d-aaf5-4859-a236-527bff0f3c76,"HB, MB",HB:54; MB:15,2
+7d1a2cb6-f482-4059-b596-53087caac8ec,"MB, HPF, Isocortex",MB:37; HPF:25; Isocortex:18,3
+7d63ab43-95e4-41f5-bd43-c629578de7a9,"CNU, Isocortex",CNU:72; Isocortex:18,2
+7d999a68-0215-4e45-8e6c-879c6ca2b771,"TH, HPF, Isocortex",TH:88; HPF:12; Isocortex:1,3
+7dcd74a9-fc7a-4c3c-85b9-769d869629ec,"TH, Isocortex, CNU",TH:9; Isocortex:2; CNU:1,3
+800e8e76-dc93-4e52-ae8d-e35ad26daefe,"TH, CNU",TH:10; CNU:2,2
+80c7f589-733c-4f23-abf3-ade8c79f0a3b,"HB, CB",HB:38; CB:5,2
+80f6ffdd-f692-450f-ab19-cd6d45bfd73e,"TH, MB, Isocortex, HPF",TH:56; MB:40; Isocortex:29; HPF:25,4
+810416d1-ce3c-4b2e-a827-6cdc65c8cd5c,"TH, HPF, HY",TH:58; HPF:1; HY:1,3
+8169d556-f994-4735-b4c8-f7c85ddc39b0,"MB, Isocortex, HPF",MB:38; Isocortex:33; HPF:14,3
+818d2996-766a-4fd9-82b8-7e4cb080af0e,"TH, CNU, Isocortex",TH:29; CNU:17; Isocortex:12,3
+81950362-ed95-4662-997f-e119bbd594d1,"TH, HY",TH:9; HY:1,2
+81a1cbae-60b6-4013-9511-1bf3855387a2,"HB, CB",HB:114; CB:10,2
+81b1800e-f138-4337-abc9-bb0449b77852,"MB, Isocortex",MB:59; Isocortex:27,2
+81ef1ec7-dbcc-410f-9bff-b21a62a909fd,"MB, Isocortex, HPF",MB:102; Isocortex:20; HPF:5,3
+81f0087b-2bd1-4e48-8e86-e8206aee3d9d,"MB, HPF",MB:29; HPF:10,2
+81f35c52-f7bb-4342-8f91-1837a068c045,CB,CB:71,1
+825ba9b8-ce03-49b7-b1a8-4d85ae2185af,"HB, MB",HB:47; MB:32,2
+82765a73-2a03-42ca-ba98-194247caa62e,"TH, HPF, MB, HY",TH:30; HPF:21; MB:7; HY:4,4
+834fca72-0b69-44e4-b77e-95a61290b50d,"TH, HY, HPF, MB",TH:97; HY:13; HPF:3; MB:3,4
+83716e49-3026-41a3-b021-1a4b6362f433,Isocortex,Isocortex:41,1
+8386f396-0a69-48b5-98d4-18801066ea76,"CNU, HY",CNU:157; HY:3,2
+84fd7fa3-6c2d-4233-b265-46a427d3d68d,"TH, HPF, Isocortex",TH:96; HPF:7; Isocortex:1,3
+85bdeae3-269b-4e39-bd9b-2b0d95aff2fa,"HPF, Isocortex",HPF:99; Isocortex:44,2
+86553ccc-2e51-4cfb-a8e6-80da6860c8d9,"CB, HB",CB:71; HB:53,2
+869bac48-ad1b-46b8-be00-cf6b26aea40e,"HB, CB",HB:30; CB:28,2
+8895f61f-1c17-4d2f-8b9b-77476c5261b6,"TH, CNU",TH:71; CNU:13,2
+88e1154c-bd92-446d-bd6d-550062666223,Isocortex,Isocortex:160,1
+88e148d2-d554-42c2-9c41-cc6369f98c45,"MB, HB, HPF",MB:27; HB:17; HPF:5,3
+88fe9ed9-9e3e-431a-8ecc-4cb2fe5bf448,"HB, CB",HB:56; CB:3,2
+89606895-287e-4559-8536-9830b047af34,"CB, HB",CB:17; HB:15,2
+898f8971-31e9-4fdb-b66e-2ae6d3a33a5b,"Isocortex, CNU",Isocortex:29; CNU:26,2
+8ab470cc-de5a-4d65-92bd-9a25fbe6d07d,"MB, HPF",MB:100; HPF:10,2
+8aba5f8c-4438-4588-9bb0-b20d2fd3eca5,Isocortex,Isocortex:16,1
+8abf098f-d4f6-4957-9c0a-f53685db74cc,"Isocortex, MB, HPF",Isocortex:32; MB:25; HPF:20,3
+8ac7e5d5-57a4-41c8-a35d-8195784bfe95,"TH, HY",TH:98; HY:35,2
+8b31b4bd-003e-4816-a3bf-2df4cc3558f8,"TH, HPF",TH:70; HPF:1,2
+8b735d77-b77b-4243-8821-37802bf402fe,"HPF, Isocortex",HPF:126; Isocortex:68,2
+8bf0f1a4-0d8c-4df3-a99e-f7c81c809652,"HB, MB",HB:133; MB:61,2
+8c732bf2-639d-496c-bf82-464bc9c2d54b,"TH, Isocortex, HPF",TH:205; Isocortex:64; HPF:13,3
+8ca1a850-26ef-42be-8b28-c2e2d12f06d6,"TH, HPF, Isocortex",TH:133; HPF:20; Isocortex:18,3
+8d0a5caf-2be2-48c1-bf1a-f538bacd46b4,CB,CB:235,1
+8d59da25-3a9c-44be-8b1a-e27cdd39ca34,"TH, HPF",TH:56; HPF:10,2
+8d661567-49f3-4547-997d-a345c0ffe2dd,Isocortex,Isocortex:88,1
+8d89b7d0-33e7-45c6-9972-d3ad4c1e5f4c,"CNU, Isocortex",CNU:55; Isocortex:17,2
+8dfb86c8-d45c-46c4-90ec-33078014d434,"TH, HY",TH:157; HY:6,2
+8ee585ba-d055-4bb5-bc5f-2266a3d62bf4,"TH, CTXsp, HY, MB, HPF",TH:46; CTXsp:10; HY:7; MB:4; HPF:1,5
+8f2e16c4-893b-4f8f-bfb2-94fa452710ec,"TH, HPF, Isocortex",TH:95; HPF:26; Isocortex:19,3
+8f4fd564-7e34-4113-a6e4-ae40faa64f7a,"Isocortex, CNU",Isocortex:36; CNU:10,2
+8fbfa285-d721-4a1a-8c18-f36652c17909,"TH, Isocortex, HPF, HY",TH:30; Isocortex:19; HPF:9; HY:5,4
+9150758e-1390-41d1-b426-96675e60dbea,"MB, Isocortex, HPF",MB:29; Isocortex:11; HPF:3,3
+91fb4ed3-ee27-4d7e-ba5d-f61202ed9884,"HPF, Isocortex",HPF:134; Isocortex:26,2
+920865d3-1581-4e81-bd63-ab2186024564,"CNU, Isocortex",CNU:58; Isocortex:33,2
+92822789-608f-44a6-ad64-fe549402b2df,"MB, HPF, Isocortex",MB:49; HPF:44; Isocortex:40,3
+9338f8bb-e097-46d8-81b4-7f37beb4d308,"TH, CTXsp, HPF, CNU",TH:52; CTXsp:16; HPF:3; CNU:1,4
+9373cd09-a591-42be-9343-ed6f06b7056d,"CB, HB",CB:51; HB:49,2
+93a76e52-fed0-494f-8852-2b978f56a8e7,"CB, HB",CB:126; HB:39,2
+94761f31-0dfc-4f67-87ef-6d1ac7f95144,"MB, HPF, Isocortex",MB:18; HPF:11; Isocortex:5,3
+9486a103-c53e-4a60-b202-4efcc6278d44,Isocortex,Isocortex:7,1
+94e948c1-f7be-4868-893a-f7cd2df3313e,"MB, HPF",MB:90; HPF:5,2
+94fcff55-2da2-4366-a2c7-2f58c05b54dc,"MB, HB",MB:57; HB:46,2
+954b1983-e603-4611-ba15-dc2db6f988ab,"TH, HPF, Isocortex",TH:50; HPF:7; Isocortex:7,3
+958b1089-a066-43e2-990d-8aad703429a2,"CNU, HY",CNU:102; HY:2,2
+95fd67e6-cbff-4356-80c7-5a03b1bf6b8a,"TH, HPF, Isocortex, HY",TH:104; HPF:15; Isocortex:15; HY:6,4
+9657af01-50bd-4120-8303-416ad9e24a51,"MB, Isocortex, HPF",MB:34; Isocortex:27; HPF:15,3
+96c816ad-9a48-46a4-8a84-9a73cc153d69,"TH, MB",TH:133; MB:31,2
+96fe2729-b5a2-4e77-92bb-9df410144768,"TH, HY, Isocortex",TH:117; HY:10; Isocortex:2,3
+97207d87-3fcd-4ebb-b0c7-087bdbf8a95c,"MB, Isocortex",MB:99; Isocortex:26,2
+9793c99d-f918-4931-8bba-fdb978bd8e0a,"HB, MB",HB:55; MB:29,2
+9861fa24-d998-4ef5-9606-89002b8706fc,CB,CB:79,1
+9866c08f-acce-4291-b94d-d9835e62f835,CNU,CNU:16,1
+98bde8a6-6b6a-4e53-96b1-9078c3974a97,"Isocortex, OLF",Isocortex:24; OLF:7,2
+99086aba-f671-42b5-bdc0-e665c61f5452,"MB, Isocortex",MB:37; Isocortex:23,2
+9915765e-ff15-4371-b1aa-c2ef1db8a254,"CTXsp, OLF",CTXsp:10; OLF:10,2
+9991277b-9e8e-4db8-b8a6-e2c0176ef9ad,"CB, HB",CB:121; HB:30,2
+99993a2b-588e-4c0c-bfec-e3dfb4f61534,"Isocortex, OLF",Isocortex:53; OLF:52,2
+9ac90b86-fc72-4ca0-9389-c8b3a77da437,"MB, HY",MB:20; HY:7,2
+9b3ad89a-177f-4242-9a96-2fd98721e47f,"HPF, CTXsp",HPF:8; CTXsp:1,2
+9b5fec96-9f19-4ddf-ba1c-3175e15245e9,"HPF, MB",HPF:41; MB:20,2
+9bd71ac6-c455-41f3-8c56-59987a649ac4,"Isocortex, OLF",Isocortex:137; OLF:79,2
+9dff5593-e781-41a3-a6f9-20d06085e4f8,CNU,CNU:14,1
+9e069684-a4be-4b70-b9e6-446309f977d4,Isocortex,Isocortex:81,1
+9e979599-11e1-4372-96fc-e80520f3e668,"HB, CB",HB:131; CB:15,2
+9f78a787-c6d5-4e51-b4fb-1552e81eccd5,"TH, Isocortex",TH:114; Isocortex:13,2
+9f99bd34-40d4-4aac-ae2b-7bc7f7086ccb,"Isocortex, OLF",Isocortex:121; OLF:10,2
+a21bade7-5be7-4a17-a9b9-ddee453e6260,"HB, CB",HB:118; CB:93,2
+a3d13b05-bf4d-427a-a2d5-2fe050d603ec,"MB, HPF, Isocortex",MB:43; HPF:10; Isocortex:4,3
+a3ebc7f4-813a-4f06-a33e-9825c878f9c2,"HB, MB",HB:72; MB:38,2
+a44a9942-0667-4d49-9047-40d2256c9854,"MB, HB",MB:59; HB:3,2
+a44bd77c-de9c-49cc-85e5-354aa9f1eb98,"CB, HB",CB:43; HB:10,2
+a450558e-195f-44ff-979b-6b6420c9621b,"MB, HB",MB:103; HB:62,2
+a464fc97-1391-4bbe-9aef-73a79975d27f,CNU,CNU:31,1
+a4d9d9d5-6ea3-4234-aa28-e064e83626fa,"TH, MB, HPF",TH:28; MB:19; HPF:6,3
+a4ed0599-4a72-4afb-8fe9-d0d046aec6aa,CB,CB:36,1
+a5f2ec22-0ff3-4249-bd2f-6247c3990e53,CNU,CNU:146,1
+a63a7248-9393-478b-9478-64f421ef5eb8,"TH, Isocortex, HPF",TH:31; Isocortex:25; HPF:8,3
+a6b71993-165b-4c43-845c-c062fe7d7a11,"TH, HY",TH:18; HY:4,2
+a6bcfe32-69ce-414f-80bc-495d1b4906af,"MB, HPF, Isocortex",MB:96; HPF:19; Isocortex:13,3
+a6f9e4d5-5f20-4a98-9118-22187f4d230b,"TH, Isocortex",TH:87; Isocortex:31,2
+a6fe3779-2b77-4b66-a625-a6078720e412,"TH, HPF, HY, MB",TH:101; HPF:30; HY:21; MB:13,4
+a759e857-fd8f-4653-a397-c48547230427,"HB, CB",HB:168; CB:107,2
+a85b9795-f99c-4c1d-a376-8b5ef095ffd7,"CNU, Isocortex",CNU:10; Isocortex:1,2
+a8a59fc3-a658-4db4-b5e8-09f1e4df03fd,"MB, Isocortex, HPF",MB:96; Isocortex:17; HPF:16,3
+a8adabd7-7979-4fcf-99e7-d9bd9d27896f,CNU,CNU:22,1
+a91e4882-d3aa-4339-8b14-e94fa419f328,"HB, MB",HB:68; MB:2,2
+a94a0023-d461-49fa-8cc6-032237039c27,"MB, HPF",MB:183; HPF:23,2
+a9c9df46-85f3-46ad-848d-c6b8da4ae67c,"Isocortex, HPF",Isocortex:63; HPF:47,2
+a9e83d8a-7c90-4152-abad-53a1ad94d73a,"CNU, Isocortex, TH",CNU:13; Isocortex:4; TH:3,3
+aab5be05-5c1c-4c08-9739-1274bc3bcf4f,"MB, TH, HY, HPF",MB:53; TH:27; HY:12; HPF:1,4
+aac3b928-e99a-4039-ace1-af45d0130d82,"Isocortex, HPF",Isocortex:20; HPF:7,2
+ac088ddb-9e1e-49ae-b341-46a8445cf809,"TH, HY, CNU",TH:45; HY:10; CNU:1,3
+ac680ec5-6f89-4739-9848-9d76fc0e017f,"MB, Isocortex, HB",MB:64; Isocortex:5; HB:1,3
+ac839451-05bc-493e-b167-558b2b195baa,"Isocortex, MB, HPF",Isocortex:59; MB:56; HPF:19,3
+acf04c3f-650a-4de0-b0d0-edf695dd2025,Isocortex,Isocortex:94,1
+ad256265-03f2-4b4e-954b-0ba0c5cf6707,TH,TH:98,1
+ad315779-2b39-46c4-8348-b166e796fa7c,Isocortex,Isocortex:61,1
+ad714133-1e03-4d3a-8427-33fc483daf1a,"TH, Isocortex, HPF",TH:109; Isocortex:32; HPF:25,3
+adca9242-0725-41d4-8eb1-5655a464431d,"Isocortex, CNU",Isocortex:58; CNU:56,2
+adcd791c-ead3-4572-a9cb-028bbee1d2e4,"CNU, OLF, Isocortex",CNU:94; OLF:92; Isocortex:66,3
+ae03524f-e493-4077-99b1-588244de9a98,"MB, HY",MB:68; HY:7,2
+ae2b9f1b-ebe3-4b56-8957-31982186e6ec,"CNU, Isocortex",CNU:51; Isocortex:31,2
+aeb06797-fddf-4ad2-b0ef-dd1b0f54d034,"MB, HB",MB:61; HB:32,2
+aec2b14f-5dbc-400b-bf2e-dd13e711e2ff,"TH, Isocortex, CNU",TH:32; Isocortex:24; CNU:10,3
+aecd7612-b5c5-4ad2-9e76-e5b783387e47,"CB, HB",CB:49; HB:24,2
+af1e9dee-8c26-4b2b-ac43-358221048797,"HY, CNU, TH",HY:51; CNU:31; TH:3,3
+af2a0072-e17e-4368-b80b-1359bf6d4647,"CNU, Isocortex",CNU:64; Isocortex:57,2
+af775340-53d0-43cd-9cda-48e32b95adca,"TH, Isocortex",TH:20; Isocortex:12,2
+afe87fbb-3a17-461f-b333-e22903f1d70d,"TH, HPF, Isocortex, MB",TH:133; HPF:49; Isocortex:32; MB:4,4
+afecbc7f-10e3-40af-b091-cca9e8df6108,"HPF, Isocortex",HPF:35; Isocortex:24,2
+b114e7e0-92b3-43bb-9529-53860e52606d,"HPF, Isocortex",HPF:164; Isocortex:83,2
+b1455ca8-3999-4eb8-9e1e-5c8d0d2e5719,"HPF, Isocortex",HPF:19; Isocortex:6,2
+b25799a5-09e8-4656-9c1b-44bc9cbb5279,"TH, HPF, Isocortex",TH:130; HPF:13; Isocortex:5,3
+b2ea68e2-c732-4d17-8166-1a8595fff225,Isocortex,Isocortex:109,1
+b3065f45-7227-4099-9f8c-7e81e677d8cf,CB,CB:123,1
+b33e4298-a735-4781-8dea-d7203b4137fb,"CNU, HY, TH",CNU:20; HY:11; TH:11,3
+b375a0ee-4c5a-4a53-9cea-d753f206e5c5,"Isocortex, CNU",Isocortex:71; CNU:1,2
+b40d8c65-7ee8-4069-8b64-1a3f7907742f,"MB, Isocortex, HPF",MB:62; Isocortex:28; HPF:12,3
+b4131145-9675-4433-88e1-9ae016c701dd,"Isocortex, TH, HPF",Isocortex:91; TH:63; HPF:23,3
+b45c8f3f-6361-41df-9bc1-9df98b3d30e6,"TH, MB, HPF",TH:26; MB:23; HPF:13,3
+b46e219c-6a87-4a93-9924-1070841381e9,"TH, Isocortex",TH:44; Isocortex:43,2
+b543e81e-4c8f-415e-82ec-631b177d19d2,"MB, Isocortex",MB:42; Isocortex:40,2
+b549e337-acc5-4837-9c56-e53b173fe5fe,"Isocortex, CNU, OLF",Isocortex:82; CNU:28; OLF:28,3
+b72b22c2-6e9d-4604-9910-20c0e1a467d7,"Isocortex, HPF",Isocortex:20; HPF:15,2
+b73ef9cf-462c-4de3-ae61-5907790ebd0e,"HPF, TH",HPF:65; TH:34,2
+b749446c-18e3-4987-820a-50649ab0f826,"TH, Isocortex, HPF",TH:39; Isocortex:38; HPF:19,3
+b7612153-372f-415a-9770-7101fbbbdc59,"TH, Isocortex",TH:34; Isocortex:24,2
+b76f24ea-95b1-4a0e-95eb-9c39b1283c40,"MB, HPF, Isocortex",MB:51; HPF:46; Isocortex:4,3
+b78b3c42-eee5-47c6-9717-743b78c0b721,"HPF, Isocortex, TH",HPF:67; Isocortex:51; TH:10,3
+b7c57ce1-a75b-410a-94b6-8abee5a92c4f,MB,MB:61,1
+b83407f8-8220-46f9-9b90-a4c9f150c572,"MB, Isocortex, HPF",MB:139; Isocortex:49; HPF:27,3
+b8dbd3af-a589-41e4-878c-3372eaa1a8f6,CNU,CNU:77,1
+b8df4cc3-e973-4267-8cf8-a55cea77e1ac,"TH, HPF, CTXsp, HY, OLF",TH:71; HPF:39; CTXsp:25; HY:15; OLF:4,5
+b8f3a7c3-b700-446b-8d29-69691c0e3b1d,"Isocortex, TH",Isocortex:54; TH:13,2
+b910cbe2-0c68-40b2-b9f1-268e7c28320a,"CNU, HY",CNU:57; HY:16,2
+b939cc85-6028-404a-995d-28c8405a07db,"MB, Isocortex",MB:65; Isocortex:1,2
+b976e816-bc24-42e3-adf4-2801f1a52657,"HPF, CTXsp, OLF",HPF:30; CTXsp:25; OLF:10,3
+b98f6b89-3de4-4295-be1c-59e465de1e32,"Isocortex, OLF, CNU, CTXsp",Isocortex:46; OLF:32; CNU:13; CTXsp:11,4
+b9b101cf-24d3-4c2a-8464-bc91b9f0c767,"Isocortex, HPF, HB",Isocortex:25; HPF:13; HB:5,3
+b9faf068-fd1c-4568-8a1a-f503eed6f726,"Isocortex, HPF, MB",Isocortex:18; HPF:11; MB:7,3
+ba291bec-4492-4d7f-a6aa-483ebb64b3c3,"MB, Isocortex",MB:61; Isocortex:18,2
+bb7a5967-56ae-4193-920d-142710b4f07d,"CNU, CTXsp, OLF, Isocortex",CNU:52; CTXsp:37; OLF:31; Isocortex:17,4
+bbe6ebc1-d32f-42dd-a89c-211226737deb,"TH, Isocortex, HPF",TH:56; Isocortex:12; HPF:11,3
+bbf6a51e-2999-4982-803f-8769db095dd2,"HB, CB, MB",HB:41; CB:29; MB:20,3
+bc2f8bde-9498-41d7-b9db-83bd05cd34ba,"HB, CB",HB:98; CB:49,2
+bdb2ec51-d948-4428-b2cc-2c6cd5bf5fe3,"CB, HB",CB:73; HB:2,2
+be76cfe3-b2bb-4358-956b-0fad07215972,"TH, HY, Isocortex",TH:102; HY:29; Isocortex:3,3
+be95fb3b-d607-409a-968e-98a3e9bcb577,"OLF, Isocortex, CNU",OLF:72; Isocortex:40; CNU:24,3
+be9a2119-a4d7-4e62-82a1-b1a6623ecc99,HPF,HPF:79,1
+bebe7c8f-0f34-4c3a-8fbb-d2a5119d2961,"TH, Isocortex",TH:55; Isocortex:7,2
+bef05a5c-68c3-4513-87c7-b3151c88da8e,"TH, HY",TH:74; HY:13,2
+bef552f5-efd8-4e98-8467-d54ac7c4ef41,"CNU, OLF, Isocortex, CTXsp",CNU:67; OLF:49; Isocortex:4; CTXsp:1,4
+bf591043-03c2-48bb-9197-e17e85aaeb8f,"CNU, Isocortex",CNU:32; Isocortex:8,2
+bf746764-78e0-4b9c-bdf6-65b6ff45745d,HY,HY:2,1
+bf827e50-eed3-4984-908e-c48ffbeae7b5,Isocortex,Isocortex:62,1
+bf99284f-dc34-4652-baf1-ffaa1cc7fb05,"CNU, HY",CNU:30; HY:7,2
+bfda40f8-a7a7-47cd-a439-39fb5cd7873f,"HB, CB",HB:70; CB:14,2
+c07d13ed-e387-4457-8e33-1d16aed3fd92,"TH, HPF, Isocortex, HY",TH:46; HPF:12; Isocortex:3; HY:1,4
+c0c3bcca-6a79-47ef-becb-b1a157a3f2cb,"MB, HB",MB:44; HB:21,2
+c0c3c95d-43c3-4e30-9ce7-0519d0473911,"HPF, Isocortex",HPF:11; Isocortex:1,2
+c0e59477-43f0-4441-9f81-3a55ddad9dad,"HB, CB",HB:91; CB:54,2
+c1014051-d06b-4f85-9887-e7c42a94baf2,"CNU, Isocortex",CNU:97; Isocortex:15,2
+c16b8e98-100f-40ce-b417-b1524c7e1270,"HPF, Isocortex",HPF:38; Isocortex:28,2
+c17772a9-21b5-49df-ab31-3017addea12e,"TH, HPF",TH:155; HPF:6,2
+c2184312-2421-492b-bbee-e8c8e982e49e,"MB, HB",MB:57; HB:15,2
+c2363000-27a6-461e-940b-15f681496ed8,"TH, Isocortex, HPF",TH:89; Isocortex:9; HPF:5,3
+c250d4f4-7516-4cf1-a8bd-04873ca9e21c,"MB, HB",MB:116; HB:65,2
+c2ebf259-9777-4a8f-b1de-5302776961d2,CNU,CNU:102,1
+c3ef78d5-7c75-48a4-96b7-f8ecc91c2eca,"TH, MB",TH:60; MB:1,2
+c410fda5-a6db-4697-a7e3-6ed65601844d,"HB, MB",HB:66; MB:61,2
+c42574be-0456-437f-8329-afc5a63b7e78,CNU,CNU:38,1
+c44adf4f-3d1c-491f-88e4-c516cc910bd8,"TH, CTXsp, CNU",TH:22; CTXsp:10; CNU:1,3
+c4b5a9fa-10cb-4195-9c17-15b6a1f77f9a,"CNU, Isocortex",CNU:58; Isocortex:51,2
+c4f6665f-8be5-476b-a6e8-d81eeae9279d,"MB, Isocortex, HPF",MB:49; Isocortex:10; HPF:7,3
+c536b0a9-b710-43c3-ba2c-5a0cccf98ec2,"HPF, CTXsp, OLF",HPF:18; CTXsp:11; OLF:2,3
+c5b9e063-f640-4936-b851-f7602cb6659b,"HPF, Isocortex, TH, MB",HPF:63; Isocortex:24; TH:17; MB:1,4
+c5fd185f-1c5a-4aad-9795-43c4ccf8ea94,"CB, HB",CB:82; HB:30,2
+c64201ea-262e-45fe-8f41-5a074780cd59,CB,CB:121,1
+c6ba6f8e-c13e-410f-b7df-e193ba0d239d,"MB, Isocortex, HB, HPF",MB:27; Isocortex:16; HB:9; HPF:6,4
+c6e294f7-5421-4697-8618-8ccc9b0269f6,"MB, HPF, TH",MB:34; HPF:9; TH:2,3
+c736dc60-0726-410d-8419-cb6ea025d5b1,"MB, HB",MB:97; HB:37,2
+c84144db-4498-4627-b72a-975a6b618715,"MB, Isocortex, HPF",MB:65; Isocortex:34; HPF:20,3
+c872ca65-8319-4901-856e-7dc507e2dd9c,"CNU, OLF",CNU:33; OLF:1,2
+c893c0a3-5597-49cf-baa1-60efdfdef542,"MB, HB",MB:114; HB:99,2
+c9664185-d3fd-4e0e-89cf-77c402038938,"HPF, Isocortex",HPF:69; Isocortex:41,2
+c9fb5e2e-bd92-41d8-8b7e-394005860a1e,"TH, HPF, CTXsp, MB, HY, OLF",TH:68; HPF:44; CTXsp:8; MB:4; HY:2; OLF:2,6
+ca073754-be17-43b7-a38a-0c1e5563ff32,"TH, HPF, HY, CNU",TH:191; HPF:21; HY:8; CNU:1,4
+ca5404f7-297c-40f1-bbf0-5ac0a63e24f8,"MB, Isocortex",MB:179; Isocortex:10,2
+cab81176-36cd-4c37-9353-841e85027d36,"HB, CB, HPF",HB:33; CB:12; HPF:8,3
+caf2170c-5463-46ce-8cd0-66f2e1e3376d,"CB, HB",CB:3; HB:3,2
+cb1c4327-5f5e-4286-85ed-840c85e82792,"HB, CB",HB:100; CB:49,2
+cc701ed3-84b6-4b8e-8390-2e3f54414b19,"MB, HPF, Isocortex",MB:42; HPF:9; Isocortex:2,3
+cc72fdb7-92e8-47e6-9cea-94f27c0da2d8,"HB, MB",HB:119; MB:12,2
+cc9d666c-6fe5-418d-9b37-114428d25454,"HPF, MB, Isocortex",HPF:25; MB:17; Isocortex:12,3
+ccb501d1-a4fa-41c6-819e-54aaf74d439d,"TH, Isocortex, HPF",TH:61; Isocortex:21; HPF:7,3
+cde137a5-7a93-4968-ab61-5aedbd9ce3fb,HB,HB:100,1
+ce0dc660-f19e-46a3-94f9-646bebae6805,"HPF, Isocortex",HPF:89; Isocortex:1,2
+ce24bbe9-ae70-4659-9e9c-564d1a865de8,"HB, CB",HB:133; CB:77,2
+ce397420-3cd2-4a55-8fd1-5e28321981f4,"TH, Isocortex, HPF, MB",TH:152; Isocortex:29; HPF:16; MB:2,4
+ce99545f-c6a5-4d53-8b68-0ceb78bd942e,"HB, CB",HB:158; CB:105,2
+d0046384-16ea-4f69-bae9-165e8d0aeacf,"MB, HPF, TH, Isocortex",MB:73; HPF:27; TH:7; Isocortex:5,4
+d004f105-9886-4b83-a59a-f9173131a383,"MB, Isocortex, HPF",MB:39; Isocortex:24; HPF:11,3
+d06bdedb-e173-4fe5-a4f1-ab9ab53f9761,CB,CB:106,1
+d06f4b61-42c1-4a8d-a2a5-c1cf8f7d0e47,"HB, CB, MB",HB:64; CB:34; MB:29,3
+d14f70e6-bf7b-4d6d-a380-bfd0a46ed7a1,"MB, Isocortex",MB:113; Isocortex:13,2
+d151b391-e6e4-4daf-bd9c-191f4ad837b4,"TH, HPF",TH:24; HPF:6,2
+d1af1003-247b-4f76-988f-d55cbb72aa80,CNU,CNU:83,1
+d1d9defc-6f73-489f-9f14-2c0b5e970b2d,"Isocortex, CNU, CTXsp, OLF",Isocortex:92; CNU:51; CTXsp:37; OLF:35,4
+d213e786-4b1c-477d-a710-766d69fa1ac1,"Isocortex, MB, HPF",Isocortex:12; MB:11; HPF:4,3
+d23dec01-b35e-4950-9afa-72a1b3e74148,"OLF, Isocortex, CNU",OLF:92; Isocortex:24; CNU:21,3
+d258bca2-bf18-4491-8d57-5322f705caec,"CNU, Isocortex",CNU:74; Isocortex:57,2
+d3507787-60c8-4cea-a61e-0c708b4361d8,"HB, MB, Isocortex",HB:91; MB:46; Isocortex:4,3
+d3b3c9a7-cf6a-4d25-b8da-e0f599a26191,MB,MB:67,1
+d3deaed9-34b7-41da-bd62-961750cb9ca0,"HY, CNU",HY:95; CNU:82,2
+d403c464-9d91-4338-b64b-81c299356972,HPF,HPF:33,1
+d4291925-ad00-47fe-baaf-3fdff0991e86,"MB, Isocortex",MB:46; Isocortex:39,2
+d552cffa-b662-40bd-b1e3-98d0a8face2c,"MB, Isocortex, HPF",MB:54; Isocortex:25; HPF:8,3
+d585f4b5-d154-4666-92c4-eb219f1e0f02,"Isocortex, HPF, MB, TH",Isocortex:19; HPF:12; MB:7; TH:2,4
+d591a59c-b49b-46ba-a914-df379ada9813,"OLF, Isocortex",OLF:18; Isocortex:10,2
+d595ee58-75bb-4df3-96de-d9b4f4d1f6ab,"MB, HB",MB:32; HB:9,2
+d5e5311c-8beb-4f8f-b798-3e9bfa6bcdd8,"MB, HPF, Isocortex",MB:48; HPF:41; Isocortex:27,3
+d65ab768-bd77-4719-acb9-677abca4e9d8,"HB, CB",HB:87; CB:49,2
+d6c810b2-5922-4127-af2b-4b104bc55c2b,"MB, HB, HPF, Isocortex",MB:49; HB:13; HPF:12; Isocortex:9,4
+d70f3604-b3cc-41b0-967a-f6619b2586a7,"MB, HB",MB:116; HB:53,2
+d7187e4f-7bfe-42b3-9e36-761c76eb6e8f,"HB, MB",HB:78; MB:58,2
+d7ec0892-0a6c-4f4f-9d8f-72083692af5c,"CB, HB",CB:40; HB:31,2
+d8c7d3f2-f8e7-451d-bca1-7800f4ef52ed,CB,CB:50,1
+d8ccc6bb-f0d9-494a-b682-f12c73e228c6,"CNU, Isocortex",CNU:87; Isocortex:21,2
+d8dae4d0-e11d-4b4d-8bd9-103c13491eb7,"Isocortex, TH, HPF",Isocortex:67; TH:18; HPF:15,3
+da17779f-7728-4c51-8b54-b88764c0908d,Isocortex,Isocortex:25,1
+da57bb3a-b0f2-465d-a5fc-cc84341450b0,"HB, CB",HB:87; CB:8,2
+da8dfec1-d265-44e8-84ce-6ae9c109b8bd,"CNU, HY",CNU:231; HY:66,2
+dab512bd-a02d-4c1f-8dbc-9155a163efc0,"TH, HPF, Isocortex",TH:83; HPF:20; Isocortex:8,3
+dac5defe-62b8-4cc0-96cb-b9f923957c7f,"MB, Isocortex",MB:165; Isocortex:41,2
+db2100c3-64ac-463e-97a1-20ce8266cd5f,"HY, TH",HY:8; TH:7,2
+dc7e9403-19f7-409f-9240-05ee57cb7aea,"CNU, CTXsp, OLF",CNU:221; CTXsp:45; OLF:23,3
+dce4e63f-7ece-4dae-bd6e-5b116c2fbe37,"HB, CB",HB:170; CB:167,2
+dd619e10-5df1-4c79-bd62-cc00937b5d36,HPF,HPF:141,1
+dd75e810-a399-4364-9d4a-517312cf3010,"TH, MB, HPF, Isocortex",TH:29; MB:21; HPF:16; Isocortex:10,4
+de5d704c-4a5b-4fb0-b4af-71614c510a8b,CB,CB:147,1
+dec6ad00-01c8-4bfd-bcdc-b37c5e0cdb0e,"Isocortex, HPF, TH",Isocortex:25; HPF:11; TH:10,3
+decc8d40-cf74-4263-ae9d-a0cc68b47e86,"Isocortex, CNU",Isocortex:54; CNU:35,2
+df07180e-268e-489c-826e-40cb6f63d3a5,"MB, Isocortex, HPF",MB:70; Isocortex:57; HPF:16,3
+df350b09-a420-42bb-9952-17862cbb9f1c,"Isocortex, OLF",Isocortex:216; OLF:74,2
+df6012d0-d921-4d0a-af2a-2a91030d0f42,"HB, CB",HB:98; CB:31,2
+df7d2ca7-068b-4df2-9782-8f6bb7d67f18,"TH, HPF, Isocortex",TH:31; HPF:19; Isocortex:6,3
+e033ef96-3590-4e52-bb01-6c6d75bab083,"MB, HB, HPF, Isocortex",MB:162; HB:25; HPF:11; Isocortex:2,4
+e05af01e-8721-4ec7-8d0f-dc022b3bebc3,"HY, TH",HY:5; TH:3,2
+e070023a-2a5d-4398-ad66-f9ed5d517ad1,"HB, CB",HB:119; CB:94,2
+e089d4d9-0a74-4ebc-951d-67098305e06b,"HB, HPF",HB:21; HPF:1,2
+e10a7a75-4740-41d1-82bb-7696ed14c442,"MB, Isocortex, HPF",MB:30; Isocortex:17; HPF:1,3
+e17db2b6-b778-4e2a-845c-c4d040b0c875,"HB, MB, CB",HB:19; MB:14; CB:3,3
+e22d047c-5beb-4e5b-9a3d-53b637743856,"CNU, OLF",CNU:126; OLF:36,2
+e31b4e39-e350-47a9-aca4-72496d99ff2a,"TH, HY, HPF",TH:243; HY:21; HPF:17,3
+e40193d5-8158-40a1-924b-5a01ed2565dc,"MB, HPF",MB:55; HPF:5,2
+e42e948c-3154-45cb-bf52-408b7cda0f2f,"MB, HPF",MB:37; HPF:14,2
+e45a00b1-14a0-4f5e-9ea5-9f76d042b11c,"TH, Isocortex, HPF",TH:62; Isocortex:5; HPF:3,3
+e4632651-5ba7-48a7-86db-5298b45a5bac,"HB, MB",HB:83; MB:31,2
+e4ce2e94-6fb9-4afe-acbf-6f5a3498602e,"MB, HPF, Isocortex",MB:106; HPF:29; Isocortex:7,3
+e52942b9-62b8-4cbf-9597-d73aea5cdb3e,"HB, CB",HB:17; CB:16,2
+e55266c7-eb05-47bb-b263-1cc08dc3c00c,"Isocortex, HPF, MB, TH",Isocortex:28; HPF:27; MB:20; TH:1,4
+e5bc1f00-f4b8-4b35-a9b6-60d9cc7959a1,"HPF, Isocortex",HPF:87; Isocortex:13,2
+e5bd461c-a713-4b3c-b165-a132a711e59d,"OLF, CTXsp, CNU",OLF:27; CTXsp:23; CNU:9,3
+e6508b9a-9dec-47d7-88c7-b0a72c7d1134,"CB, HB",CB:71; HB:59,2
+e6749a77-4b65-4186-a47e-63562386cecd,"CB, HB",CB:194; HB:52,2
+e7080659-8319-48a6-b6fd-2e8ce8eeec49,"Isocortex, MB",Isocortex:67; MB:26,2
+e8129a86-b5a9-4d2e-9e9c-09689c9bf0b3,"TH, CTXsp, HY, OLF, CNU",TH:58; CTXsp:18; HY:11; OLF:6; CNU:2,5
+e88eb9f8-fff3-469a-854d-d16adef19df0,Isocortex,Isocortex:54,1
+e8901184-9f60-4309-bee5-c3c95030550a,"TH, HY, MB, HPF",TH:67; HY:20; MB:15; HPF:5,4
+e8f9fba4-d151-4b00-bee7-447f0f3e752c,"TH, CTXsp, OLF, CNU",TH:58; CTXsp:17; OLF:11; CNU:8,4
+e92f8734-2c06-4168-9271-d00b3bf57c02,"Isocortex, CNU, HPF",Isocortex:55; CNU:26; HPF:2,3
+e96cbd77-5fdf-4a35-81f4-4a6361bded65,"Isocortex, HPF",Isocortex:49; HPF:10,2
+e9c04e7e-c075-4ee3-9750-dff255ec7e84,CB,CB:30,1
+e9cf749b-85dc-4b59-834b-325cec608c48,"HPF, CTXsp, OLF",HPF:43; CTXsp:26; OLF:1,3
+ea084e63-c0cb-4e11-8440-302de8fc76ee,"Isocortex, OLF",Isocortex:170; OLF:56,2
+ea931b15-6214-4b80-8d88-7acbbe071bc0,"MB, HPF",MB:86; HPF:10,2
+eab03c6e-bf98-48d2-8a0c-1887f34dd554,"TH, Isocortex, HPF",TH:56; Isocortex:49; HPF:8,3
+eb04cc7c-7c10-4e7f-8593-9c3b9b6986f5,"CNU, HY, TH",CNU:31; HY:15; TH:3,3
+eb7e9f3f-b79d-4cdd-bc24-b13a4008c1b5,"Isocortex, OLF",Isocortex:188; OLF:2,2
+eb82b081-4edc-4d6a-89ee-3453d1c4c8f0,"MB, Isocortex",MB:37; Isocortex:7,2
+eb99c2c8-e614-4240-931b-169bed23e9f5,"TH, Isocortex, HPF, HY",TH:48; Isocortex:43; HPF:13; HY:3,4
+ebd18510-c263-4d5b-a736-a588862a6972,"Isocortex, CNU, OLF",Isocortex:100; CNU:42; OLF:6,3
+ec1e2af7-c107-4a18-ab05-cefb9174d516,"HB, HPF, Isocortex",HB:55; HPF:8; Isocortex:1,3
+ec2fbc3e-cb2b-48cb-a521-3a6ca15e244c,"TH, HY, HPF",TH:70; HY:5; HPF:1,3
+ecd07b7e-6450-4e31-bef1-f195129eb3d3,Isocortex,Isocortex:40,1
+ecde7e20-f135-47dd-8f96-adac49e4942e,"CNU, Isocortex",CNU:42; Isocortex:24,2
+ece878b9-830d-4618-b801-ad0e7d8e7085,"HPF, Isocortex",HPF:140; Isocortex:23,2
+ed469fda-4519-456f-a671-cf901222b4f8,"MB, HPF, TH, Isocortex",MB:51; HPF:13; TH:7; Isocortex:3,4
+eda7a3ac-f038-4603-9c68-816234e9c4eb,"MB, Isocortex",MB:56; Isocortex:8,2
+edc82c06-83fd-44be-a41e-52fdeea728b4,"Isocortex, TH, HY",Isocortex:21; TH:15; HY:1,3
+ee320f72-b613-4acd-b10d-3ceef332a949,HPF,HPF:27,1
+ee3345e6-540d-4cea-9e4a-7f1b2fb9a4e4,"Isocortex, MB, HPF, TH",Isocortex:33; MB:31; HPF:15; TH:15,4
+eeb27b45-5b85-4e5c-b6ff-f639ca5687de,"TH, Isocortex, HPF",TH:96; Isocortex:37; HPF:7,3
+eebcaf65-7fa4-4118-869d-a084e84530e2,"MB, HPF, Isocortex",MB:97; HPF:75; Isocortex:40,3
+ef7e9f3e-a53a-4e00-8f6a-537667af2bea,"HPF, Isocortex",HPF:42; Isocortex:4,2
+f03b61b4-6b13-479d-940f-d1608eb275cc,"TH, Isocortex, HPF",TH:135; Isocortex:44; HPF:36,3
+f083fcd5-e456-433d-8aa5-6ace0a7ac170,"MB, HB",MB:147; HB:59,2
+f0c390da-d8e3-4b5f-8df7-bd2f153ed01b,"MB, Isocortex",MB:101; Isocortex:79,2
+f0dfd1c1-d315-4cf8-9130-05d3be2ea0cb,"HB, CB",HB:76; CB:5,2
+f142d2c6-6d85-4e9d-9c56-07620486e068,"CTXsp, Isocortex, CNU, OLF",CTXsp:46; Isocortex:38; CNU:23; OLF:16,4
+f1c3cf0a-f3ad-479b-8dd2-7d60ab6d03ff,"CB, HB",CB:91; HB:17,2
+f211d54e-e7eb-4188-bdcd-faa9c4317e9e,"CNU, OLF, CTXsp",CNU:92; OLF:18; CTXsp:5,3
+f26a6ab1-7e37-4f8d-bb50-295c056e1062,"TH, Isocortex, HPF, HY",TH:85; Isocortex:22; HPF:12; HY:3,4
+f2803f8c-a37b-42dd-9f20-84bdc90b21e2,"HY, TH",HY:17; TH:13,2
+f2a098e7-a67e-4125-92d8-36fc6b606c45,"Isocortex, HPF, MB, TH",Isocortex:20; HPF:17; MB:2; TH:2,4
+f2ee886d-5b9c-4d06-a9be-ee7ae8381114,"Isocortex, MB, HPF",Isocortex:19; MB:18; HPF:12,3
+f31bef35-3f56-4ca9-a34f-09d678f03039,"Isocortex, MB",Isocortex:26; MB:5,2
+f336f6a4-f693-4b88-b12c-c5cf0785b061,"HPF, CTXsp",HPF:21; CTXsp:1,2
+f3988aec-b8c7-47d9-b1a0-5334eed7f92c,CB,CB:115,1
+f44d2056-644c-4769-a189-7efe67b0269d,"MB, TH, HPF",MB:33; TH:4; HPF:2,3
+f475ae14-9415-453e-b800-1480ea1c868d,"Isocortex, CNU",Isocortex:51; CNU:46,2
+f4bd76a6-66c9-41f3-9311-6962315f8fc8,"TH, HPF, Isocortex",TH:124; HPF:4; Isocortex:2,3
+f4f45cff-c45c-413a-92ea-b6533e3e0019,"CNU, OLF, CTXsp",CNU:28; OLF:26; CTXsp:5,3
+f4ff3ff8-19b7-40c7-bf6f-8b577b811ed1,"CNU, OLF",CNU:97; OLF:20,2
+f639f4f3-ac14-4114-b712-f445463597e4,"TH, HY",TH:45; HY:6,2
+f68d9f26-ac40-4c67-9cbf-9ad1851292f7,"MB, Isocortex, HPF",MB:40; Isocortex:26; HPF:18,3
+f698f893-da01-49a1-ae4b-16f7e42e5ff5,"HPF, Isocortex",HPF:93; Isocortex:18,2
+f72e60c3-3593-466a-afaf-91145c44fb2b,"MB, HB",MB:44; HB:17,2
+f74a6b9a-b8a5-4c80-9c30-7dd4cdbb48c0,"CNU, HY, Isocortex",CNU:99; HY:7; Isocortex:4,3
+f7c49002-6565-4314-83f7-19b9a16d8e61,"Isocortex, CNU, OLF",Isocortex:21; CNU:6; OLF:6,3
+f7c93877-ec05-4091-a003-e69fae0f2fa8,"TH, Isocortex",TH:36; Isocortex:20,2
+f8249eab-d4c2-4fb0-a258-7f4b99fa19e4,"Isocortex, OLF, CTXsp, CNU",Isocortex:35; OLF:30; CTXsp:12; CNU:6,4
+f84f36c9-88f8-4d80-ba34-7f7a2b254ece,"OLF, HPF, CTXsp",OLF:20; HPF:18; CTXsp:6,3
+f865ea6c-6288-4a77-9a94-ef740166e9c7,MB,MB:98,1
+f86e9571-63ff-4116-9c40-aa44d57d2da9,"Isocortex, MB, HPF, TH",Isocortex:29; MB:15; HPF:8; TH:5,4
+f93bfce4-e814-4ae3-9cdf-59f4dcdedf51,"TH, HPF, MB",TH:111; HPF:22; MB:16,3
+f9656eee-141c-453d-a016-4aba68f674dc,"CNU, CTXsp",CNU:43; CTXsp:7,2
+f967a527-257f-404a-871d-b91575dca3b4,"TH, Isocortex, HPF",TH:223; Isocortex:75; HPF:13,3
+f9b2e36b-eef8-402f-b121-786dfed58bcb,"MB, Isocortex",MB:146; Isocortex:36,2
+f9d783f9-7d2e-4b53-83f7-9409f788cbca,"Isocortex, CNU",Isocortex:22; CNU:2,2
+f9d8aacd-b2a0-49f2-bd71-c2f5aadcfdd1,"MB, TH, Isocortex, HPF",MB:58; TH:38; Isocortex:33; HPF:30,4
+fa539f97-a078-4fc6-9a12-237799466d9c,"MB, TH, HPF",MB:24; TH:20; HPF:7,3
+fb0de39b-c750-4adc-af18-12bf8a22ed41,"HPF, Isocortex",HPF:8; Isocortex:2,2
+fb962a77-ed5a-40e0-bfdf-b3220427c55e,"TH, HY",TH:11; HY:6,2
+fcc167d6-cb53-4dc7-a58f-06a53cfabc84,"MB, Isocortex",MB:11; Isocortex:1,2
+fd555d39-b728-44aa-90d2-796b8bb58300,"CNU, OLF, CTXsp",CNU:79; OLF:36; CTXsp:8,3
+fd6d686b-eae1-44cb-adbb-159c69c85827,"CNU, CTXsp, OLF",CNU:18; CTXsp:17; OLF:9,3
+fddceb2e-82ba-493d-baba-c5d8af65981f,"Isocortex, CNU",Isocortex:86; CNU:55,2
+fdeff6df-7216-4b83-ab64-241e9fd173da,"MB, Isocortex",MB:15; Isocortex:12,2
+fe2d6fc9-b0c4-4256-b427-9c06950da925,MB,MB:112,1
+fe380793-8035-414e-b000-09bfe5ece92a,Isocortex,Isocortex:261,1
+fe41986d-4966-4a77-af7e-e7f71c25aec5,"HB, MB",HB:73; MB:65,2
+fe6507ed-7725-467a-9d46-1101c32df1ca,"TH, HY",TH:79; HY:49,2
+febb430e-2d50-4f83-87a0-b5ffbb9a4943,"TH, HPF, Isocortex, HY, MB",TH:62; HPF:27; Isocortex:10; HY:9; MB:9,5
+ff5fceaf-8247-42ab-a187-f7876441899d,"OLF, Isocortex",OLF:26; Isocortex:14,2
+ffb1b072-2de7-44a4-8115-5799b9866382,"HB, CB",HB:18; CB:4,2

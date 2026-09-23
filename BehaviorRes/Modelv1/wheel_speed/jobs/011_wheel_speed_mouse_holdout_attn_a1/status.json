@@ -1,0 +1,15 @@
+{
+  "job": 11,
+  "tag": "wheel_speed_mouse_holdout_attn_a1",
+  "slurm_job_id": "367897",
+  "slurm_array_task_id": "11",
+  "task": "mouse_holdout",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 17,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:27:02.978348+00:00"
+}

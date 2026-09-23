@@ -1,0 +1,15 @@
+{
+  "job": 45,
+  "tag": "paw_vz_session_holdout_attn_a1",
+  "slurm_job_id": "367949",
+  "slurm_array_task_id": "45",
+  "task": "session_holdout",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_vz",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 29,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:36:15.154968+00:00"
+}

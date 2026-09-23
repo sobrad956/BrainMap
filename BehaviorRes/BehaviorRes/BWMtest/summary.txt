@@ -1,0 +1,13 @@
+BWM-style decoding on ModelDataLeftIpsi (left paw, left hemisphere, MOp/MOs)
+sessions with a fit: 49 / 52   method: Ridge nested 5-fold, lag W=10, 5 circular-shift nulls
+window: stimOn→reward (paper's firstMovement −0.2:+1.0 s does not fit these trials)
+null p-floor = 1/6 ≈ 0.167; report 'beats all nulls' instead of p<0.05
+
+  wheel speed |ω|           median R²= 0.250  mean= 0.274  null-corr median= 0.266  beats all 5 nulls in 44/49 sessions
+  paw speed (2D)            median R²= 0.180  mean= 0.198  null-corr median= 0.203  beats all 5 nulls in 44/48 sessions
+  paw speedNormalized       median R²= 0.186  mean= 0.211  null-corr median= 0.225  beats all 5 nulls in 46/48 sessions
+
+  corr(R² wheel, paw)     0.91
+  corr(R² wheel, paw_norm) 0.83
+  corr(R² paw, paw_norm)   0.94
+  fraction of sessions with paw R² > wheel R²: 0.16

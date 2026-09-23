@@ -78,3 +78,5 @@ BehaviorRes/ModelDataRightContra/
 # Keep small derived label tables; ignore other parquet dumps
 *.parquet
 !BehaviorRes/wheel_paws_labels.parquet
+*.out
+*.err

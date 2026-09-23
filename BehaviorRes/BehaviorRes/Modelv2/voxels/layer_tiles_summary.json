@@ -1,0 +1,47 @@
+{
+  "strategy": "layer_tiles",
+  "n_voxels_catalog": 700,
+  "n_voxels_occupied": 121,
+  "occupancy_fraction": 0.17285714285714285,
+  "n_sessions": 52,
+  "n_mice": 32,
+  "units_assigned": 2408,
+  "assignment_rate": 1.0,
+  "mean_units_per_occupied_voxel_session": 11.803921568627452,
+  "median_units_per_occupied_voxel_session": 8.0,
+  "frac_occupied_voxels_unique_to_one_session": 0.49586776859504134,
+  "n_voxels_shared_by_ge2_sessions": 61,
+  "mean_jaccard_between_sessions": 0.013596015179725586,
+  "mean_jaccard_within_multi_session_mice": 0.03888888888888888,
+  "mean_jaccard_between_mice": 0.019435388369596636,
+  "median_session_voxels": 4.0,
+  "median_mouse_voxels": 5.0,
+  "split_overlap": {
+    "trial_holdout": {
+      "train_voxels": 121,
+      "test_voxels": 22,
+      "jaccard": 0.18181818181818182,
+      "test_covered": 1.0
+    },
+    "session_holdout": {
+      "train_voxels": 118,
+      "test_voxels": 3,
+      "jaccard": 0.0,
+      "test_covered": 0.0
+    },
+    "mouse_holdout": {
+      "train_voxels": 121,
+      "test_voxels": 4,
+      "jaccard": 0.03305785123966942,
+      "test_covered": 1.0
+    }
+  },
+  "grid": {
+    "nx": 7,
+    "ny": 10,
+    "nz": null,
+    "ml_um": 400.0,
+    "ap_um": 400.0,
+    "dv_um": null
+  }
+}

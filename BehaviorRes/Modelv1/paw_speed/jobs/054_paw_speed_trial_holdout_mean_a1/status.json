@@ -1,0 +1,15 @@
+{
+  "job": 54,
+  "tag": "paw_speed_trial_holdout_mean_a1",
+  "slurm_job_id": "367960",
+  "slurm_array_task_id": "54",
+  "task": "trial_holdout",
+  "pool": "mean",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 26,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:36:49.089847+00:00"
+}

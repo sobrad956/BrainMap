@@ -1,0 +1,602 @@
+[11:09:38] Cohort: 1 mice, 1 sessions
+[11:09:38] Loading frozen BWM trials.pqt and clusters.pqt
+[11:09:39] [1/1] ZFM-01576 2020-12-03
+[11:09:40] ZFM-01576 2020-12-03 eid=9e9c6fc0-4769-4d83-9ea4-b59a1230510e: 609 BWM trials with RT in [0.08, 2.0] s
+[11:09:46]   loading spikes probe00 pid=6eb8be8d-d089-43c6-b2e4-a6558ca16dcf
+[11:09:49]     QC>=1.0 after merge: 116; BWM aggregate uuids: 116
+[11:09:49]     BWM units=116 spikes=4104521
+[11:10:37]   wrote 9e9c6fc0-4769-4d83-9ea4-b59a1230510e.pkl: 609 trials, 116 units
+[11:10:37] Done. processed=1 skipped=0 failed=0; index 1 mice, 1 sessions, 609 trials, 116 units
+[11:10:37] Warning: index does not yet contain the full 39 mice / 67 sessions. Re-run fullData.py to resume remaining sessions.
+[11:12:14] Cohort: 39 mice, 67 sessions
+[11:12:14] Loading frozen BWM trials.pqt and clusters.pqt
+[11:12:15] [1/67] NYU-21 2020-08-13
+[11:12:16] NYU-21 2020-08-13 eid=8c33abef-3d3e-4d42-9f27-445e9def08f9: 492 BWM trials with RT in [0.08, 2.0] s
+[11:12:42]   loading spikes probe01 pid=8895f61f-1c17-4d2f-8b9b-77476c5261b6
+[11:12:55]     QC>=1.0 after merge: 122; BWM aggregate uuids: 122
+[11:12:55]     BWM units=122 spikes=7120704
+[11:12:55]   loading spikes probe00 pid=f475ae14-9415-453e-b800-1480ea1c868d
+[11:13:06]     QC>=1.0 after merge: 141; BWM aggregate uuids: 141
+[11:13:06]     BWM units=141 spikes=4426789
+[11:13:26]   wrote 8c33abef-3d3e-4d42-9f27-445e9def08f9.pkl: 492 trials, 263 units
+[11:13:26] [2/67] NYU-21 2020-08-19
+[11:13:26] NYU-21 2020-08-19 eid=ebe2efe3-e8a1-451a-8947-76ef42427cc9: 347 BWM trials with RT in [0.08, 2.0] s
+[11:13:49]   loading spikes probe00 pid=73ff4936-8cd3-4a75-a772-f563e67d249d
+[11:13:57]     QC>=1.0 after merge: 49; BWM aggregate uuids: 49
+[11:13:57]     BWM units=49 spikes=1701600
+[11:13:57]   loading spikes probe01 pid=ac088ddb-9e1e-49ae-b341-46a8445cf809
+[11:14:07]     QC>=1.0 after merge: 56; BWM aggregate uuids: 56
+[11:14:07]     BWM units=56 spikes=2830202
+[11:14:19]   wrote ebe2efe3-e8a1-451a-8947-76ef42427cc9.pkl: 347 trials, 105 units
+[11:14:19] [3/67] NYU-30 2020-10-20
+[11:14:19] NYU-30 2020-10-20 eid=77e6dc6a-66ed-433c-b1a2-778c914f523c: 594 BWM trials with RT in [0.08, 2.0] s
+[11:14:44]   loading spikes probe00 pid=7b05cccc-44f6-4491-a0ea-e38d6e95513d
+[11:14:54]     QC>=1.0 after merge: 95; BWM aggregate uuids: 95
+[11:14:54]     BWM units=95 spikes=2989699
+[11:15:16]   wrote 77e6dc6a-66ed-433c-b1a2-778c914f523c.pkl: 594 trials, 95 units
+[11:15:16] [4/67] NYU-30 2020-10-21
+[11:15:16] NYU-30 2020-10-21 eid=5569f363-0934-464e-9a5b-77c8e67791a1: 513 BWM trials with RT in [0.08, 2.0] s
+[11:15:39]   loading spikes probe00 pid=99993a2b-588e-4c0c-bfec-e3dfb4f61534
+[11:15:49]     QC>=1.0 after merge: 105; BWM aggregate uuids: 105
+[11:15:49]     BWM units=105 spikes=3125722
+[11:16:05]   wrote 5569f363-0934-464e-9a5b-77c8e67791a1.pkl: 513 trials, 105 units
+[11:16:05] [5/67] NYU-30 2020-10-22
+[11:16:05] NYU-30 2020-10-22 eid=5ec72172-3901-4771-8777-6e9490ca51fc: 694 BWM trials with RT in [0.08, 2.0] s
+[11:16:29]   loading spikes probe00 pid=298e2a70-9801-45f0-b91c-d6bb9718427e
+[11:16:40]     QC>=1.0 after merge: 183; BWM aggregate uuids: 183
+[11:16:40]     BWM units=183 spikes=4671194
+[11:16:40]   loading spikes probe01 pid=9dff5593-e781-41a3-a6f9-20d06085e4f8
+[11:16:47]     QC>=1.0 after merge: 15; BWM aggregate uuids: 15
+[11:16:47]     BWM units=15 spikes=853180
+[11:17:13]   wrote 5ec72172-3901-4771-8777-6e9490ca51fc.pkl: 694 trials, 198 units
+[11:17:13] [6/67] NYU-37 2021-01-26
+[11:17:13] NYU-37 2021-01-26 eid=f88d4dd4-ccd7-400e-9035-fa00be3bcfa8: 228 BWM trials with RT in [0.08, 2.0] s
+[11:17:33]   loading spikes probe00 pid=511afaa5-fdc4-4166-b4c0-4629ec5e652e
+[11:17:47]     QC>=1.0 after merge: 194; BWM aggregate uuids: 194
+[11:17:47]     BWM units=194 spikes=8848348
+[11:17:47]   loading spikes probe01 pid=decc8d40-cf74-4263-ae9d-a0cc68b47e86
+[11:17:55]     QC>=1.0 after merge: 94; BWM aggregate uuids: 94
+[11:17:55]     BWM units=94 spikes=1780196
+[11:18:01]   wrote f88d4dd4-ccd7-400e-9035-fa00be3bcfa8.pkl: 228 trials, 288 units
+[11:18:01] [7/67] NYU-39 2021-05-12
+[11:18:01] NYU-39 2021-05-12 eid=fa1f26a1-eb49-4b24-917e-19f02a18ac61: 504 BWM trials with RT in [0.08, 2.0] s
+[11:18:26]   loading spikes probe01 pid=01864e9d-0dbe-41d4-9e3a-0285348ecfc1
+[11:18:36]     QC>=1.0 after merge: 109; BWM aggregate uuids: 109
+[11:18:36]     BWM units=109 spikes=3909367
+[11:18:36]   loading spikes probe00 pid=a9e83d8a-7c90-4152-abad-53a1ad94d73a
+[11:18:43]     QC>=1.0 after merge: 20; BWM aggregate uuids: 20
+[11:18:43]     BWM units=20 spikes=649361
+[11:19:00]   wrote fa1f26a1-eb49-4b24-917e-19f02a18ac61.pkl: 504 trials, 129 units
+[11:19:00] [8/67] NYU-48 2021-06-29
+[11:19:00] NYU-48 2021-06-29 eid=a405053a-eb13-4aa4-850c-5a337e5dc7fd: 478 BWM trials with RT in [0.08, 2.0] s
+[11:19:23]   loading spikes probe00 pid=450cea3b-9289-4708-9df2-a2518bdc4b59
+[11:19:30]     QC>=1.0 after merge: 20; BWM aggregate uuids: 20
+[11:19:30]     BWM units=20 spikes=292051
+[11:19:30]   loading spikes probe01 pid=afecbc7f-10e3-40af-b091-cca9e8df6108
+[11:19:37]     QC>=1.0 after merge: 59; BWM aggregate uuids: 59
+[11:19:37]     BWM units=59 spikes=976742
+[11:19:52]   wrote a405053a-eb13-4aa4-850c-5a337e5dc7fd.pkl: 478 trials, 79 units
+[11:19:52] [9/67] CSHL049 2020-01-10
+[11:19:52] CSHL049 2020-01-10 eid=d2918f52-8280-43c0-924b-029b2317e62c: 592 BWM trials with RT in [0.08, 2.0] s
+[11:20:15]   loading spikes probe00 pid=2564dc27-4eda-4fc3-a151-c13475796ee1
+[11:20:29]     QC>=1.0 after merge: 218; BWM aggregate uuids: 218
+[11:20:29]     BWM units=218 spikes=7403286
+[11:21:01]   wrote d2918f52-8280-43c0-924b-029b2317e62c.pkl: 592 trials, 218 units
+[11:21:01] [10/67] CSHL049 2020-01-11
+[11:21:01] CSHL049 2020-01-11 eid=d839491f-55d8-4cbe-a298-7839208ba12b: 330 BWM trials with RT in [0.08, 2.0] s
+[11:21:24]   loading spikes probe00 pid=ae2b9f1b-ebe3-4b56-8957-31982186e6ec
+[11:21:33]     QC>=1.0 after merge: 82; BWM aggregate uuids: 82
+[11:21:33]     BWM units=82 spikes=2086362
+[11:21:33]   loading spikes probe01 pid=c536b0a9-b710-43c3-ba2c-5a0cccf98ec2
+[11:21:40]     QC>=1.0 after merge: 31; BWM aggregate uuids: 31
+[11:21:40]     BWM units=31 spikes=842321
+[11:21:59]   wrote d839491f-55d8-4cbe-a298-7839208ba12b.pkl: 330 trials, 113 units
+[11:22:00] [11/67] CSHL058 2020-07-08
+[11:22:00] CSHL058 2020-07-08 eid=fb70ebf7-8175-42b0-9b7a-7c6e8612226e: 489 BWM trials with RT in [0.08, 2.0] s
+[11:22:24]   loading spikes probe01 pid=5fd00035-89d6-4e7c-bb26-f103388b731d
+[11:22:35]     QC>=1.0 after merge: 173; BWM aggregate uuids: 173
+[11:22:35]     BWM units=173 spikes=3635465
+[11:22:35]   loading spikes probe00 pid=acf04c3f-650a-4de0-b0d0-edf695dd2025
+[11:22:44]     QC>=1.0 after merge: 94; BWM aggregate uuids: 94
+[11:22:44]     BWM units=94 spikes=2263173
+[11:23:15]   wrote fb70ebf7-8175-42b0-9b7a-7c6e8612226e.pkl: 489 trials, 267 units
+[11:23:15] [12/67] CSHL058 2020-07-11
+[11:23:15] CSHL058 2020-07-11 eid=28741f91-c837-4147-939e-918d38d849f2: 271 BWM trials with RT in [0.08, 2.0] s
+[11:23:36]   loading spikes probe01 pid=5458cb27-d065-4626-bcd8-1aa775e1115e
+[11:23:44]     QC>=1.0 after merge: 69; BWM aggregate uuids: 69
+[11:23:44]     BWM units=69 spikes=1248659
+[11:23:44]   loading spikes probe00 pid=bf591043-03c2-48bb-9197-e17e85aaeb8f
+[11:23:52]     QC>=1.0 after merge: 50; BWM aggregate uuids: 50
+[11:23:52]     BWM units=50 spikes=2529831
+[11:24:07]   wrote 28741f91-c837-4147-939e-918d38d849f2.pkl: 271 trials, 119 units
+[11:24:07] [13/67] CSHL059 2020-03-03
+[11:24:07] CSHL059 2020-03-03 eid=d2f5a130-b981-4546-8858-c94ae1da75ff: 358 BWM trials with RT in [0.08, 2.0] s
+[11:24:31]   loading spikes probe01 pid=2d2cdf86-4a0c-42d8-aed3-5b187f160013
+[11:24:41]     QC>=1.0 after merge: 67; BWM aggregate uuids: 67
+[11:24:41]     BWM units=67 spikes=2855572
+[11:24:41]   loading spikes probe00 pid=79628a45-c2e3-4206-97df-4c91edaff90f
+[11:24:51]     QC>=1.0 after merge: 96; BWM aggregate uuids: 96
+[11:24:51]     BWM units=96 spikes=2860987
+[11:25:11]   wrote d2f5a130-b981-4546-8858-c94ae1da75ff.pkl: 358 trials, 163 units
+[11:25:11] [14/67] CSHL059 2020-03-05
+[11:25:11] CSHL059 2020-03-05 eid=57b5ae8f-d446-4161-b439-b191c5e3e77b: 371 BWM trials with RT in [0.08, 2.0] s
+[11:25:39]   loading spikes probe01 pid=c42574be-0456-437f-8329-afc5a63b7e78
+[11:25:49]     QC>=1.0 after merge: 38; BWM aggregate uuids: 38
+[11:25:49]     BWM units=38 spikes=3893233
+[11:25:49]   loading spikes probe00 pid=e88eb9f8-fff3-469a-854d-d16adef19df0
+[11:25:58]     QC>=1.0 after merge: 62; BWM aggregate uuids: 62
+[11:25:58]     BWM units=62 spikes=2048384
+[11:26:22]   wrote 57b5ae8f-d446-4161-b439-b191c5e3e77b.pkl: 371 trials, 100 units
+[11:26:22] [15/67] CSHL060 2020-03-09
+[11:26:22] CSHL060 2020-03-09 eid=2e6e179c-fccc-4e8f-9448-ce5b6858a183: 451 BWM trials with RT in [0.08, 2.0] s
+[11:26:47]   loading spikes probe01 pid=35897454-8702-4dc4-9865-7f01fa65f355
+[11:26:55]     QC>=1.0 after merge: 33; BWM aggregate uuids: 33
+[11:26:55]     BWM units=33 spikes=2585348
+[11:26:55]   loading spikes probe00 pid=9f99bd34-40d4-4aac-ae2b-7bc7f7086ccb
+[11:27:07]     QC>=1.0 after merge: 131; BWM aggregate uuids: 131
+[11:27:07]     BWM units=131 spikes=4358425
+[11:27:34]   wrote 2e6e179c-fccc-4e8f-9448-ce5b6858a183.pkl: 451 trials, 164 units
+[11:27:34] [16/67] CSHL060 2020-03-11
+[11:27:34] CSHL060 2020-03-11 eid=1191f865-b10a-45c8-9c48-24a980fd9402: 681 BWM trials with RT in [0.08, 2.0] s
+[11:28:01]   loading spikes probe00 pid=62a97aee-9f8b-40be-9ea7-f785ede30df8
+[11:28:15]     QC>=1.0 after merge: 218; BWM aggregate uuids: 218
+[11:28:15]     BWM units=218 spikes=6554179
+[11:28:15]   loading spikes probe01 pid=e52942b9-62b8-4cbf-9597-d73aea5cdb3e
+[11:28:26]     QC>=1.0 after merge: 34; BWM aggregate uuids: 34
+[11:28:26]     BWM units=34 spikes=3608046
+[11:29:15]   wrote 1191f865-b10a-45c8-9c48-24a980fd9402.pkl: 681 trials, 252 units
+[11:29:15] [17/67] UCLA033 2022-02-17
+[11:29:15] UCLA033 2022-02-17 eid=5455a21c-1be7-4cae-ae8e-8853a8d5f55e: 364 BWM trials with RT in [0.08, 2.0] s
+[11:29:38]   loading spikes probe00 pid=e96cbd77-5fdf-4a35-81f4-4a6361bded65
+[11:29:47]     QC>=1.0 after merge: 67; BWM aggregate uuids: 67
+[11:29:47]     BWM units=67 spikes=1893073
+[11:30:02]   wrote 5455a21c-1be7-4cae-ae8e-8853a8d5f55e.pkl: 364 trials, 67 units
+[11:30:02] [18/67] UCLA034 2022-01-26
+[11:30:02] UCLA034 2022-01-26 eid=ebc9392c-1ecb-4b4b-a545-4e3d70d23611: 326 BWM trials with RT in [0.08, 2.0] s
+[11:30:34]   loading spikes probe00 pid=6358854e-51d2-47de-a278-5cbfd155feb6
+[11:30:50]     QC>=1.0 after merge: 281; BWM aggregate uuids: 281
+[11:30:51]     BWM units=281 spikes=10712691
+[11:31:12]   wrote ebc9392c-1ecb-4b4b-a545-4e3d70d23611.pkl: 326 trials, 281 units
+[11:31:12] [19/67] UCLA035 2022-02-18
+[11:31:12] UCLA035 2022-02-18 eid=6f36868f-5cc1-450c-82fa-6b9829ce0cfe: 542 BWM trials with RT in [0.08, 2.0] s
+[11:31:39]   loading spikes probe00 pid=54455bff-7afd-4a16-835f-f79b7c30bae9
+[11:31:47]     QC>=1.0 after merge: 21; BWM aggregate uuids: 21
+[11:31:47]     BWM units=21 spikes=1655903
+[11:31:47]   loading spikes probe01 pid=7c94d733-b913-4064-83f2-37422712204c
+[11:31:58]     QC>=1.0 after merge: 119; BWM aggregate uuids: 119
+[11:31:58]     BWM units=119 spikes=4669081
+[11:32:30]   wrote 6f36868f-5cc1-450c-82fa-6b9829ce0cfe.pkl: 542 trials, 140 units
+[11:32:31] [20/67] UCLA035 2022-02-24
+[11:32:31] UCLA035 2022-02-24 eid=f99ac31f-171b-4208-a55d-5644c0ad51c3: 409 BWM trials with RT in [0.08, 2.0] s
+[11:32:57]   loading spikes probe00 pid=6ad5a0a6-362a-4aec-8743-2e91469b0b62
+[11:33:11]     QC>=1.0 after merge: 312; BWM aggregate uuids: 312
+[11:33:11]     BWM units=312 spikes=9112543
+[11:33:11]   loading spikes probe01 pid=6e61f777-90b9-4656-af30-9ed54d426c5a
+[11:33:18]     QC>=1.0 after merge: 0; BWM aggregate uuids: 0
+[11:33:18]     BWM units=0 spikes=0
+[11:33:43]   wrote f99ac31f-171b-4208-a55d-5644c0ad51c3.pkl: 409 trials, 312 units
+[11:33:43] [21/67] UCLA037 2022-02-09
+[11:33:43] UCLA037 2022-02-09 eid=8d316998-28c3-4265-b029-e2ca82375b2f: 405 BWM trials with RT in [0.08, 2.0] s
+[11:34:03]   loading spikes probe00 pid=5245b505-d0e7-4942-94d1-b33a084fab03
+[11:34:15]     QC>=1.0 after merge: 229; BWM aggregate uuids: 229
+[11:34:15]     BWM units=229 spikes=5348636
+[11:34:30]   wrote 8d316998-28c3-4265-b029-e2ca82375b2f.pkl: 405 trials, 229 units
+[11:34:30] [22/67] KS023 2019-12-06
+[11:34:30] KS023 2019-12-06 eid=a4000c2f-fa75-4b3e-8f06-a7cf599b87ad: 513 BWM trials with RT in [0.08, 2.0] s
+[11:34:50]   loading spikes probe01 pid=adca9242-0725-41d4-8eb1-5655a464431d
+[11:34:59]     QC>=1.0 after merge: 115; BWM aggregate uuids: 115
+[11:34:59]     BWM units=115 spikes=1953608
+[11:34:59]   loading spikes probe00 pid=e8129a86-b5a9-4d2e-9e9c-09689c9bf0b3
+[11:35:09]     QC>=1.0 after merge: 95; BWM aggregate uuids: 95
+[11:35:09]     BWM units=95 spikes=2321185
+[11:35:31]   wrote a4000c2f-fa75-4b3e-8f06-a7cf599b87ad.pkl: 513 trials, 210 units
+[11:35:31] [23/67] KS023 2019-12-08
+[11:35:31] KS023 2019-12-08 eid=a92c4b1d-46bd-457e-a1f4-414265f0e2d4: 584 BWM trials with RT in [0.08, 2.0] s
+[11:35:51]   loading spikes probe01 pid=26af22bb-b295-4a45-8ed3-1700604c0708
+[11:36:00]     QC>=1.0 after merge: 83; BWM aggregate uuids: 83
+[11:36:00]     BWM units=83 spikes=1531543
+[11:36:00]   loading spikes probe00 pid=f44d2056-644c-4769-a189-7efe67b0269d
+[11:36:10]     QC>=1.0 after merge: 39; BWM aggregate uuids: 39
+[11:36:10]     BWM units=39 spikes=4027394
+[11:36:36]   wrote a92c4b1d-46bd-457e-a1f4-414265f0e2d4.pkl: 584 trials, 122 units
+[11:36:36] [24/67] KS023 2019-12-10
+[11:36:36] KS023 2019-12-10 eid=aad23144-0e52-4eac-80c5-c4ee2decb198: 484 BWM trials with RT in [0.08, 2.0] s
+[11:36:57]   loading spikes probe00 pid=45e7731f-4a43-45d5-9029-c080150bc596
+[11:37:07]     QC>=1.0 after merge: 174; BWM aggregate uuids: 174
+[11:37:07]     BWM units=174 spikes=2404727
+[11:37:07]   loading spikes probe01 pid=b749446c-18e3-4987-820a-50649ab0f826
+[11:37:16]     QC>=1.0 after merge: 96; BWM aggregate uuids: 96
+[11:37:16]     BWM units=96 spikes=1615968
+[11:37:34]   wrote aad23144-0e52-4eac-80c5-c4ee2decb198.pkl: 484 trials, 270 units
+[11:37:34] [25/67] KS043 2020-12-06
+[11:37:34] KS043 2020-12-06 eid=9468fa93-21ae-4984-955c-e8402e280c83: 378 BWM trials with RT in [0.08, 2.0] s
+[11:37:59]   loading spikes probe01 pid=0c42a3d2-beb7-4b7b-a9b5-1eea6c51e1f4
+[11:38:08]     QC>=1.0 after merge: 75; BWM aggregate uuids: 75
+[11:38:08]     BWM units=75 spikes=1696240
+[11:38:08]   loading spikes probe00 pid=f0dfd1c1-d315-4cf8-9130-05d3be2ea0cb
+[11:38:20]     QC>=1.0 after merge: 87; BWM aggregate uuids: 87
+[11:38:20]     BWM units=87 spikes=5621781
+[11:38:40]   wrote 9468fa93-21ae-4984-955c-e8402e280c83.pkl: 378 trials, 162 units
+[11:38:41] [26/67] KS046 2020-12-04
+[11:38:41] KS046 2020-12-04 eid=dfbe628d-365b-461c-a07f-8b9911ba83aa: 516 BWM trials with RT in [0.08, 2.0] s
+[11:39:09]   loading spikes probe00 pid=ad315779-2b39-46c4-8348-b166e796fa7c
+[11:39:18]     QC>=1.0 after merge: 61; BWM aggregate uuids: 61
+[11:39:18]     BWM units=61 spikes=1364029
+[11:39:18]   loading spikes probe01 pid=df350b09-a420-42bb-9952-17862cbb9f1c
+[11:39:36]     QC>=1.0 after merge: 290; BWM aggregate uuids: 290
+[11:39:36]     BWM units=290 spikes=11410457
+[11:40:08]   wrote dfbe628d-365b-461c-a07f-8b9911ba83aa.pkl: 516 trials, 351 units
+[11:40:08] [27/67] KS046 2020-12-05
+[11:40:08] KS046 2020-12-05 eid=aa3432cd-62bd-40bc-bc1c-a12d53bcbdcf: 487 BWM trials with RT in [0.08, 2.0] s
+[11:40:36]   loading spikes probe00 pid=41ea689a-7e05-463b-915a-90e63b8c0572
+[11:40:46]     QC>=1.0 after merge: 104; BWM aggregate uuids: 104
+[11:40:46]     BWM units=104 spikes=2063540
+[11:40:46]   loading spikes probe01 pid=cc9d666c-6fe5-418d-9b37-114428d25454
+[11:40:56]     QC>=1.0 after merge: 58; BWM aggregate uuids: 58
+[11:40:56]     BWM units=58 spikes=4466092
+[11:41:23]   wrote aa3432cd-62bd-40bc-bc1c-a12d53bcbdcf.pkl: 487 trials, 162 units
+[11:41:24] [28/67] KS051 2021-05-13
+[11:41:24] KS051 2021-05-13 eid=7082d8ff-255a-47d7-a839-bf093483ec30: 264 BWM trials with RT in [0.08, 2.0] s
+[11:41:29]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[11:41:29]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[11:41:29]   loading spikes probe00 pid=082187a0-121f-47d5-962a-a9ad467e7124
+[11:41:37]     QC>=1.0 after merge: 15; BWM aggregate uuids: 15
+[11:41:37]     BWM units=15 spikes=884814
+[11:41:37]   loading spikes probe01 pid=2122d807-13ab-494e-a1cc-e55cf24d3e9f
+[11:41:46]     QC>=1.0 after merge: 60; BWM aggregate uuids: 60
+[11:41:46]     BWM units=60 spikes=1054905
+[11:41:47]   wrote 7082d8ff-255a-47d7-a839-bf093483ec30.pkl: 264 trials, 75 units
+[11:41:47] [29/67] KS052 2021-05-13
+[11:41:47] KS052 2021-05-13 eid=ac7d3064-7f09-48a3-88d2-e86a4eb86461: 524 BWM trials with RT in [0.08, 2.0] s
+[11:41:52]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[11:41:52]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[11:41:52]   loading spikes probe00 pid=1df6ebb3-9d16-4c0f-96cc-e1b1596d2006
+[11:42:01]     QC>=1.0 after merge: 53; BWM aggregate uuids: 53
+[11:42:01]     BWM units=53 spikes=994998
+[11:42:01]   loading spikes probe01 pid=2c401cbd-b95c-4ebe-8a83-92b55ab49542
+[11:42:12]     QC>=1.0 after merge: 38; BWM aggregate uuids: 38
+[11:42:13]     BWM units=38 spikes=868551
+[11:42:16]   wrote ac7d3064-7f09-48a3-88d2-e86a4eb86461.pkl: 524 trials, 91 units
+[11:42:16] [30/67] KS091 2022-07-04
+[11:42:16] KS091 2022-07-04 eid=78b4fff5-c5ec-44d9-b5f9-d59493063f00: 615 BWM trials with RT in [0.08, 2.0] s
+[11:42:42]   loading spikes probe01 pid=19c5b0d5-a255-47ff-9f8d-639e634a7b61
+[11:42:51]     QC>=1.0 after merge: 58; BWM aggregate uuids: 58
+[11:42:51]     BWM units=58 spikes=1066943
+[11:42:51]   loading spikes probe00 pid=1ca6cd06-1ed5-45af-b73a-017d5e7cff48
+[11:43:00]     QC>=1.0 after merge: 58; BWM aggregate uuids: 58
+[11:43:00]     BWM units=58 spikes=3145759
+[11:43:24]   wrote 78b4fff5-c5ec-44d9-b5f9-d59493063f00.pkl: 615 trials, 116 units
+[11:43:24] [31/67] DY_011 2020-01-31
+[11:43:25] DY_011 2020-01-31 eid=7bee9f09-a238-42cf-b499-f51f765c6ded: 351 BWM trials with RT in [0.08, 2.0] s
+[11:43:42]   loading spikes probe00 pid=26118c10-35dd-4ab1-9f0f-b9a89a1da070
+[11:43:55]     QC>=1.0 after merge: 83; BWM aggregate uuids: 83
+[11:43:55]     BWM units=83 spikes=1805695
+[11:44:04]   wrote 7bee9f09-a238-42cf-b499-f51f765c6ded.pkl: 351 trials, 83 units
+[11:44:05] [32/67] DY_011 2020-02-01
+[11:44:05] DY_011 2020-02-01 eid=36280321-555b-446d-9b7d-c2e17991e090: 429 BWM trials with RT in [0.08, 2.0] s
+[11:44:24]   loading spikes probe00 pid=898f8971-31e9-4fdb-b66e-2ae6d3a33a5b
+[11:44:31]     QC>=1.0 after merge: 59; BWM aggregate uuids: 59
+[11:44:31]     BWM units=59 spikes=1150772
+[11:44:48]   wrote 36280321-555b-446d-9b7d-c2e17991e090.pkl: 429 trials, 59 units
+[11:44:48] [33/67] DY_011 2020-02-08
+[11:44:48] DY_011 2020-02-08 eid=cf43dbb1-6992-40ec-a5f9-e8e838d0f643: 321 BWM trials with RT in [0.08, 2.0] s
+[11:45:05]   loading spikes probe00 pid=0e8d3cb3-2e4c-47a0-8bb4-65d2cc3161c6
+[11:45:14]     QC>=1.0 after merge: 41; BWM aggregate uuids: 41
+[11:45:14]     BWM units=41 spikes=778824
+[11:45:24]   wrote cf43dbb1-6992-40ec-a5f9-e8e838d0f643.pkl: 321 trials, 41 units
+[11:45:25] [34/67] DY_014 2020-07-17
+[11:45:25] DY_014 2020-07-17 eid=bd456d8f-d36e-434a-8051-ff3997253802: 518 BWM trials with RT in [0.08, 2.0] s
+[11:45:47]   loading spikes probe01 pid=091392a5-73f6-40f3-8552-fa917cf96deb
+[11:45:58]     QC>=1.0 after merge: 93; BWM aggregate uuids: 93
+[11:45:58]     BWM units=93 spikes=3215424
+[11:45:58]   loading spikes probe00 pid=d258bca2-bf18-4491-8d57-5322f705caec
+[11:46:09]     QC>=1.0 after merge: 135; BWM aggregate uuids: 135
+[11:46:09]     BWM units=135 spikes=4133732
+[11:46:25]   wrote bd456d8f-d36e-434a-8051-ff3997253802.pkl: 518 trials, 228 units
+[11:46:25] [35/67] DY_014 2020-07-18
+[11:46:25] DY_014 2020-07-18 eid=ee8b36de-779f-4dea-901f-e0141c95722b: 441 BWM trials with RT in [0.08, 2.0] s
+[11:46:48]   loading spikes probe01 pid=1ef94d02-d51a-491f-a313-1bb5238d6b8b
+[11:46:58]     QC>=1.0 after merge: 142; BWM aggregate uuids: 142
+[11:46:58]     BWM units=142 spikes=3490453
+[11:46:58]   loading spikes probe00 pid=b375a0ee-4c5a-4a53-9cea-d753f206e5c5
+[11:47:13]     QC>=1.0 after merge: 78; BWM aggregate uuids: 78
+[11:47:13]     BWM units=78 spikes=2893623
+[11:47:26]   wrote ee8b36de-779f-4dea-901f-e0141c95722b.pkl: 441 trials, 220 units
+[11:47:27] [36/67] PL033 2022-10-04
+[11:47:27] PL033 2022-10-04 eid=62902992-8432-46fb-af12-6392012e58c7: 375 BWM trials with RT in [0.08, 2.0] s
+[11:47:49]   loading spikes probe00 pid=edc82c06-83fd-44be-a41e-52fdeea728b4
+[11:48:01]     QC>=1.0 after merge: 99; BWM aggregate uuids: 99
+[11:48:01]     BWM units=99 spikes=4394810
+[11:48:21]   wrote 62902992-8432-46fb-af12-6392012e58c7.pkl: 375 trials, 99 units
+[11:48:21] [37/67] PL033 2022-10-06
+[11:48:21] PL033 2022-10-06 eid=cef05f87-161b-4031-932c-6f47daf89698: 355 BWM trials with RT in [0.08, 2.0] s
+[11:48:41]   loading spikes probe00 pid=c1014051-d06b-4f85-9887-e7c42a94baf2
+[11:48:50]     QC>=1.0 after merge: 114; BWM aggregate uuids: 114
+[11:48:50]     BWM units=114 spikes=2775489
+[11:49:07]   wrote cef05f87-161b-4031-932c-6f47daf89698.pkl: 355 trials, 114 units
+[11:49:08] [38/67] PL033 2022-10-10
+[11:49:08] PL033 2022-10-10 eid=7f150b7c-c261-46e6-9edb-cc391c9d9f03: 341 BWM trials with RT in [0.08, 2.0] s
+[11:49:31]   loading spikes probe00 pid=0ffa052a-fe3f-46c2-999d-43bd56b7826e
+[11:49:41]     QC>=1.0 after merge: 87; BWM aggregate uuids: 87
+[11:49:41]     BWM units=87 spikes=2755360
+[11:49:58]   wrote 7f150b7c-c261-46e6-9edb-cc391c9d9f03.pkl: 341 trials, 87 units
+[11:49:59] [39/67] SWC_043 2020-09-15
+[11:49:59] SWC_043 2020-09-15 eid=f3ce3197-d534-4618-bf81-b687555d1883: 700 BWM trials with RT in [0.08, 2.0] s
+[11:50:27]   loading spikes probe01 pid=2a7caaa4-1710-49a1-ade4-db0a986ae6f5
+[11:50:36]     QC>=1.0 after merge: 93; BWM aggregate uuids: 93
+[11:50:36]     BWM units=93 spikes=2157824
+[11:51:17]   wrote f3ce3197-d534-4618-bf81-b687555d1883.pkl: 700 trials, 93 units
+[11:51:17] [40/67] SWC_043 2020-09-16
+[11:51:17] SWC_043 2020-09-16 eid=6f09ba7e-e3ce-44b0-932b-c003fb44fb89: 411 BWM trials with RT in [0.08, 2.0] s
+[11:51:42]   loading spikes probe00 pid=bef552f5-efd8-4e98-8467-d54ac7c4ef41
+[11:51:53]     QC>=1.0 after merge: 126; BWM aggregate uuids: 126
+[11:51:53]     BWM units=126 spikes=3697376
+[11:51:53]   loading spikes probe01 pid=c17772a9-21b5-49df-ab31-3017addea12e
+[11:52:06]     QC>=1.0 after merge: 162; BWM aggregate uuids: 162
+[11:52:06]     BWM units=162 spikes=5249043
+[11:52:27]   wrote 6f09ba7e-e3ce-44b0-932b-c003fb44fb89.pkl: 411 trials, 288 units
+[11:52:28] [41/67] SWC_043 2020-09-19
+[11:52:28] SWC_043 2020-09-19 eid=88d24c31-52e4-49cc-9f32-6adbeb9eba87: 328 BWM trials with RT in [0.08, 2.0] s
+[11:52:48]   loading spikes probe00 pid=3fd2d2b3-9415-4b6e-b392-40427fb1c388
+[11:53:00]     QC>=1.0 after merge: 165; BWM aggregate uuids: 165
+[11:53:00]     BWM units=165 spikes=3881880
+[11:53:11]   wrote 88d24c31-52e4-49cc-9f32-6adbeb9eba87.pkl: 328 trials, 165 units
+[11:53:12] [42/67] SWC_043 2020-09-21
+[11:53:12] SWC_043 2020-09-21 eid=4ecb5d24-f5cc-402c-be28-9d0f7cb14b3a: 341 BWM trials with RT in [0.08, 2.0] s
+[11:53:33]   loading spikes probe01 pid=6638cfb3-3831-4fc2-9327-194b76cf22e1
+[11:53:49]     QC>=1.0 after merge: 150; BWM aggregate uuids: 150
+[11:53:49]     BWM units=150 spikes=9809988
+[11:53:49]   loading spikes probe00 pid=da8dfec1-d265-44e8-84ce-6ae9c109b8bd
+[11:54:10]     QC>=1.0 after merge: 298; BWM aggregate uuids: 298
+[11:54:10]     BWM units=298 spikes=13705503
+[11:54:23]   wrote 4ecb5d24-f5cc-402c-be28-9d0f7cb14b3a.pkl: 341 trials, 448 units
+[11:54:24] [43/67] SWC_061 2020-11-23
+[11:54:24] SWC_061 2020-11-23 eid=493170a6-fd94-4ee4-884f-cc018c17eeb9: 536 BWM trials with RT in [0.08, 2.0] s
+[11:54:47]   loading spikes probe01 pid=31d8dfb1-71fd-4c53-9229-7cd48bee07e4
+[11:54:57]     QC>=1.0 after merge: 102; BWM aggregate uuids: 102
+[11:54:57]     BWM units=102 spikes=3893071
+[11:54:57]   loading spikes probe00 pid=68f5f1e4-5e88-4aa5-8a1a-94b691adb11e
+[11:55:06]     QC>=1.0 after merge: 96; BWM aggregate uuids: 96
+[11:55:07]     BWM units=96 spikes=2698444
+[11:55:36]   wrote 493170a6-fd94-4ee4-884f-cc018c17eeb9.pkl: 536 trials, 198 units
+[11:55:37] [44/67] SWC_061 2020-11-26
+[11:55:37] SWC_061 2020-11-26 eid=360eac0c-7d2d-4cc1-9dcf-79fc7afc56e7: 368 BWM trials with RT in [0.08, 2.0] s
+[11:56:00]   loading spikes probe00 pid=02328ef5-47d4-4690-b020-04b6315aa2d6
+[11:56:12]     QC>=1.0 after merge: 96; BWM aggregate uuids: 96
+[11:56:12]     BWM units=96 spikes=3385686
+[11:56:12]   loading spikes probe01 pid=06c6741e-9f2a-4114-8ca9-0dc5ccc951e6
+[11:56:21]     QC>=1.0 after merge: 68; BWM aggregate uuids: 68
+[11:56:21]     BWM units=68 spikes=1547717
+[11:56:44]   wrote 360eac0c-7d2d-4cc1-9dcf-79fc7afc56e7.pkl: 368 trials, 164 units
+[11:56:44] [45/67] ZFM-01576 2020-12-03
+[11:56:44]   skip, already cached
+[11:56:44] [46/67] ZFM-01936 2021-01-20
+[11:56:44] ZFM-01936 2021-01-20 eid=4aa1d525-5c7d-4c50-a147-ec53a9014812: 371 BWM trials with RT in [0.08, 2.0] s
+[11:57:03]   loading spikes probe00 pid=fddceb2e-82ba-493d-baba-c5d8af65981f
+[11:57:13]     QC>=1.0 after merge: 148; BWM aggregate uuids: 148
+[11:57:13]     BWM units=148 spikes=3283333
+[11:57:31]   wrote 4aa1d525-5c7d-4c50-a147-ec53a9014812.pkl: 371 trials, 148 units
+[11:57:31] [47/67] ZFM-01936 2021-01-23
+[11:57:31] ZFM-01936 2021-01-23 eid=2c44a360-5a56-4971-8009-f469fb59de98: 333 BWM trials with RT in [0.08, 2.0] s
+[11:57:52]   loading spikes probe01 pid=688606f8-9733-46f2-8331-b2dd84c5d385
+[11:58:03]     QC>=1.0 after merge: 169; BWM aggregate uuids: 169
+[11:58:03]     BWM units=169 spikes=2891428
+[11:58:03]   loading spikes probe00 pid=eab03c6e-bf98-48d2-8a0c-1887f34dd554
+[11:58:13]     QC>=1.0 after merge: 117; BWM aggregate uuids: 117
+[11:58:13]     BWM units=117 spikes=2527152
+[11:58:26]   wrote 2c44a360-5a56-4971-8009-f469fb59de98.pkl: 333 trials, 286 units
+[11:58:27] [48/67] ZFM-01937 2021-04-08
+[11:58:27] ZFM-01937 2021-04-08 eid=113c5b6c-940e-4b21-b462-789b4c2be0e5: 304 BWM trials with RT in [0.08, 2.0] s
+[11:58:46]   loading spikes probe00 pid=af2a0072-e17e-4368-b80b-1359bf6d4647
+[11:58:56]     QC>=1.0 after merge: 130; BWM aggregate uuids: 130
+[11:58:56]     BWM units=130 spikes=3183499
+[11:59:09]   wrote 113c5b6c-940e-4b21-b462-789b4c2be0e5.pkl: 304 trials, 130 units
+[11:59:09] [49/67] ZFM-02370 2021-04-28
+[11:59:09] ZFM-02370 2021-04-28 eid=6f6d2c8e-28be-49f4-ae4d-06be2d3148c1: 394 BWM trials with RT in [0.08, 2.0] s
+[11:59:30]   loading spikes probe00 pid=adcd791c-ead3-4572-a9cb-028bbee1d2e4
+[11:59:41]     QC>=1.0 after merge: 295; BWM aggregate uuids: 295
+[11:59:41]     BWM units=295 spikes=6138082
+[11:59:58]   wrote 6f6d2c8e-28be-49f4-ae4d-06be2d3148c1.pkl: 394 trials, 295 units
+[11:59:59] [50/67] ZM_1897 2019-12-02
+[11:59:59] ZM_1897 2019-12-02 eid=dd4da095-4a99-4bf3-9727-f735077dba66: 332 BWM trials with RT in [0.08, 2.0] s
+[12:00:08]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[12:00:09]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[12:00:09]   loading spikes probe01 pid=5a34d971-1cb3-4f0e-8dfe-e51e2313a668
+[12:00:22]     QC>=1.0 after merge: 395; BWM aggregate uuids: 395
+[12:00:22]     BWM units=395 spikes=5960054
+[12:00:22]   loading spikes probe00 pid=8f2e16c4-893b-4f8f-bfb2-94fa452710ec
+[12:00:31]     QC>=1.0 after merge: 141; BWM aggregate uuids: 141
+[12:00:31]     BWM units=141 spikes=2564093
+[12:00:32]   wrote dd4da095-4a99-4bf3-9727-f735077dba66.pkl: 332 trials, 536 units
+[12:00:33] [51/67] ZM_2240 2020-01-21
+[12:00:33] ZM_2240 2020-01-21 eid=d33baf74-263c-4b37-a0d0-b79dcb80a764: 332 BWM trials with RT in [0.08, 2.0] s
+[12:00:51]   loading spikes probe00 pid=2ce1d485-ebce-41a2-a5ce-aa109d5a13a3
+[12:01:04]     QC>=1.0 after merge: 299; BWM aggregate uuids: 299
+[12:01:04]     BWM units=299 spikes=5884681
+[12:01:04]   loading spikes probe01 pid=ca073754-be17-43b7-a38a-0c1e5563ff32
+[12:01:24]     QC>=1.0 after merge: 225; BWM aggregate uuids: 225
+[12:01:24]     BWM units=225 spikes=14119331
+[12:01:36]   wrote d33baf74-263c-4b37-a0d0-b79dcb80a764.pkl: 332 trials, 524 units
+[12:01:36] [52/67] ZM_2240 2020-01-22
+[12:01:36] ZM_2240 2020-01-22 eid=259927fd-7563-4b03-bc5d-17b4d0fa7a55: 458 BWM trials with RT in [0.08, 2.0] s
+[12:01:56]   loading spikes probe00 pid=1bf5c05b-3654-4d5c-bac9-2b96edd12adf
+[12:02:10]     QC>=1.0 after merge: 284; BWM aggregate uuids: 284
+[12:02:10]     BWM units=284 spikes=6806486
+[12:02:10]   loading spikes probe01 pid=1d237afc-ac2f-4bac-a163-a397fe09819f
+[12:02:19]     QC>=1.0 after merge: 44; BWM aggregate uuids: 44
+[12:02:19]     BWM units=44 spikes=2383042
+[12:02:37]   wrote 259927fd-7563-4b03-bc5d-17b4d0fa7a55.pkl: 458 trials, 328 units
+[12:02:37] [53/67] ZM_2241 2020-01-27
+[12:02:37] ZM_2241 2020-01-27 eid=ff4187b5-4176-4e39-8894-53a24b7cf36b: 559 BWM trials with RT in [0.08, 2.0] s
+[12:02:59]   loading spikes probe01 pid=dc7e9403-19f7-409f-9240-05ee57cb7aea
+[12:03:44]     QC>=1.0 after merge: 356; BWM aggregate uuids: 356
+[12:03:45]     BWM units=356 spikes=35327786
+[12:03:45]   loading spikes probe00 pid=ebd18510-c263-4d5b-a736-a588862a6972
+[12:03:56]     QC>=1.0 after merge: 162; BWM aggregate uuids: 162
+[12:03:56]     BWM units=162 spikes=3007622
+[12:04:12]   wrote ff4187b5-4176-4e39-8894-53a24b7cf36b.pkl: 559 trials, 518 units
+[12:04:13] [54/67] ZM_2245 2020-01-21
+[12:04:13] ZM_2245 2020-01-21 eid=cb2ad999-a6cb-42ff-bf71-1774c57e5308: 680 BWM trials with RT in [0.08, 2.0] s
+[12:04:35]   loading spikes probe01 pid=55001cb4-e10f-4657-9760-1228b590a69c
+[12:04:48]     QC>=1.0 after merge: 155; BWM aggregate uuids: 155
+[12:04:48]     BWM units=155 spikes=7135053
+[12:04:48]   loading spikes probe00 pid=8f4fd564-7e34-4113-a6e4-ae40faa64f7a
+[12:04:56]     QC>=1.0 after merge: 46; BWM aggregate uuids: 46
+[12:04:56]     BWM units=46 spikes=1200761
+[12:05:29]   wrote cb2ad999-a6cb-42ff-bf71-1774c57e5308.pkl: 680 trials, 201 units
+[12:05:29] [55/67] SWC_038 2020-07-30
+[12:05:29] SWC_038 2020-07-30 eid=4d8c7767-981c-4347-8e5e-5d5fffe38534: 562 BWM trials with RT in [0.08, 2.0] s
+[12:05:34]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[12:05:34]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[12:05:34]   loading spikes probe01 pid=749cb2b7-e57e-4453-a794-f6230e4d0226
+[12:05:44]     QC>=1.0 after merge: 163; BWM aggregate uuids: 163
+[12:05:44]     BWM units=163 spikes=3081844
+[12:05:44]   loading spikes probe00 pid=ea084e63-c0cb-4e11-8440-302de8fc76ee
+[12:05:56]     QC>=1.0 after merge: 226; BWM aggregate uuids: 226
+[12:05:56]     BWM units=226 spikes=4957056
+[12:06:00]   wrote 4d8c7767-981c-4347-8e5e-5d5fffe38534.pkl: 562 trials, 389 units
+[12:06:00] [56/67] SWC_038 2020-07-31
+[12:06:00] SWC_038 2020-07-31 eid=1e45d992-c356-40e1-9be1-a506d944896f: 413 BWM trials with RT in [0.08, 2.0] s
+[12:06:29]   loading spikes probe01 pid=2b3c3126-11f3-4a8e-aa44-2f965bf8ab9c
+[12:06:38]     QC>=1.0 after merge: 126; BWM aggregate uuids: 126
+[12:06:38]     BWM units=126 spikes=2788070
+[12:06:38]   loading spikes probe00 pid=76de0e1a-30aa-4713-9fe5-25ad2dff653f
+[12:06:48]     QC>=1.0 after merge: 58; BWM aggregate uuids: 58
+[12:06:48]     BWM units=58 spikes=2665704
+[12:07:14]   wrote 1e45d992-c356-40e1-9be1-a506d944896f.pkl: 413 trials, 184 units
+[12:07:14] [57/67] SWC_038 2020-08-01
+[12:07:14] SWC_038 2020-08-01 eid=03063955-2523-47bd-ae57-f7489dd40f15: 578 BWM trials with RT in [0.08, 2.0] s
+[12:07:40]   loading spikes probe01 pid=7bd5627e-b02e-47f1-b476-4bf8eaa726b3
+[12:07:52]     QC>=1.0 after merge: 131; BWM aggregate uuids: 131
+[12:07:52]     BWM units=131 spikes=2745317
+[12:07:52]   loading spikes probe00 pid=9915765e-ff15-4371-b1aa-c2ef1db8a254
+[12:08:05]     QC>=1.0 after merge: 20; BWM aggregate uuids: 20
+[12:08:05]     BWM units=20 spikes=377585
+[12:08:40]   wrote 03063955-2523-47bd-ae57-f7489dd40f15.pkl: 578 trials, 151 units
+[12:08:41] [58/67] NR_0027 2022-08-22
+[12:08:41] NR_0027 2022-08-22 eid=0f77ca5d-73c2-45bd-aa4c-4c5ed275dbde: 615 BWM trials with RT in [0.08, 2.0] s
+[12:09:08]   loading spikes probe00 pid=1ab86a7f-578b-4a46-9c9c-df3be97abcca
+[12:09:19]     QC>=1.0 after merge: 92; BWM aggregate uuids: 92
+[12:09:19]     BWM units=92 spikes=5343503
+[12:09:19]   loading spikes probe01 pid=eb7e9f3f-b79d-4cdd-bc24-b13a4008c1b5
+[12:09:31]     QC>=1.0 after merge: 190; BWM aggregate uuids: 190
+[12:09:31]     BWM units=190 spikes=5428836
+[12:10:05]   wrote 0f77ca5d-73c2-45bd-aa4c-4c5ed275dbde.pkl: 615 trials, 282 units
+[12:10:06] [59/67] NR_0027 2022-08-23
+[12:10:06] NR_0027 2022-08-23 eid=ae8787b1-4229-4d56-b0c2-566b61a25b77: 551 BWM trials with RT in [0.08, 2.0] s
+[12:10:35]   loading spikes probe00 pid=06cb2ee3-0fb8-4ace-acbe-19c716f3ca40
+[12:10:45]     QC>=1.0 after merge: 84; BWM aggregate uuids: 84
+[12:10:45]     BWM units=84 spikes=2347486
+[12:10:45]   loading spikes probe01 pid=310c60b6-d68f-4018-a86a-3668ce296837
+[12:10:55]     QC>=1.0 after merge: 117; BWM aggregate uuids: 117
+[12:10:55]     BWM units=117 spikes=2886078
+[12:11:19]   wrote ae8787b1-4229-4d56-b0c2-566b61a25b77.pkl: 551 trials, 201 units
+[12:11:19] [60/67] ibl_witten_19 2020-07-23
+[12:11:19] ibl_witten_19 2020-07-23 eid=65f5c9b4-4440-48b9-b914-c593a5184a18: 359 BWM trials with RT in [0.08, 2.0] s
+[12:11:31]   loading spikes probe00 pid=b549e337-acc5-4837-9c56-e53b173fe5fe
+[12:11:41]     QC>=1.0 after merge: 142; BWM aggregate uuids: 142
+[12:11:41]     BWM units=142 spikes=4465967
+[12:11:44]   wrote 65f5c9b4-4440-48b9-b914-c593a5184a18.pkl: 359 trials, 142 units
+[12:11:45] [61/67] ibl_witten_32 2021-07-21
+[12:11:45] ibl_witten_32 2021-07-21 eid=08102cfc-a040-4bcf-b63c-faa0f4914a6f: 144 BWM trials with RT in [0.08, 2.0] s
+[12:12:09]   loading spikes probe01 pid=f7c49002-6565-4314-83f7-19b9a16d8e61
+[12:12:17]     QC>=1.0 after merge: 33; BWM aggregate uuids: 33
+[12:12:17]     BWM units=33 spikes=1010774
+[12:12:25]   wrote 08102cfc-a040-4bcf-b63c-faa0f4914a6f.pkl: 144 trials, 33 units
+[12:12:26] [62/67] CSH_ZAD_019 2020-08-16
+[12:12:26] CSH_ZAD_019 2020-08-16 eid=5adab0b7-dfd0-467d-b09d-43cb7ca5d59c: 440 BWM trials with RT in [0.08, 2.0] s
+[12:12:50]   loading spikes probe01 pid=96fe2729-b5a2-4e77-92bb-9df410144768
+[12:13:04]     QC>=1.0 after merge: 132; BWM aggregate uuids: 132
+[12:13:04]     BWM units=132 spikes=7961178
+[12:13:04]   loading spikes probe00 pid=b4131145-9675-4433-88e1-9ae016c701dd
+[12:13:19]     QC>=1.0 after merge: 186; BWM aggregate uuids: 186
+[12:13:19]     BWM units=186 spikes=7493124
+[12:13:44]   wrote 5adab0b7-dfd0-467d-b09d-43cb7ca5d59c.pkl: 440 trials, 318 units
+[12:13:44] [63/67] CSH_ZAD_024 2020-06-08
+[12:13:44] CSH_ZAD_024 2020-06-08 eid=8207abc6-6b23-4762-92b4-82e05bed5143: 492 BWM trials with RT in [0.08, 2.0] s
+[12:13:59]   loading spikes probe01 pid=9bd71ac6-c455-41f3-8c56-59987a649ac4
+[12:14:16]     QC>=1.0 after merge: 216; BWM aggregate uuids: 216
+[12:14:16]     BWM units=216 spikes=9709868
+[12:14:16]   loading spikes probe00 pid=e22d047c-5beb-4e5b-9a3d-53b637743856
+[12:14:27]     QC>=1.0 after merge: 164; BWM aggregate uuids: 164
+[12:14:27]     BWM units=164 spikes=5153442
+[12:14:34]   wrote 8207abc6-6b23-4762-92b4-82e05bed5143.pkl: 492 trials, 380 units
+[12:14:35] [64/67] CSH_ZAD_026 2020-08-15
+[12:14:35] CSH_ZAD_026 2020-08-15 eid=e56541a5-a6d5-4750-b1fe-f6b5257bfe7c: 347 BWM trials with RT in [0.08, 2.0] s
+[12:14:59]   loading spikes probe00 pid=920865d3-1581-4e81-bd63-ab2186024564
+[12:15:12]     QC>=1.0 after merge: 92; BWM aggregate uuids: 92
+[12:15:12]     BWM units=92 spikes=2784799
+[12:15:12]   loading spikes probe01 pid=d1d9defc-6f73-489f-9f14-2c0b5e970b2d
+[12:15:25]     QC>=1.0 after merge: 217; BWM aggregate uuids: 217
+[12:15:25]     BWM units=217 spikes=7546277
+[12:15:34]   wrote e56541a5-a6d5-4750-b1fe-f6b5257bfe7c.pkl: 347 trials, 309 units
+[12:15:35] [65/67] CSH_ZAD_026 2020-08-17
+[12:15:35] CSH_ZAD_026 2020-08-17 eid=81a78eac-9d36-4f90-a73a-7eb3ad7f770b: 910 BWM trials with RT in [0.08, 2.0] s
+[12:16:01]   loading spikes probe01 pid=03d2d8d1-a116-4763-8425-4ef7b1c1bd35
+[12:16:14]     QC>=1.0 after merge: 173; BWM aggregate uuids: 173
+[12:16:14]     BWM units=173 spikes=4968153
+[12:16:14]   loading spikes probe00 pid=5011eba9-8926-4a73-b729-579d02676d25
+[12:16:25]     QC>=1.0 after merge: 136; BWM aggregate uuids: 136
+[12:16:25]     BWM units=136 spikes=4528283
+[12:16:52]   wrote 81a78eac-9d36-4f90-a73a-7eb3ad7f770b.pkl: 910 trials, 309 units
+[12:16:52] [66/67] CSH_ZAD_026 2020-08-18
+[12:16:52] CSH_ZAD_026 2020-08-18 eid=626126d5-eecf-4e9b-900e-ec29a17ece07: 663 BWM trials with RT in [0.08, 2.0] s
+[12:17:24]   loading spikes probe00 pid=79b2e46e-e2ee-446e-b875-9aff03ef52d2
+[12:17:35]     QC>=1.0 after merge: 132; BWM aggregate uuids: 132
+[12:17:35]     BWM units=132 spikes=4316963
+[12:17:35]   loading spikes probe01 pid=f211d54e-e7eb-4188-bdcd-faa9c4317e9e
+[12:17:45]     QC>=1.0 after merge: 117; BWM aggregate uuids: 117
+[12:17:45]     BWM units=117 spikes=4005567
+[12:18:05]   wrote 626126d5-eecf-4e9b-900e-ec29a17ece07.pkl: 663 trials, 249 units
+[12:18:05] [67/67] CSH_ZAD_026 2020-08-19
+[12:18:05] CSH_ZAD_026 2020-08-19 eid=b69b86be-af7d-4ecf-8cbf-0cd356afa1bd: 199 BWM trials with RT in [0.08, 2.0] s
+[12:18:31]   loading spikes probe01 pid=00a96dee-1e8b-44cc-9cc3-aca704d2b594
+[12:19:00]     QC>=1.0 after merge: 295; BWM aggregate uuids: 295
+[12:19:00]     BWM units=295 spikes=21377127
+[12:19:00]   loading spikes probe00 pid=8d89b7d0-33e7-45c6-9972-d3ad4c1e5f4c
+[12:19:10]     QC>=1.0 after merge: 72; BWM aggregate uuids: 72
+[12:19:10]     BWM units=72 spikes=1862586
+[12:19:17]   wrote b69b86be-af7d-4ecf-8cbf-0cd356afa1bd.pkl: 199 trials, 367 units
+[12:19:18] Done. processed=66 skipped=1 failed=0; index 39 mice, 67 sessions, 30264 trials, 13929 units
+[14:46:24]   wheel unavailable: wheel 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   wheel unavailable: wheel 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   wheel unavailable: wheel 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:46:24]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:54:28]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:54:28]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:55:44]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:55:44]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:57:21]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:57:21]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:58:23]   pose tracker=dlc unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 
+[14:58:23]   pose tracker=lightningPose unavailable: rightCamera 
+ The ALF object was not found.  This may occur if the object or namespace or incorrectly formatted e.g. the object "_ibl_trials.intervals.npy" would be found with the filters `object="trials", namespace="ibl"` 

@@ -1,0 +1,2 @@
+task,pool,target,ablation,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials
+mouse_holdout,attn,paw_vx,a1,0.004879799433202492,608.6256713867188,365.3657531738281,0.0769597238262755,8433,-0.6001055936313098,-0.09102158356962309,371

@@ -1,0 +1,15 @@
+{
+  "job": 17,
+  "tag": "paw_vx_mouse_holdout_attn",
+  "slurm_job_id": "367907",
+  "slurm_array_task_id": "17",
+  "task": "mouse_holdout",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "paw_vx",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 20,
+  "device": "cuda",
+  "updated_at": "2026-09-23T17:30:09.378161+00:00"
+}

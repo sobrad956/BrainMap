@@ -1,0 +1,28 @@
+{
+  "built_at": "2026-09-17T20:23:59.361404+00:00",
+  "n_mice": 32,
+  "n_sessions": 53,
+  "n_trials": 7225,
+  "n_units": 10537,
+  "binsize_s": 0.02,
+  "paths": {
+    "sessions": "/Users/Stefan/Desktop/BehaviorRes/ModelDataRight/sessions",
+    "trials": "/Users/Stefan/Desktop/BehaviorRes/ModelDataRight/trials.parquet",
+    "units": "/Users/Stefan/Desktop/BehaviorRes/ModelDataRight/units.parquet"
+  },
+  "source": "/Users/Stefan/Desktop/BehaviorRes/ModelData",
+  "filter": {
+    "wheel_paws": "right"
+  },
+  "n_trials_in": 19277,
+  "n_trials_out": 7225,
+  "kinematics": {
+    "right_camera_scale": 2.0,
+    "right_camera_note": "IBL right camera is 640x512, left is 1280x1024. Near-camera x/y on right-paw trials are multiplied by 2. Disparity z is rebuilt as x_near_scaled - x_far_scaled so both cameras speak left-camera pixels. Paw-state labels are NOT recomputed.",
+    "speed": "2d_hypot_vx_vy",
+    "speedNormalized": "dlc_speedNormalized, lp_speedNormalized, and speedNormalized (Lightning Pose if present else DLC) = 2D speed divided by that session's median coupled speed for the same tracker and used_paw."
+  },
+  "kinematics_patched_at": "2026-09-18T05:19:07.131503+00:00",
+  "kinematics_sessions_ok": 53,
+  "kinematics_sessions_skipped": 0
+}

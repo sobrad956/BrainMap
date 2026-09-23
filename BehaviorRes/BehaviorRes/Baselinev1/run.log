@@ -1,0 +1,697 @@
+[15:01:05] loading 52 sessions from ModelDataRightContra
+[15:01:06] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[15:01:06] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[15:01:06] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[15:01:06] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[15:01:06] ==== trial_holdout ====
+[15:01:06]   regions=10  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[15:01:06]    b0_const           wheel_speed  R²=-0.000  trialR²=-0.105  r=nan
+[15:01:06]    b0_const           paw_speed    R²=-0.004  trialR²=-0.172  r=nan
+[15:01:06]    b0_traj            wheel_speed  R²=+0.332  trialR²=+0.269  r=0.577
+[15:01:06]    b0_traj            paw_speed    R²=+0.135  trialR²=+0.134  r=0.378
+[15:01:06]   cache hit trial_holdout/b1  alpha=0.1
+[15:01:06]    b1                 wheel_speed  R²=+0.050  trialR²=-0.107  r=0.259
+[15:01:06]    b1                 paw_speed    R²=+0.097  trialR²=-0.131  r=0.369
+[15:01:06]   cache hit trial_holdout/b2  alpha=0.1
+[15:01:06]    b2                 wheel_speed  R²=+0.061  trialR²=-0.766  r=0.292
+[15:01:06]    b2                 paw_speed    R²=+0.127  trialR²=-0.254  r=0.425
+[15:01:06]   cache hit trial_holdout/b3  alpha=1000.0
+[15:01:06]    b3                 wheel_speed  R²=+0.081  trialR²=-0.080  r=0.290
+[15:01:06]    b3                 paw_speed    R²=+0.089  trialR²=-0.055  r=0.338
+[15:01:06]   trial_holdout/b6 params=29378  device=mps
+[15:02:30]     trial_holdout/b6 epoch 01  train=1.7615  val=1.5532
+[15:03:29]     trial_holdout/b6 epoch 02  train=1.5675  val=1.5529
+[15:04:25]     trial_holdout/b6 epoch 03  train=1.5544  val=1.5197
+[15:05:18]     trial_holdout/b6 epoch 04  train=1.5467  val=1.5259
+[15:06:13]     trial_holdout/b6 epoch 05  train=1.5444  val=1.5154
+[15:07:07]     trial_holdout/b6 epoch 06  train=1.5362  val=1.5179
+[15:08:00]     trial_holdout/b6 epoch 07  train=1.5391  val=1.5313
+[15:08:51]     trial_holdout/b6 epoch 08  train=1.5333  val=1.5210
+[15:09:44]     trial_holdout/b6 epoch 09  train=1.5317  val=1.5191
+[15:10:37]     trial_holdout/b6 epoch 10  train=1.5279  val=1.5135
+[15:11:28]     trial_holdout/b6 epoch 11  train=1.5283  val=1.5128
+[15:12:22]     trial_holdout/b6 epoch 12  train=1.5256  val=1.5078
+[15:13:15]     trial_holdout/b6 epoch 13  train=1.5222  val=1.5130
+[15:14:05]     trial_holdout/b6 epoch 14  train=1.5165  val=1.5004
+[15:14:59]     trial_holdout/b6 epoch 15  train=1.5183  val=1.5076
+[15:15:52]     trial_holdout/b6 epoch 16  train=1.5162  val=1.5025
+[15:16:44]     trial_holdout/b6 epoch 17  train=1.5157  val=1.4995
+[15:17:37]     trial_holdout/b6 epoch 18  train=1.5116  val=1.5026
+[15:18:32]     trial_holdout/b6 epoch 19  train=1.5107  val=1.5201
+[15:19:25]     trial_holdout/b6 epoch 20  train=1.5133  val=1.5088
+[15:20:18]     trial_holdout/b6 epoch 21  train=1.5091  val=1.4931
+[15:21:11]     trial_holdout/b6 epoch 22  train=1.5088  val=1.5018
+[15:22:04]     trial_holdout/b6 epoch 23  train=1.5068  val=1.5152
+[15:22:55]     trial_holdout/b6 epoch 24  train=1.5101  val=1.5130
+[15:23:49]     trial_holdout/b6 epoch 25  train=1.5077  val=1.5015
+[15:24:42]     trial_holdout/b6 epoch 26  train=1.5073  val=1.4931
+[15:24:42]     early stop at epoch 26
+[15:24:42]    b6                 wheel_speed  R²=+0.346  trialR²=+0.171  r=0.645
+[15:24:42]    b6                 paw_speed    R²=+0.234  trialR²=+0.083  r=0.486
+[15:24:43]   trial_holdout/b7 params=31234  device=mps
+[15:25:37]     trial_holdout/b7 epoch 01  train=1.7788  val=1.5597
+[15:26:31]     trial_holdout/b7 epoch 02  train=1.5622  val=1.5222
+[15:27:25]     trial_holdout/b7 epoch 03  train=1.5384  val=1.5563
+[15:28:20]     trial_holdout/b7 epoch 04  train=1.5179  val=1.4727
+[15:29:15]     trial_holdout/b7 epoch 05  train=1.5001  val=1.4848
+[15:30:11]     trial_holdout/b7 epoch 06  train=1.4945  val=1.4572
+[15:31:06]     trial_holdout/b7 epoch 07  train=1.4837  val=1.4428
+[15:31:59]     trial_holdout/b7 epoch 08  train=1.4757  val=1.4415
+[15:32:52]     trial_holdout/b7 epoch 09  train=1.4622  val=1.4343
+[15:33:44]     trial_holdout/b7 epoch 10  train=1.4544  val=1.4223
+[15:34:39]     trial_holdout/b7 epoch 11  train=1.4498  val=1.4139
+[15:35:33]     trial_holdout/b7 epoch 12  train=1.4390  val=1.4170
+[15:36:29]     trial_holdout/b7 epoch 13  train=1.4290  val=1.4044
+[15:37:21]     trial_holdout/b7 epoch 14  train=1.4318  val=1.4083
+[15:38:15]     trial_holdout/b7 epoch 15  train=1.4210  val=1.4079
+[15:39:07]     trial_holdout/b7 epoch 16  train=1.4153  val=1.4134
+[15:40:01]     trial_holdout/b7 epoch 17  train=1.4095  val=1.3942
+[15:40:56]     trial_holdout/b7 epoch 18  train=1.4048  val=1.3979
+[15:41:48]     trial_holdout/b7 epoch 19  train=1.4013  val=1.3794
+[15:42:44]     trial_holdout/b7 epoch 20  train=1.4010  val=1.3911
+[15:43:37]     trial_holdout/b7 epoch 21  train=1.3917  val=1.3744
+[15:44:33]     trial_holdout/b7 epoch 22  train=1.3836  val=1.3701
+[15:45:29]     trial_holdout/b7 epoch 23  train=1.3834  val=1.3565
+[15:46:24]     trial_holdout/b7 epoch 24  train=1.3801  val=1.3559
+[15:47:19]     trial_holdout/b7 epoch 25  train=1.3787  val=1.3677
+[15:48:13]     trial_holdout/b7 epoch 26  train=1.3800  val=1.3464
+[15:49:11]     trial_holdout/b7 epoch 27  train=1.3662  val=1.3514
+[15:50:06]     trial_holdout/b7 epoch 28  train=1.3658  val=1.3500
+[16:04:40]     trial_holdout/b7 epoch 29  train=1.3682  val=1.3494
+[16:05:53]     trial_holdout/b7 epoch 30  train=1.3606  val=1.3439
+[16:06:45]     trial_holdout/b7 epoch 31  train=1.3620  val=1.3412
+[16:07:41]     trial_holdout/b7 epoch 32  train=1.3567  val=1.3686
+[16:08:37]     trial_holdout/b7 epoch 33  train=1.3508  val=1.3354
+[16:09:32]     trial_holdout/b7 epoch 34  train=1.3513  val=1.3319
+[16:10:29]     trial_holdout/b7 epoch 35  train=1.3452  val=1.3275
+[16:11:27]     trial_holdout/b7 epoch 36  train=1.3425  val=1.3259
+[16:12:22]     trial_holdout/b7 epoch 37  train=1.3380  val=1.3310
+[16:13:18]     trial_holdout/b7 epoch 38  train=1.3344  val=1.3315
+[16:14:14]     trial_holdout/b7 epoch 39  train=1.3335  val=1.3233
+[16:15:10]     trial_holdout/b7 epoch 40  train=1.3324  val=1.3147
+[16:15:11]    b7                 wheel_speed  R²=+0.424  trialR²=+0.260  r=0.668
+[16:15:11]    b7                 paw_speed    R²=+0.357  trialR²=+0.244  r=0.603
+[16:15:11]   session 5adab0b7  n_train=86 n_test=10
+[16:15:11]   trial_holdout/b10/5adab0b7 params=39426  device=mps
+[16:15:13]     trial_holdout/b10/5adab0b7 epoch 01  train=1.8330  val=1.3903
+[16:15:14]     trial_holdout/b10/5adab0b7 epoch 02  train=1.7876  val=1.3517
+[16:15:16]     trial_holdout/b10/5adab0b7 epoch 03  train=1.7423  val=1.3134
+[16:15:17]     trial_holdout/b10/5adab0b7 epoch 04  train=1.6945  val=1.2782
+[16:15:18]     trial_holdout/b10/5adab0b7 epoch 05  train=1.6526  val=1.2553
+[16:15:20]     trial_holdout/b10/5adab0b7 epoch 06  train=1.5989  val=1.2105
+[16:15:21]     trial_holdout/b10/5adab0b7 epoch 07  train=1.5286  val=1.1330
+[16:15:22]     trial_holdout/b10/5adab0b7 epoch 08  train=1.4116  val=1.0412
+[16:15:24]     trial_holdout/b10/5adab0b7 epoch 09  train=1.2655  val=0.9628
+[16:15:25]     trial_holdout/b10/5adab0b7 epoch 10  train=1.1357  val=0.9548
+[16:15:26]     trial_holdout/b10/5adab0b7 epoch 11  train=1.0611  val=0.9634
+[16:15:27]     trial_holdout/b10/5adab0b7 epoch 12  train=0.9995  val=0.9088
+[16:15:29]     trial_holdout/b10/5adab0b7 epoch 13  train=0.9702  val=0.8449
+[16:15:30]     trial_holdout/b10/5adab0b7 epoch 14  train=0.9285  val=0.8053
+[16:15:31]     trial_holdout/b10/5adab0b7 epoch 15  train=0.9192  val=0.7723
+[16:15:32]     trial_holdout/b10/5adab0b7 epoch 16  train=0.9131  val=0.7629
+[16:15:34]     trial_holdout/b10/5adab0b7 epoch 17  train=0.8957  val=0.7656
+[16:15:35]     trial_holdout/b10/5adab0b7 epoch 18  train=0.8841  val=0.7792
+[16:15:36]     trial_holdout/b10/5adab0b7 epoch 19  train=0.8618  val=0.7837
+[16:15:37]     trial_holdout/b10/5adab0b7 epoch 20  train=0.8504  val=0.8001
+[16:15:38]     trial_holdout/b10/5adab0b7 epoch 21  train=0.8481  val=0.8152
+[16:15:38]     early stop at epoch 21
+[16:15:38]   session 62902992  n_train=49 n_test=5
+[16:15:38]   trial_holdout/b10/62902992 params=34818  device=mps
+[16:15:39]     trial_holdout/b10/62902992 epoch 01  train=1.6106  val=1.5040
+[16:15:40]     trial_holdout/b10/62902992 epoch 02  train=1.5892  val=1.4885
+[16:15:41]     trial_holdout/b10/62902992 epoch 03  train=1.5722  val=1.4755
+[16:15:42]     trial_holdout/b10/62902992 epoch 04  train=1.5544  val=1.4645
+[16:15:42]     trial_holdout/b10/62902992 epoch 05  train=1.5372  val=1.4549
+[16:15:43]     trial_holdout/b10/62902992 epoch 06  train=1.5180  val=1.4478
+[16:15:44]     trial_holdout/b10/62902992 epoch 07  train=1.5044  val=1.4423
+[16:15:45]     trial_holdout/b10/62902992 epoch 08  train=1.4894  val=1.4302
+[16:15:45]     trial_holdout/b10/62902992 epoch 09  train=1.4608  val=1.4059
+[16:15:46]     trial_holdout/b10/62902992 epoch 10  train=1.4233  val=1.3758
+[16:15:47]     trial_holdout/b10/62902992 epoch 11  train=1.3795  val=1.3446
+[16:15:48]     trial_holdout/b10/62902992 epoch 12  train=1.3312  val=1.3214
+[16:15:48]     trial_holdout/b10/62902992 epoch 13  train=1.2733  val=1.3184
+[16:15:49]     trial_holdout/b10/62902992 epoch 14  train=1.2204  val=1.3694
+[16:15:50]     trial_holdout/b10/62902992 epoch 15  train=1.1467  val=1.3882
+[16:15:50]     trial_holdout/b10/62902992 epoch 16  train=1.0931  val=1.4414
+[16:15:51]     trial_holdout/b10/62902992 epoch 17  train=1.0602  val=1.5533
+[16:15:52]     trial_holdout/b10/62902992 epoch 18  train=1.0135  val=1.6080
+[16:15:52]     early stop at epoch 18
+[16:15:52]   session 8c33abef  n_train=181 n_test=20
+[16:15:52]   trial_holdout/b10/8c33abef params=36738  device=mps
+[16:15:55]     trial_holdout/b10/8c33abef epoch 01  train=1.8257  val=1.5187
+[16:15:57]     trial_holdout/b10/8c33abef epoch 02  train=1.7646  val=1.4194
+[16:15:58]     trial_holdout/b10/8c33abef epoch 03  train=1.6764  val=1.2869
+[16:16:00]     trial_holdout/b10/8c33abef epoch 04  train=1.5167  val=1.0960
+[16:16:02]     trial_holdout/b10/8c33abef epoch 05  train=1.2870  val=0.9045
+[16:16:04]     trial_holdout/b10/8c33abef epoch 06  train=1.1702  val=0.8800
+[16:16:06]     trial_holdout/b10/8c33abef epoch 07  train=1.0678  val=0.8101
+[16:16:08]     trial_holdout/b10/8c33abef epoch 08  train=0.9529  val=0.7115
+[16:16:10]     trial_holdout/b10/8c33abef epoch 09  train=0.8848  val=0.6802
+[16:16:12]     trial_holdout/b10/8c33abef epoch 10  train=0.8730  val=0.6796
+[16:16:14]     trial_holdout/b10/8c33abef epoch 11  train=0.8687  val=0.6776
+[16:16:16]     trial_holdout/b10/8c33abef epoch 12  train=0.8457  val=0.6611
+[16:16:18]     trial_holdout/b10/8c33abef epoch 13  train=0.8155  val=0.6569
+[16:16:20]     trial_holdout/b10/8c33abef epoch 14  train=0.8002  val=0.6592
+[16:16:22]     trial_holdout/b10/8c33abef epoch 15  train=0.7953  val=0.6579
+[16:16:23]     trial_holdout/b10/8c33abef epoch 16  train=0.7778  val=0.6582
+[16:16:25]     trial_holdout/b10/8c33abef epoch 17  train=0.7665  val=0.6643
+[16:16:27]     trial_holdout/b10/8c33abef epoch 18  train=0.7515  val=0.6595
+[16:16:27]     early stop at epoch 18
+[16:16:27]   session a92c4b1d  n_train=7 n_test=1
+[16:16:27]   trial_holdout/b10/a92c4b1d params=34306  device=mps
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 01  train=2.6725  val=1.9693
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 02  train=2.6594  val=1.9548
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 03  train=2.6434  val=1.9416
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 04  train=2.6299  val=1.9292
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 05  train=2.6245  val=1.9175
+[16:16:29]     trial_holdout/b10/a92c4b1d epoch 06  train=2.6103  val=1.9063
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 07  train=2.6000  val=1.8958
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 08  train=2.5904  val=1.8861
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 09  train=2.5810  val=1.8777
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 10  train=2.5781  val=1.8707
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 11  train=2.5668  val=1.8653
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 12  train=2.5560  val=1.8611
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 13  train=2.5399  val=1.8572
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 14  train=2.5416  val=1.8525
+[16:16:30]     trial_holdout/b10/a92c4b1d epoch 15  train=2.5210  val=1.8458
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 16  train=2.5301  val=1.8364
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 17  train=2.5061  val=1.8244
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 18  train=2.4893  val=1.8102
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 19  train=2.4635  val=1.7940
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 20  train=2.4514  val=1.7755
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 21  train=2.4241  val=1.7542
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 22  train=2.3810  val=1.7288
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 23  train=2.3490  val=1.6980
+[16:16:31]     trial_holdout/b10/a92c4b1d epoch 24  train=2.3232  val=1.6604
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 25  train=2.2979  val=1.6164
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 26  train=2.2625  val=1.5673
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 27  train=2.1653  val=1.5144
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 28  train=2.1648  val=1.4681
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 29  train=2.1265  val=1.4406
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 30  train=2.0542  val=1.4248
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 31  train=2.0210  val=1.3703
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 32  train=1.9750  val=1.2963
+[16:16:32]     trial_holdout/b10/a92c4b1d epoch 33  train=1.9796  val=1.2767
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 34  train=1.9314  val=1.3290
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 35  train=1.9582  val=1.3025
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 36  train=1.9399  val=1.2498
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 37  train=1.8905  val=1.2527
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 38  train=1.8946  val=1.2678
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 39  train=1.9005  val=1.2583
+[16:16:33]     trial_holdout/b10/a92c4b1d epoch 40  train=1.9190  val=1.2668
+[16:16:33]   session d2f5a130  n_train=85 n_test=9
+[16:16:33]   trial_holdout/b10/d2f5a130 params=39874  device=mps
+[16:16:35]     trial_holdout/b10/d2f5a130 epoch 01  train=2.6387  val=2.6010
+[16:16:36]     trial_holdout/b10/d2f5a130 epoch 02  train=2.5853  val=2.5375
+[16:16:38]     trial_holdout/b10/d2f5a130 epoch 03  train=2.5045  val=2.4224
+[16:16:39]     trial_holdout/b10/d2f5a130 epoch 04  train=2.3562  val=2.2167
+[16:16:40]     trial_holdout/b10/d2f5a130 epoch 05  train=2.1114  val=1.8869
+[16:16:41]     trial_holdout/b10/d2f5a130 epoch 06  train=1.7319  val=1.4342
+[16:16:42]     trial_holdout/b10/d2f5a130 epoch 07  train=1.2822  val=0.9334
+[16:16:43]     trial_holdout/b10/d2f5a130 epoch 08  train=0.8387  val=0.7359
+[16:16:45]     trial_holdout/b10/d2f5a130 epoch 09  train=0.6921  val=0.8191
+[16:16:46]     trial_holdout/b10/d2f5a130 epoch 10  train=0.7165  val=0.7704
+[16:16:47]     trial_holdout/b10/d2f5a130 epoch 11  train=0.6471  val=0.6559
+[16:16:48]     trial_holdout/b10/d2f5a130 epoch 12  train=0.5348  val=0.6252
+[16:16:49]     trial_holdout/b10/d2f5a130 epoch 13  train=0.5250  val=0.6426
+[16:16:50]     trial_holdout/b10/d2f5a130 epoch 14  train=0.5260  val=0.6110
+[16:16:51]     trial_holdout/b10/d2f5a130 epoch 15  train=0.5097  val=0.5834
+[16:16:52]     trial_holdout/b10/d2f5a130 epoch 16  train=0.4916  val=0.5697
+[16:16:53]     trial_holdout/b10/d2f5a130 epoch 17  train=0.4741  val=0.5599
+[16:16:54]     trial_holdout/b10/d2f5a130 epoch 18  train=0.4741  val=0.5550
+[16:16:55]     trial_holdout/b10/d2f5a130 epoch 19  train=0.4628  val=0.5598
+[16:16:57]     trial_holdout/b10/d2f5a130 epoch 20  train=0.4588  val=0.5543
+[16:16:58]     trial_holdout/b10/d2f5a130 epoch 21  train=0.4462  val=0.5649
+[16:16:59]     trial_holdout/b10/d2f5a130 epoch 22  train=0.4410  val=0.5560
+[16:17:00]     trial_holdout/b10/d2f5a130 epoch 23  train=0.4349  val=0.5611
+[16:17:01]     trial_holdout/b10/d2f5a130 epoch 24  train=0.4226  val=0.5474
+[16:17:02]     trial_holdout/b10/d2f5a130 epoch 25  train=0.4170  val=0.5458
+[16:17:03]     trial_holdout/b10/d2f5a130 epoch 26  train=0.4102  val=0.5454
+[16:17:04]     trial_holdout/b10/d2f5a130 epoch 27  train=0.4054  val=0.5431
+[16:17:05]     trial_holdout/b10/d2f5a130 epoch 28  train=0.4030  val=0.5452
+[16:17:07]     trial_holdout/b10/d2f5a130 epoch 29  train=0.4037  val=0.5566
+[16:17:08]     trial_holdout/b10/d2f5a130 epoch 30  train=0.3940  val=0.5416
+[16:17:09]     trial_holdout/b10/d2f5a130 epoch 31  train=0.3954  val=0.5370
+[16:17:10]     trial_holdout/b10/d2f5a130 epoch 32  train=0.3827  val=0.5444
+[16:17:11]     trial_holdout/b10/d2f5a130 epoch 33  train=0.3835  val=0.5561
+[16:17:12]     trial_holdout/b10/d2f5a130 epoch 34  train=0.3723  val=0.5434
+[16:17:13]     trial_holdout/b10/d2f5a130 epoch 35  train=0.3758  val=0.5529
+[16:17:15]     trial_holdout/b10/d2f5a130 epoch 36  train=0.3724  val=0.5729
+[16:17:15]     early stop at epoch 36
+[16:17:15]    b9                 wheel_speed  R²=+0.257  trialR²=+0.030  r=0.556
+[16:17:15]    b9                 paw_speed    R²=+0.387  trialR²=+0.251  r=0.624
+[16:17:15]    b10                wheel_speed  R²=+0.387  trialR²=+0.176  r=0.691
+[16:17:15]    b10                paw_speed    R²=+0.415  trialR²=+0.238  r=0.645
+[16:17:15]    bwm                wheel_speed  R²=+0.293  trialR²=-1.415  r=0.604
+[16:17:15]    bwm                paw_speed    R²=+0.344  trialR²=-0.038  r=0.619
+[16:17:15] ==== session_holdout ====
+[16:17:15]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[16:17:15]    b0_const           wheel_speed  R²=-0.010  trialR²=-0.079  r=nan
+[16:17:15]    b0_const           paw_speed    R²=-0.163  trialR²=-1.585  r=nan
+[16:17:15]    b0_traj            wheel_speed  R²=+0.417  trialR²=+0.388  r=0.687
+[16:17:15]    b0_traj            paw_speed    R²=+0.136  trialR²=-1.169  r=0.537
+[16:17:15]   session_holdout/b1 alpha=0.1  val MSE=211700.6406
+[16:17:15]    b1                 wheel_speed  R²=+0.072  trialR²=+0.003  r=0.421
+[16:17:15]    b1                 paw_speed    R²=-0.186  trialR²=-1.949  r=0.395
+[16:17:16]   session_holdout/b2 alpha=0.1  val MSE=252248.7500
+[16:17:16]    b2                 wheel_speed  R²=+0.065  trialR²=-0.405  r=0.488
+[16:17:16]    b2                 paw_speed    R²=-0.114  trialR²=-3.375  r=0.534
+[16:17:17]   session_holdout/b3 alpha=0.1  val MSE=207130.4531
+[16:17:17]    b3                 wheel_speed  R²=+0.088  trialR²=-0.001  r=0.377
+[16:17:17]    b3                 paw_speed    R²=-0.165  trialR²=-1.813  r=0.341
+[16:17:17]   session_holdout/b6 params=29378  device=mps
+[16:18:12]     session_holdout/b6 epoch 01  train=1.7629  val=1.6240
+[16:19:08]     session_holdout/b6 epoch 02  train=1.5859  val=1.5988
+[16:20:01]     session_holdout/b6 epoch 03  train=1.5726  val=1.5646
+[16:20:53]     session_holdout/b6 epoch 04  train=1.5660  val=1.5589
+[16:21:46]     session_holdout/b6 epoch 05  train=1.5579  val=1.5602
+[16:22:36]     session_holdout/b6 epoch 06  train=1.5542  val=1.5470
+[16:23:28]     session_holdout/b6 epoch 07  train=1.5543  val=1.5495
+[16:24:24]     session_holdout/b6 epoch 08  train=1.5484  val=1.5825
+[16:25:21]     session_holdout/b6 epoch 09  train=1.5497  val=1.5401
+[16:26:18]     session_holdout/b6 epoch 10  train=1.5442  val=1.5378
+[16:27:13]     session_holdout/b6 epoch 11  train=1.5516  val=1.5453
+[16:32:57] loading 52 sessions from ModelDataRightContra
+[16:32:58] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[16:32:58] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[16:32:58] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[16:32:58] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[16:32:58] ==== trial_holdout ====
+[16:32:59]   regions=10  y_mean=[  0.61694914 409.3728    ] y_std=[  0.9448759 646.10944  ]
+[16:32:59]    b0_const           wheel_speed  R²=-0.000  trialR²=-0.105  r=nan
+[16:32:59]    b0_const           paw_speed    R²=-0.004  trialR²=-0.172  r=nan
+[16:32:59]    b0_traj            wheel_speed  R²=+0.332  trialR²=+0.269  r=0.577
+[16:32:59]    b0_traj            paw_speed    R²=+0.135  trialR²=+0.134  r=0.378
+[16:32:59]   cache hit trial_holdout/b1  alpha=0.1
+[16:32:59]    b1                 wheel_speed  R²=+0.050  trialR²=-0.107  r=0.259
+[16:32:59]    b1                 paw_speed    R²=+0.097  trialR²=-0.131  r=0.369
+[16:32:59]   cache hit trial_holdout/b2  alpha=0.1
+[16:32:59]    b2                 wheel_speed  R²=+0.061  trialR²=-0.766  r=0.292
+[16:32:59]    b2                 paw_speed    R²=+0.127  trialR²=-0.254  r=0.425
+[16:32:59]   cache hit trial_holdout/b3  alpha=1000.0
+[16:32:59]    b3                 wheel_speed  R²=+0.081  trialR²=-0.080  r=0.290
+[16:32:59]    b3                 paw_speed    R²=+0.089  trialR²=-0.055  r=0.338
+[16:32:59]   cache hit trial_holdout/b6
+[16:33:00]    b6                 wheel_speed  R²=+0.346  trialR²=+0.171  r=0.645
+[16:33:00]    b6                 paw_speed    R²=+0.234  trialR²=+0.083  r=0.486
+[16:33:00]   cache hit trial_holdout/b7
+[16:33:00]    b7                 wheel_speed  R²=+0.424  trialR²=+0.260  r=0.668
+[16:33:00]    b7                 paw_speed    R²=+0.357  trialR²=+0.244  r=0.603
+[16:33:00]   session 5adab0b7  n_train=86 n_test=10
+[16:33:00]   cache hit trial_holdout/b10/5adab0b7
+[16:33:01]   session 62902992  n_train=49 n_test=5
+[16:33:01]   cache hit trial_holdout/b10/62902992
+[16:33:01]   session 8c33abef  n_train=181 n_test=20
+[16:33:01]   cache hit trial_holdout/b10/8c33abef
+[16:33:01]   session a92c4b1d  n_train=7 n_test=1
+[16:33:01]   cache hit trial_holdout/b10/a92c4b1d
+[16:33:01]   session d2f5a130  n_train=85 n_test=9
+[16:33:01]   cache hit trial_holdout/b10/d2f5a130
+[16:33:01]    b9                 wheel_speed  R²=+0.257  trialR²=+0.030  r=0.556
+[16:33:01]    b9                 paw_speed    R²=+0.387  trialR²=+0.251  r=0.624
+[16:33:01]    b10                wheel_speed  R²=+0.387  trialR²=+0.176  r=0.691
+[16:33:01]    b10                paw_speed    R²=+0.415  trialR²=+0.238  r=0.645
+[16:33:01]    bwm                wheel_speed  R²=+0.293  trialR²=-1.415  r=0.604
+[16:33:01]    bwm                paw_speed    R²=+0.344  trialR²=-0.038  r=0.619
+[16:33:01] ==== session_holdout ====
+[16:33:01]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[16:33:01]    b0_const           wheel_speed  R²=-0.010  trialR²=-0.079  r=nan
+[16:33:01]    b0_const           paw_speed    R²=-0.163  trialR²=-1.585  r=nan
+[16:33:01]    b0_traj            wheel_speed  R²=+0.417  trialR²=+0.388  r=0.687
+[16:33:01]    b0_traj            paw_speed    R²=+0.136  trialR²=-1.169  r=0.537
+[16:33:01]   cache hit session_holdout/b1  alpha=0.1
+[16:33:01]    b1                 wheel_speed  R²=+0.072  trialR²=+0.003  r=0.421
+[16:33:01]    b1                 paw_speed    R²=-0.186  trialR²=-1.949  r=0.395
+[16:33:01]   cache hit session_holdout/b2  alpha=0.1
+[16:33:01]    b2                 wheel_speed  R²=+0.065  trialR²=-0.405  r=0.488
+[16:33:01]    b2                 paw_speed    R²=-0.114  trialR²=-3.375  r=0.534
+[16:33:01]   cache hit session_holdout/b3  alpha=0.1
+[16:33:01]    b3                 wheel_speed  R²=+0.088  trialR²=-0.001  r=0.377
+[16:33:01]    b3                 paw_speed    R²=-0.165  trialR²=-1.813  r=0.341
+[16:33:01]   session_holdout/b6 params=29378  device=mps
+[16:34:07]     session_holdout/b6 epoch 01  train=1.7730  val=1.6123
+[16:34:59]     session_holdout/b6 epoch 02  train=1.5801  val=1.6118
+[16:42:32] loading 52 sessions from ModelDataRightContra
+[16:42:34] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[16:42:34] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[16:42:34] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[16:42:34] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[16:42:34] ==== session_holdout ====
+[16:42:34]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[16:42:34]   session_holdout/b6 params=29378  device=mps
+[16:43:42]     session_holdout/b6 epoch 01  train=1.7848  val=1.6002
+[16:44:36]     session_holdout/b6 epoch 02  train=1.5749  val=1.5717
+[16:47:01] loading 52 sessions from ModelDataRightContra
+[16:47:02] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[16:47:02] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[16:47:02] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[16:47:02] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[16:47:02] ==== session_holdout ====
+[16:47:02]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[16:47:04]   session_holdout/b6 params=29378  device=mps
+[16:48:06]     session_holdout/b6 epoch 01  train=1.7848  val=1.6002
+[16:49:00]     session_holdout/b6 epoch 02  train=1.5749  val=1.5717
+[16:49:52]     session_holdout/b6 epoch 03  train=1.5718  val=1.5860
+[16:50:39]     session_holdout/b6 epoch 04  train=1.5655  val=1.5462
+[16:51:27]     session_holdout/b6 epoch 05  train=1.5509  val=1.5726
+[16:52:18]     session_holdout/b6 epoch 06  train=1.5507  val=1.5475
+[16:53:11]     session_holdout/b6 epoch 07  train=1.5469  val=1.5474
+[16:54:01]     session_holdout/b6 epoch 08  train=1.5473  val=1.5460
+[16:54:53]     session_holdout/b6 epoch 09  train=1.5511  val=1.5538
+[16:55:43]     session_holdout/b6 epoch 10  train=1.5438  val=1.5541
+[16:56:34]     session_holdout/b6 epoch 11  train=1.5456  val=1.5427
+[16:57:26]     session_holdout/b6 epoch 12  train=1.5433  val=1.5516
+[17:07:17] loading 52 sessions from ModelDataRightContra
+[17:07:17] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[17:07:18] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[17:07:18] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[17:07:18] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[17:07:18] ==== session_holdout ====
+[17:07:18]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[17:07:18]   resume session_holdout/b6 from epoch 12
+[17:08:24]     session_holdout/b6 epoch 01  train=1.5439  val=1.5383
+[17:14:30] loading 52 sessions from ModelDataRightContra
+[17:14:31] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[17:14:31] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[17:14:31] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[17:14:31] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[17:14:31] ==== session_holdout ====
+[17:14:31]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[17:14:31]   resume session_holdout/b6 from epoch 13
+[17:14:34]   continue session_holdout/b6 at epoch 14  best_val=1.5383
+[17:15:38]     session_holdout/b6 epoch 14  train=1.5418  val=1.5379
+[17:16:29]     session_holdout/b6 epoch 15  train=1.5333  val=1.5365
+[17:17:18]     session_holdout/b6 epoch 16  train=1.5349  val=1.5396
+[17:18:08]     session_holdout/b6 epoch 17  train=1.5321  val=1.5345
+[17:19:01]     session_holdout/b6 epoch 18  train=1.5274  val=1.5599
+[17:19:52]     session_holdout/b6 epoch 19  train=1.5269  val=1.5311
+[17:20:42]     session_holdout/b6 epoch 20  train=1.5271  val=1.5324
+[17:21:30]     session_holdout/b6 epoch 21  train=1.5315  val=1.5300
+[17:28:04] loading 52 sessions from ModelDataRightContra
+[17:28:05] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[17:28:05] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[17:28:05] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[17:28:05] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[17:28:05] ==== session_holdout ====
+[17:28:05]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[17:28:05]   resume session_holdout/b6 from epoch 21
+[17:28:10]   continue session_holdout/b6 at epoch 22  best_val=1.5300
+[17:29:01]     session_holdout/b6 epoch 22  train=1.5324  val=1.5343
+[17:29:44]     session_holdout/b6 epoch 23  train=1.5258  val=1.5378
+[17:30:30]     session_holdout/b6 epoch 24  train=1.5268  val=1.5336
+[17:31:20]     session_holdout/b6 epoch 25  train=1.5242  val=1.5305
+[17:32:11]     session_holdout/b6 epoch 26  train=1.5209  val=1.5554
+[17:32:11]     early stop at epoch 26
+[17:32:11]    b6                 wheel_speed  R²=+0.511  trialR²=+0.435  r=0.720
+[17:32:11]    b6                 paw_speed    R²=+0.008  trialR²=-1.895  r=0.579
+[17:32:13] wrote /Users/Stefan/Desktop/BehaviorRes/Baselinev1
+           task model      target  oracle family       r2       rmse        mae  pearson  n_bins  mean_trial_r2  median_trial_r2  n_trials
+session_holdout    b6 wheel_speed   False  cross 0.511037   0.738275   0.501069 0.720128    4694       0.435374         0.669810       237
+session_holdout    b6   paw_speed   False  cross 0.007564 395.313202 279.502655 0.579130    4694      -1.894813         0.017499       237
+[17:34:10] loading 52 sessions from ModelDataRightContra
+[17:34:11] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[17:34:11] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[17:34:11] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[17:34:11] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[17:34:11] ==== session_holdout ====
+[17:34:11]   regions=10  y_mean=[  0.6108033 412.82974  ] y_std=[  0.9385299 650.8421   ]
+[17:34:11]    b0_const           wheel_speed  R²=-0.010  trialR²=-0.079  r=nan
+[17:34:11]    b0_const           paw_speed    R²=-0.163  trialR²=-1.585  r=nan
+[17:34:11]    b0_traj            wheel_speed  R²=+0.417  trialR²=+0.388  r=0.687
+[17:34:11]    b0_traj            paw_speed    R²=+0.136  trialR²=-1.169  r=0.537
+[17:34:11]   cache hit session_holdout/b1  alpha=0.1
+[17:34:11]    b1                 wheel_speed  R²=+0.072  trialR²=+0.003  r=0.421
+[17:34:11]    b1                 paw_speed    R²=-0.186  trialR²=-1.949  r=0.395
+[17:34:11]   cache hit session_holdout/b2  alpha=0.1
+[17:34:11]    b2                 wheel_speed  R²=+0.065  trialR²=-0.405  r=0.488
+[17:34:11]    b2                 paw_speed    R²=-0.114  trialR²=-3.375  r=0.534
+[17:34:11]   cache hit session_holdout/b3  alpha=0.1
+[17:34:11]    b3                 wheel_speed  R²=+0.088  trialR²=-0.001  r=0.377
+[17:34:11]    b3                 paw_speed    R²=-0.165  trialR²=-1.813  r=0.341
+[17:34:13]   session_holdout/b7 params=31234  device=mps
+[17:35:06]     session_holdout/b7 epoch 01  train=1.8173  val=1.6319
+[17:35:58]     session_holdout/b7 epoch 02  train=1.5933  val=1.5478
+[17:36:49]     session_holdout/b7 epoch 03  train=1.5514  val=1.6110
+[17:37:37]     session_holdout/b7 epoch 04  train=1.5381  val=1.5546
+[17:38:26]     session_holdout/b7 epoch 05  train=1.5203  val=1.5312
+[17:39:17]     session_holdout/b7 epoch 06  train=1.5065  val=1.5101
+[17:40:08]     session_holdout/b7 epoch 07  train=1.4900  val=1.5150
+[17:40:55]     session_holdout/b7 epoch 08  train=1.4806  val=1.5022
+[17:41:43]     session_holdout/b7 epoch 09  train=1.4732  val=1.4988
+[17:42:31]     session_holdout/b7 epoch 10  train=1.4712  val=1.4943
+[17:43:19]     session_holdout/b7 epoch 11  train=1.4621  val=1.4723
+[17:44:06]     session_holdout/b7 epoch 12  train=1.4568  val=1.4776
+[17:44:53]     session_holdout/b7 epoch 13  train=1.4484  val=1.4929
+[17:45:42]     session_holdout/b7 epoch 14  train=1.4384  val=1.4519
+[17:46:28]     session_holdout/b7 epoch 15  train=1.4413  val=1.4576
+[17:47:17]     session_holdout/b7 epoch 16  train=1.4289  val=1.4887
+[17:48:07]     session_holdout/b7 epoch 17  train=1.4325  val=1.4422
+[17:48:59]     session_holdout/b7 epoch 18  train=1.4277  val=1.4576
+[17:49:46]     session_holdout/b7 epoch 19  train=1.4178  val=1.4411
+[17:50:34]     session_holdout/b7 epoch 20  train=1.4159  val=1.4342
+[17:51:21]     session_holdout/b7 epoch 21  train=1.4084  val=1.4325
+[17:52:07]     session_holdout/b7 epoch 22  train=1.4038  val=1.4600
+[17:52:53]     session_holdout/b7 epoch 23  train=1.4060  val=1.4278
+[17:53:46]     session_holdout/b7 epoch 24  train=1.3985  val=1.4388
+[17:54:38]     session_holdout/b7 epoch 25  train=1.3959  val=1.4245
+[17:55:27]     session_holdout/b7 epoch 26  train=1.3896  val=1.5002
+[17:56:19]     session_holdout/b7 epoch 27  train=1.3858  val=1.4188
+[17:57:09]     session_holdout/b7 epoch 28  train=1.3846  val=1.4278
+[17:58:00]     session_holdout/b7 epoch 29  train=1.3794  val=1.4350
+[17:58:50]     session_holdout/b7 epoch 30  train=1.3768  val=1.4166
+[17:59:40]     session_holdout/b7 epoch 31  train=1.3773  val=1.4288
+[18:00:31]     session_holdout/b7 epoch 32  train=1.3711  val=1.4142
+[18:01:23]     session_holdout/b7 epoch 33  train=1.3639  val=1.4341
+[18:02:13]     session_holdout/b7 epoch 34  train=1.3678  val=1.4318
+[18:03:05]     session_holdout/b7 epoch 35  train=1.3635  val=1.4220
+[18:03:55]     session_holdout/b7 epoch 36  train=1.3584  val=1.3999
+[18:04:48]     session_holdout/b7 epoch 37  train=1.3576  val=1.3972
+[18:05:42]     session_holdout/b7 epoch 38  train=1.3563  val=1.4045
+[18:06:32]     session_holdout/b7 epoch 39  train=1.3456  val=1.3829
+[18:07:24]     session_holdout/b7 epoch 40  train=1.3382  val=1.3999
+[18:07:24]    b7                 wheel_speed  R²=+0.478  trialR²=+0.418  r=0.707
+[18:07:24]    b7                 paw_speed    R²=-0.147  trialR²=-2.503  r=0.536
+[18:07:26] wrote /Users/Stefan/Desktop/BehaviorRes/Baselinev1
+           task    model      target  oracle family        r2       rmse        mae  pearson  n_bins  mean_trial_r2  median_trial_r2  n_trials
+  trial_holdout b0_const wheel_speed   False  cross -0.000002   0.936983   0.733841      NaN    1016      -0.104832        -0.029294        45
+  trial_holdout b0_const   paw_speed   False  cross -0.004197 605.949036 423.383545      NaN    1016      -0.172206        -0.073734        45
+  trial_holdout  b0_traj wheel_speed   False  cross  0.331659   0.766003   0.513766 0.576624    1016       0.269425         0.388975        45
+  trial_holdout  b0_traj   paw_speed   False  cross  0.135289 562.292175 333.273529 0.378435    1016       0.133968         0.339968        45
+  trial_holdout       b1 wheel_speed   False  cross  0.050339   0.913094   0.747684 0.258618    1016      -0.107343         0.015370        45
+  trial_holdout       b1   paw_speed   False  cross  0.097008 574.603760 413.649109 0.368701    1016      -0.130709        -0.046902        45
+  trial_holdout       b2 wheel_speed   False  cross  0.060578   1.025490   0.880360 0.292473     611      -0.765765        -0.057430        27
+  trial_holdout       b2   paw_speed   False  cross  0.126908 625.608032 445.548676 0.425321     611      -0.253588        -0.229075        27
+  trial_holdout       b3 wheel_speed   False  cross  0.081344   0.898065   0.701899 0.290173    1016      -0.080417         0.015321        45
+  trial_holdout       b3   paw_speed   False  cross  0.089456 577.001770 382.199921 0.337618    1016      -0.054982        -0.022667        45
+  trial_holdout       b6 wheel_speed   False  cross  0.345712   0.757907   0.538945 0.645255    1016       0.171376         0.509681        45
+  trial_holdout       b6   paw_speed   False  cross  0.233908 529.257446 335.277985 0.486438    1016       0.082542         0.250041        45
+  trial_holdout       b7 wheel_speed   False  cross  0.423567   0.711387   0.466061 0.667911    1016       0.260469         0.578803        45
+  trial_holdout       b7   paw_speed   False  cross  0.357435 484.713654 281.637146 0.602911    1016       0.243761         0.416668        45
+  trial_holdout       b9 wheel_speed   False within  0.256673   0.807833   0.580173 0.555638    1016       0.030430         0.394526        45
+  trial_holdout       b9   paw_speed   False within  0.386599 473.586029 300.999207 0.623578    1016       0.251401         0.333885        45
+  trial_holdout      b10 wheel_speed   False within  0.386796   0.733726   0.481479 0.691107    1016       0.175763         0.570065        45
+  trial_holdout      b10   paw_speed   False within  0.415125 462.442810 276.100159 0.644806    1016       0.237707         0.337459        45
+  trial_holdout      bwm wheel_speed   False within  0.292554   0.906225   0.662102 0.603845     566      -1.415217         0.131652        24
+  trial_holdout      bwm   paw_speed   False within  0.343978 547.123962 357.301758 0.619498     566      -0.038112         0.018317        24
+session_holdout       b6 wheel_speed   False  cross  0.511037   0.738275   0.501069 0.720128    4694       0.435374         0.669810       237
+session_holdout       b6   paw_speed   False  cross  0.007564 395.313202 279.502655 0.579130    4694      -1.894813         0.017499       237
+session_holdout b0_const wheel_speed   False  cross -0.009786   1.060950   0.823514      NaN    4694      -0.078663        -0.050603       237
+session_holdout b0_const   paw_speed   False  cross -0.162511 427.847107 346.369934      NaN    4694      -1.585141        -0.445120       237
+session_holdout  b0_traj wheel_speed   False  cross  0.417270   0.805961   0.518373 0.687282    4694       0.387566         0.468449       237
+session_holdout  b0_traj   paw_speed   False  cross  0.136276 368.788544 248.620789 0.537484    4694      -1.169159         0.252446       237
+session_holdout       b1 wheel_speed   False  cross  0.071578   1.017309   0.815430 0.421348    4694       0.002967         0.038891       237
+session_holdout       b1   paw_speed   False  cross -0.185522 432.060822 359.829926 0.394719    4694      -1.948861        -0.519452       237
+session_holdout       b2 wheel_speed   False  cross  0.065194   1.131289   0.950277 0.488414    2561      -0.404630        -0.181713       102
+session_holdout       b2   paw_speed   False  cross -0.114120 485.117645 386.918121 0.534406    2561      -3.374653        -0.734372       102
+session_holdout       b3 wheel_speed   False  cross  0.088030   1.008255   0.845891 0.377230    4694      -0.001246         0.067988       237
+session_holdout       b3   paw_speed   False  cross -0.165241 428.349243 354.143066 0.341493    4694      -1.813375        -0.475490       237
+session_holdout       b7 wheel_speed   False  cross  0.478339   0.762561   0.545122 0.707195    4694       0.418227         0.617945       237
+session_holdout       b7   paw_speed   False  cross -0.146788 424.943878 317.965820 0.535930    4694      -2.503219        -0.457121       237
+[18:11:40] loading 52 sessions from ModelDataRightContra
+[18:11:41] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[18:11:41] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[18:11:41] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[18:11:41] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[18:11:41] ==== mouse_holdout ====
+[18:11:41]   regions=10  y_mean=[  0.6057763 406.0867   ] y_std=[  0.9436881 649.12634  ]
+[18:11:50]   mouse_holdout/b6 params=29378  device=mps
+[18:12:47]     mouse_holdout/b6 epoch 01  train=1.7709  val=1.6131
+[18:13:38]     mouse_holdout/b6 epoch 02  train=1.5754  val=1.6007
+[18:14:28]     mouse_holdout/b6 epoch 03  train=1.5640  val=1.5815
+[18:15:17]     mouse_holdout/b6 epoch 04  train=1.5606  val=1.5774
+[18:16:04]     mouse_holdout/b6 epoch 05  train=1.5580  val=1.5885
+[18:16:51]     mouse_holdout/b6 epoch 06  train=1.5468  val=1.5811
+[18:17:35]     mouse_holdout/b6 epoch 07  train=1.5411  val=1.5685
+[18:18:17]     mouse_holdout/b6 epoch 08  train=1.5399  val=1.5953
+[18:18:58]     mouse_holdout/b6 epoch 09  train=1.5377  val=1.5709
+[18:19:43]     mouse_holdout/b6 epoch 10  train=1.5406  val=1.5628
+[18:20:28]     mouse_holdout/b6 epoch 11  train=1.5430  val=1.5675
+[18:21:14]     mouse_holdout/b6 epoch 12  train=1.5378  val=1.5590
+[18:21:53]     mouse_holdout/b6 epoch 13  train=1.5325  val=1.5623
+[18:22:35]     mouse_holdout/b6 epoch 14  train=1.5283  val=1.5693
+[18:23:25]     mouse_holdout/b6 epoch 15  train=1.5270  val=1.5527
+[18:24:16]     mouse_holdout/b6 epoch 16  train=1.5238  val=1.5479
+[18:25:06]     mouse_holdout/b6 epoch 17  train=1.5252  val=1.5479
+[18:25:56]     mouse_holdout/b6 epoch 18  train=1.5203  val=1.5476
+[18:26:45]     mouse_holdout/b6 epoch 19  train=1.5212  val=1.5555
+[18:27:35]     mouse_holdout/b6 epoch 20  train=1.5162  val=1.5471
+[18:28:24]     mouse_holdout/b6 epoch 21  train=1.5170  val=1.5529
+[18:29:14]     mouse_holdout/b6 epoch 22  train=1.5150  val=1.5450
+[18:30:04]     mouse_holdout/b6 epoch 23  train=1.5169  val=1.5521
+[18:30:51]     mouse_holdout/b6 epoch 24  train=1.5162  val=1.5548
+[18:31:35]     mouse_holdout/b6 epoch 25  train=1.5137  val=1.5413
+[18:32:17]     mouse_holdout/b6 epoch 26  train=1.5173  val=1.5531
+[18:33:07]     mouse_holdout/b6 epoch 27  train=1.5148  val=1.5528
+[18:33:56]     mouse_holdout/b6 epoch 28  train=1.5092  val=1.5350
+[18:34:49]     mouse_holdout/b6 epoch 29  train=1.5084  val=1.5624
+[18:35:39]     mouse_holdout/b6 epoch 30  train=1.5088  val=1.5385
+[18:36:28]     mouse_holdout/b6 epoch 31  train=1.5064  val=1.5401
+[18:37:09]     mouse_holdout/b6 epoch 32  train=1.5082  val=1.5398
+[18:37:51]     mouse_holdout/b6 epoch 33  train=1.5050  val=1.5431
+[18:37:51]     early stop at epoch 33
+[18:37:51]    b6                 wheel_speed  R²=+0.278  trialR²=+0.261  r=0.544
+[18:37:51]    b6                 paw_speed    R²=+0.272  trialR²=-7.973  r=0.522
+[18:37:53] wrote /Users/Stefan/Desktop/BehaviorRes/Baselinev1
+           task    model      target  oracle family        r2       rmse        mae  pearson  n_bins  mean_trial_r2  median_trial_r2  n_trials
+  trial_holdout b0_const wheel_speed   False  cross -0.000002   0.936983   0.733841      NaN    1016      -0.104832        -0.029294        45
+  trial_holdout b0_const   paw_speed   False  cross -0.004197 605.949036 423.383545      NaN    1016      -0.172206        -0.073734        45
+  trial_holdout  b0_traj wheel_speed   False  cross  0.331659   0.766003   0.513766 0.576624    1016       0.269425         0.388975        45
+  trial_holdout  b0_traj   paw_speed   False  cross  0.135289 562.292175 333.273529 0.378435    1016       0.133968         0.339968        45
+  trial_holdout       b1 wheel_speed   False  cross  0.050339   0.913094   0.747684 0.258618    1016      -0.107343         0.015370        45
+  trial_holdout       b1   paw_speed   False  cross  0.097008 574.603760 413.649109 0.368701    1016      -0.130709        -0.046902        45
+  trial_holdout       b2 wheel_speed   False  cross  0.060578   1.025490   0.880360 0.292473     611      -0.765765        -0.057430        27
+  trial_holdout       b2   paw_speed   False  cross  0.126908 625.608032 445.548676 0.425321     611      -0.253588        -0.229075        27
+  trial_holdout       b3 wheel_speed   False  cross  0.081344   0.898065   0.701899 0.290173    1016      -0.080417         0.015321        45
+  trial_holdout       b3   paw_speed   False  cross  0.089456 577.001770 382.199921 0.337618    1016      -0.054982        -0.022667        45
+  trial_holdout       b6 wheel_speed   False  cross  0.345712   0.757907   0.538945 0.645255    1016       0.171376         0.509681        45
+  trial_holdout       b6   paw_speed   False  cross  0.233908 529.257446 335.277985 0.486438    1016       0.082542         0.250041        45
+  trial_holdout       b7 wheel_speed   False  cross  0.423567   0.711387   0.466061 0.667911    1016       0.260469         0.578803        45
+  trial_holdout       b7   paw_speed   False  cross  0.357435 484.713654 281.637146 0.602911    1016       0.243761         0.416668        45
+  trial_holdout       b9 wheel_speed   False within  0.256673   0.807833   0.580173 0.555638    1016       0.030430         0.394526        45
+  trial_holdout       b9   paw_speed   False within  0.386599 473.586029 300.999207 0.623578    1016       0.251401         0.333885        45
+  trial_holdout      b10 wheel_speed   False within  0.386796   0.733726   0.481479 0.691107    1016       0.175763         0.570065        45
+  trial_holdout      b10   paw_speed   False within  0.415125 462.442810 276.100159 0.644806    1016       0.237707         0.337459        45
+  trial_holdout      bwm wheel_speed   False within  0.292554   0.906225   0.662102 0.603845     566      -1.415217         0.131652        24
+  trial_holdout      bwm   paw_speed   False within  0.343978 547.123962 357.301758 0.619498     566      -0.038112         0.018317        24
+session_holdout       b6 wheel_speed   False  cross  0.511037   0.738275   0.501069 0.720128    4694       0.435374         0.669810       237
+session_holdout       b6   paw_speed   False  cross  0.007564 395.313202 279.502655 0.579130    4694      -1.894813         0.017499       237
+session_holdout b0_const wheel_speed   False  cross -0.009786   1.060950   0.823514      NaN    4694      -0.078663        -0.050603       237
+session_holdout b0_const   paw_speed   False  cross -0.162511 427.847107 346.369934      NaN    4694      -1.585141        -0.445120       237
+session_holdout  b0_traj wheel_speed   False  cross  0.417270   0.805961   0.518373 0.687282    4694       0.387566         0.468449       237
+session_holdout  b0_traj   paw_speed   False  cross  0.136276 368.788544 248.620789 0.537484    4694      -1.169159         0.252446       237
+session_holdout       b1 wheel_speed   False  cross  0.071578   1.017309   0.815430 0.421348    4694       0.002967         0.038891       237
+session_holdout       b1   paw_speed   False  cross -0.185522 432.060822 359.829926 0.394719    4694      -1.948861        -0.519452       237
+session_holdout       b2 wheel_speed   False  cross  0.065194   1.131289   0.950277 0.488414    2561      -0.404630        -0.181713       102
+session_holdout       b2   paw_speed   False  cross -0.114120 485.117645 386.918121 0.534406    2561      -3.374653        -0.734372       102
+session_holdout       b3 wheel_speed   False  cross  0.088030   1.008255   0.845891 0.377230    4694      -0.001246         0.067988       237
+session_holdout       b3   paw_speed   False  cross -0.165241 428.349243 354.143066 0.341493    4694      -1.813375        -0.475490       237
+session_holdout       b7 wheel_speed   False  cross  0.478339   0.762561   0.545122 0.707195    4694       0.418227         0.617945       237
+session_holdout       b7   paw_speed   False  cross -0.146788 424.943878 317.965820 0.535930    4694      -2.503219        -0.457121       237
+session_holdout       b9 wheel_speed    True within  0.400626   0.817390   0.608440 0.633074    4694       0.311325         0.449565       237
+session_holdout       b9   paw_speed    True within  0.346124 320.876373 200.589127 0.588603    4694      -0.108395         0.354757       237
+session_holdout      bwm wheel_speed    True within  0.536874   0.811354   0.625236 0.732955    2324      -0.291622         0.102348        84
+session_holdout      bwm   paw_speed    True within  0.276470 402.188141 263.355865 0.550515    2324      -0.709475         0.090997        84
+  mouse_holdout b0_const wheel_speed   False  cross -0.031743   0.966979   0.750147      NaN    8433      -0.092973        -0.057838       371
+  mouse_holdout b0_const   paw_speed   False  cross -0.003992 583.297974 421.665161      NaN    8433      -4.494199        -0.053948       371
+  mouse_holdout  b0_traj wheel_speed   False  cross  0.269913   0.813427   0.528843 0.542661    8433       0.325425         0.445714       371
+  mouse_holdout  b0_traj   paw_speed   False  cross  0.261279 500.340302 309.017426 0.518564    8433      -6.775524         0.332462       371
+  mouse_holdout       b1 wheel_speed   False  cross -0.013575   0.958427   0.743160 0.123533    8433      -0.070726        -0.039423       371
+  mouse_holdout       b1   paw_speed   False  cross  0.014498 577.901794 417.572845 0.142427    8433      -4.789420        -0.048574       371
+  mouse_holdout       b2 wheel_speed   False  cross -0.055649   1.018287   0.814547 0.134849    5094      -0.840077        -0.214225       241
+  mouse_holdout       b2   paw_speed   False  cross -0.010733 637.569763 450.617035 0.112617    5094     -16.641414        -0.212928       241
+  mouse_holdout       b3 wheel_speed   False  cross -0.039901   0.970794   0.733235 0.131481    8433      -0.091547        -0.062349       371
+  mouse_holdout       b3   paw_speed   False  cross -0.048386 596.054504 399.324066 0.102305    8433      -2.712112        -0.071819       371
+  mouse_holdout       b6 wheel_speed   False  cross  0.277509   0.809184   0.537042 0.543549    8433       0.261360         0.475363       371
+  mouse_holdout       b6   paw_speed   False  cross  0.271679 496.805817 309.412567 0.521926    8433      -7.973108         0.339883       371
+[18:42:12] loading 52 sessions from ModelDataRightContra
+[18:42:13] corpus: 5752 trials, 52 sessions, motor units/session 5–226
+[18:42:13] split trial_holdout: train=5707  test=45  5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)
+[18:42:13] split session_holdout: train=5515  test=237  held-out session 626126d5 of CSH_ZAD_026; 454 trials from other sessions of that mouse remain in train
+[18:42:13] split mouse_holdout: train=5381  test=371  held-out mouse ZM_2241 (one session, unseen animal)
+[18:42:13] ==== mouse_holdout ====
+[18:42:13]   regions=10  y_mean=[  0.6057763 406.0867   ] y_std=[  0.9436881 649.12634  ]
+[18:42:20]   mouse_holdout/b7 params=31234  device=mps
+[18:43:14]     mouse_holdout/b7 epoch 01  train=1.8386  val=1.6712
+[18:43:56]     mouse_holdout/b7 epoch 02  train=1.5935  val=1.5716
+[18:44:36]     mouse_holdout/b7 epoch 03  train=1.5452  val=1.5643
+[18:45:17]     mouse_holdout/b7 epoch 04  train=1.5184  val=1.5340
+[18:46:05]     mouse_holdout/b7 epoch 05  train=1.5033  val=1.5247
+[18:46:48]     mouse_holdout/b7 epoch 06  train=1.4987  val=1.5441
+[18:47:30]     mouse_holdout/b7 epoch 07  train=1.4904  val=1.5151
+[18:48:17]     mouse_holdout/b7 epoch 08  train=1.4791  val=1.5201
+[18:49:05]     mouse_holdout/b7 epoch 09  train=1.4706  val=1.4897
+[18:49:54]     mouse_holdout/b7 epoch 10  train=1.4622  val=1.5117
+[18:50:44]     mouse_holdout/b7 epoch 11  train=1.4568  val=1.4658
+[18:51:27]     mouse_holdout/b7 epoch 12  train=1.4460  val=1.4578
+[18:52:07]     mouse_holdout/b7 epoch 13  train=1.4409  val=1.4584
+[18:52:47]     mouse_holdout/b7 epoch 14  train=1.4323  val=1.4516
+[18:53:32]     mouse_holdout/b7 epoch 15  train=1.4317  val=1.4293
+[18:54:14]     mouse_holdout/b7 epoch 16  train=1.4211  val=1.4324
+[18:54:56]     mouse_holdout/b7 epoch 17  train=1.4160  val=1.4309
+[18:55:37]     mouse_holdout/b7 epoch 18  train=1.4069  val=1.4223
+[18:56:20]     mouse_holdout/b7 epoch 19  train=1.4060  val=1.4104
+[18:57:01]     mouse_holdout/b7 epoch 20  train=1.4021  val=1.4071
+[18:57:44]     mouse_holdout/b7 epoch 21  train=1.3979  val=1.4408
+[18:58:34]     mouse_holdout/b7 epoch 22  train=1.3866  val=1.3910
+[18:59:21]     mouse_holdout/b7 epoch 23  train=1.3864  val=1.4058
+[19:00:08]     mouse_holdout/b7 epoch 24  train=1.3781  val=1.4171
+[19:00:52]     mouse_holdout/b7 epoch 25  train=1.3791  val=1.4026
+[19:01:41]     mouse_holdout/b7 epoch 26  train=1.3727  val=1.3931
+[19:02:29]     mouse_holdout/b7 epoch 27  train=1.3729  val=1.4264
+[19:02:29]     early stop at epoch 27
+[19:02:30]    b7                 wheel_speed  R²=+0.176  trialR²=+0.233  r=0.498
+[19:02:30]    b7                 paw_speed    R²=+0.203  trialR²=-3.963  r=0.507
+[19:02:32] wrote /Users/Stefan/Desktop/BehaviorRes/Baselinev1
+           task    model      target  oracle family        r2       rmse        mae  pearson  n_bins  mean_trial_r2  median_trial_r2  n_trials
+  trial_holdout b0_const wheel_speed   False  cross -0.000002   0.936983   0.733841      NaN    1016      -0.104832        -0.029294        45
+  trial_holdout b0_const   paw_speed   False  cross -0.004197 605.949036 423.383545      NaN    1016      -0.172206        -0.073734        45
+  trial_holdout  b0_traj wheel_speed   False  cross  0.331659   0.766003   0.513766 0.576624    1016       0.269425         0.388975        45
+  trial_holdout  b0_traj   paw_speed   False  cross  0.135289 562.292175 333.273529 0.378435    1016       0.133968         0.339968        45
+  trial_holdout       b1 wheel_speed   False  cross  0.050339   0.913094   0.747684 0.258618    1016      -0.107343         0.015370        45
+  trial_holdout       b1   paw_speed   False  cross  0.097008 574.603760 413.649109 0.368701    1016      -0.130709        -0.046902        45
+  trial_holdout       b2 wheel_speed   False  cross  0.060578   1.025490   0.880360 0.292473     611      -0.765765        -0.057430        27
+  trial_holdout       b2   paw_speed   False  cross  0.126908 625.608032 445.548676 0.425321     611      -0.253588        -0.229075        27
+  trial_holdout       b3 wheel_speed   False  cross  0.081344   0.898065   0.701899 0.290173    1016      -0.080417         0.015321        45
+  trial_holdout       b3   paw_speed   False  cross  0.089456 577.001770 382.199921 0.337618    1016      -0.054982        -0.022667        45
+  trial_holdout       b6 wheel_speed   False  cross  0.345712   0.757907   0.538945 0.645255    1016       0.171376         0.509681        45
+  trial_holdout       b6   paw_speed   False  cross  0.233908 529.257446 335.277985 0.486438    1016       0.082542         0.250041        45
+  trial_holdout       b7 wheel_speed   False  cross  0.423567   0.711387   0.466061 0.667911    1016       0.260469         0.578803        45
+  trial_holdout       b7   paw_speed   False  cross  0.357435 484.713654 281.637146 0.602911    1016       0.243761         0.416668        45
+  trial_holdout       b9 wheel_speed   False within  0.256673   0.807833   0.580173 0.555638    1016       0.030430         0.394526        45
+  trial_holdout       b9   paw_speed   False within  0.386599 473.586029 300.999207 0.623578    1016       0.251401         0.333885        45
+  trial_holdout      b10 wheel_speed   False within  0.386796   0.733726   0.481479 0.691107    1016       0.175763         0.570065        45
+  trial_holdout      b10   paw_speed   False within  0.415125 462.442810 276.100159 0.644806    1016       0.237707         0.337459        45
+  trial_holdout      bwm wheel_speed   False within  0.292554   0.906225   0.662102 0.603845     566      -1.415217         0.131652        24
+  trial_holdout      bwm   paw_speed   False within  0.343978 547.123962 357.301758 0.619498     566      -0.038112         0.018317        24
+session_holdout       b6 wheel_speed   False  cross  0.511037   0.738275   0.501069 0.720128    4694       0.435374         0.669810       237
+session_holdout       b6   paw_speed   False  cross  0.007564 395.313202 279.502655 0.579130    4694      -1.894813         0.017499       237
+session_holdout b0_const wheel_speed   False  cross -0.009786   1.060950   0.823514      NaN    4694      -0.078663        -0.050603       237
+session_holdout b0_const   paw_speed   False  cross -0.162511 427.847107 346.369934      NaN    4694      -1.585141        -0.445120       237
+session_holdout  b0_traj wheel_speed   False  cross  0.417270   0.805961   0.518373 0.687282    4694       0.387566         0.468449       237
+session_holdout  b0_traj   paw_speed   False  cross  0.136276 368.788544 248.620789 0.537484    4694      -1.169159         0.252446       237
+session_holdout       b1 wheel_speed   False  cross  0.071578   1.017309   0.815430 0.421348    4694       0.002967         0.038891       237
+session_holdout       b1   paw_speed   False  cross -0.185522 432.060822 359.829926 0.394719    4694      -1.948861        -0.519452       237
+session_holdout       b2 wheel_speed   False  cross  0.065194   1.131289   0.950277 0.488414    2561      -0.404630        -0.181713       102
+session_holdout       b2   paw_speed   False  cross -0.114120 485.117645 386.918121 0.534406    2561      -3.374653        -0.734372       102
+session_holdout       b3 wheel_speed   False  cross  0.088030   1.008255   0.845891 0.377230    4694      -0.001246         0.067988       237
+session_holdout       b3   paw_speed   False  cross -0.165241 428.349243 354.143066 0.341493    4694      -1.813375        -0.475490       237
+session_holdout       b7 wheel_speed   False  cross  0.478339   0.762561   0.545122 0.707195    4694       0.418227         0.617945       237
+session_holdout       b7   paw_speed   False  cross -0.146788 424.943878 317.965820 0.535930    4694      -2.503219        -0.457121       237
+session_holdout       b9 wheel_speed    True within  0.400626   0.817390   0.608440 0.633074    4694       0.311325         0.449565       237
+session_holdout       b9   paw_speed    True within  0.346124 320.876373 200.589127 0.588603    4694      -0.108395         0.354757       237
+session_holdout      bwm wheel_speed    True within  0.536874   0.811354   0.625236 0.732955    2324      -0.291622         0.102348        84
+session_holdout      bwm   paw_speed    True within  0.276470 402.188141 263.355865 0.550515    2324      -0.709475         0.090997        84
+  mouse_holdout b0_const wheel_speed   False  cross -0.031743   0.966979   0.750147      NaN    8433      -0.092973        -0.057838       371
+  mouse_holdout b0_const   paw_speed   False  cross -0.003992 583.297974 421.665161      NaN    8433      -4.494199        -0.053948       371
+  mouse_holdout  b0_traj wheel_speed   False  cross  0.269913   0.813427   0.528843 0.542661    8433       0.325425         0.445714       371
+  mouse_holdout  b0_traj   paw_speed   False  cross  0.261279 500.340302 309.017426 0.518564    8433      -6.775524         0.332462       371
+  mouse_holdout       b1 wheel_speed   False  cross -0.013575   0.958427   0.743160 0.123533    8433      -0.070726        -0.039423       371
+  mouse_holdout       b1   paw_speed   False  cross  0.014498 577.901794 417.572845 0.142427    8433      -4.789420        -0.048574       371
+  mouse_holdout       b2 wheel_speed   False  cross -0.055649   1.018287   0.814547 0.134849    5094      -0.840077        -0.214225       241
+  mouse_holdout       b2   paw_speed   False  cross -0.010733 637.569763 450.617035 0.112617    5094     -16.641414        -0.212928       241
+  mouse_holdout       b3 wheel_speed   False  cross -0.039901   0.970794   0.733235 0.131481    8433      -0.091547        -0.062349       371
+  mouse_holdout       b3   paw_speed   False  cross -0.048386 596.054504 399.324066 0.102305    8433      -2.712112        -0.071819       371
+  mouse_holdout       b6 wheel_speed   False  cross  0.277509   0.809184   0.537042 0.543549    8433       0.261360         0.475363       371
+  mouse_holdout       b6   paw_speed   False  cross  0.271679 496.805817 309.412567 0.521926    8433      -7.973108         0.339883       371
+  mouse_holdout       b7 wheel_speed   False  cross  0.175512   0.864417   0.548495 0.498040    8433       0.233447         0.318832       371
+  mouse_holdout       b7   paw_speed   False  cross  0.202601 519.832275 298.167694 0.506719    8433      -3.963333         0.258308       371

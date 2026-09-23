@@ -1,0 +1,44 @@
+{
+  "built_at": "2026-09-18T08:18:46.586237+00:00",
+  "data": "/Users/Stefan/Desktop/BehaviorRes/ModelDataLeftIpsi",
+  "n_sessions_decoded": 49,
+  "method": {
+    "estimator": "Ridge + StandardScaler on each train fold (paper used Lasso; L1 did not converge on raw counts)",
+    "alphas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "n_folds": 5,
+    "n_lags": 10,
+    "n_null": 5,
+    "window": "stimOn to reward, leftover dropped; not paper 1.2 s firstMovement window",
+    "units": "MOp or MOs, label>=1, left hemisphere"
+  },
+  "by_target": {
+    "wheel_speed": {
+      "n_sessions": 49,
+      "median_r2": 0.25,
+      "mean_r2": 0.27353061224489794,
+      "median_r2_corrected": 0.266,
+      "n_beats_all_nulls": 44
+    },
+    "paw_speed": {
+      "n_sessions": 48,
+      "median_r2": 0.18,
+      "mean_r2": 0.1980208333333333,
+      "median_r2_corrected": 0.203,
+      "n_beats_all_nulls": 44
+    },
+    "paw_speed_norm": {
+      "n_sessions": 48,
+      "median_r2": 0.1865,
+      "mean_r2": 0.21110416666666665,
+      "median_r2_corrected": 0.22549999999999998,
+      "n_beats_all_nulls": 46
+    }
+  },
+  "text": "BWM-style decoding on ModelDataLeftIpsi (left paw, left hemisphere, MOp/MOs)\nsessions with a fit: 49 / 52   method: Ridge nested 5-fold, lag W=10, 5 circular-shift nulls\nwindow: stimOn\u2192reward (paper's firstMovement \u22120.2:+1.0 s does not fit these trials)\nnull p-floor = 1/6 \u2248 0.167; report 'beats all nulls' instead of p<0.05\n\n  wheel speed |\u03c9|           median R\u00b2= 0.250  mean= 0.274  null-corr median= 0.266  beats all 5 nulls in 44/49 sessions\n  paw speed (2D)            median R\u00b2= 0.180  mean= 0.198  null-corr median= 0.203  beats all 5 nulls in 44/48 sessions\n  paw speedNormalized       median R\u00b2= 0.186  mean= 0.211  null-corr median= 0.225  beats all 5 nulls in 46/48 sessions\n\n  corr(R\u00b2 wheel, paw)     0.91\n  corr(R\u00b2 wheel, paw_norm) 0.83\n  corr(R\u00b2 paw, paw_norm)   0.94\n  fraction of sessions with paw R\u00b2 > wheel R\u00b2: 0.16"
+}

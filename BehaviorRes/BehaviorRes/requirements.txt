@@ -1,0 +1,38 @@
+# BehaviorRes Python environment
+# Python 3.12 recommended (3.10+).
+#
+# Torch is NOT installed from this file. On ilab, use the cluster install:
+#
+#   module avail torch          # or: module avail pytorch
+#   module load <the torch module>
+#   python -c "import torch; print(torch.__version__, torch.__file__)"
+#
+#   python3.12 -m venv .venv --system-site-packages
+#   source .venv/bin/activate
+#   python -m pip install --upgrade pip
+#   pip install -r requirements.txt
+#   python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+#
+# --system-site-packages lets the venv import packages already on that
+# Python (torch, and often numpy). If pip then complains that a pin
+# conflicts with the cluster numpy, drop that pin from this file and
+# use the cluster version.
+#
+# If torch lives in a conda env instead of a module, activate that env
+# and pip install -r requirements.txt into it (do not create a new venv).
+#
+# The ZFM / fullData / video scripts also need system ffmpeg.
+
+numpy==1.26.4
+pandas==2.2.2
+pyarrow==18.1.0
+scipy==1.12.0
+scikit-learn==1.4.2
+matplotlib==3.8.3
+opencv-python-headless==4.11.0.86
+
+# IBL: brainbox ships inside ibllib (do not pip install the unrelated "brainbox" package)
+ONE-api==3.4.1
+ibllib==3.4.3
+iblatlas==0.10.0
+iblutil==1.20.0

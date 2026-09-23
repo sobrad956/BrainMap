@@ -1,0 +1,30 @@
+{
+  "trial_holdout": {
+    "note": "5/52 sessions contribute held-out trials (5adab0b7, 62902992, 8c33abef, a92c4b1d, d2f5a130)",
+    "n_train": 6176,
+    "n_test": 49,
+    "hold_eids": [
+      "5adab0b7-dfd0-467d-b09d-43cb7ca5d59c",
+      "62902992-8432-46fb-af12-6392012e58c7",
+      "8c33abef-3d3e-4d42-9f27-445e9def08f9",
+      "a92c4b1d-46bd-457e-a1f4-414265f0e2d4",
+      "d2f5a130-b981-4546-8858-c94ae1da75ff"
+    ]
+  },
+  "session_holdout": {
+    "note": "held-out session 626126d5 of CSH_ZAD_026; 498 trials from other sessions of that mouse remain in train",
+    "n_train": 5973,
+    "n_test": 252,
+    "hold_eids": [
+      "626126d5-eecf-4e9b-900e-ec29a17ece07"
+    ]
+  },
+  "mouse_holdout": {
+    "note": "held-out mouse ZM_2241 (one session, unseen animal)",
+    "n_train": 5849,
+    "n_test": 376,
+    "hold_eids": [
+      "ff4187b5-4176-4e39-8894-53a24b7cf36b"
+    ]
+  }
+}
