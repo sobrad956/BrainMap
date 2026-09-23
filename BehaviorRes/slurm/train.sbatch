@@ -16,7 +16,12 @@ fi
 
 SCRIPT="${BEH_SCRIPT:?set BEH_SCRIPT to e.g. Modelv1.py}"
 DEVICE="${BEH_DEVICE:-auto}"
+PROTOCOL="${BEH_PROTOCOL:-fixed}"
+EXTRA=()
+if [[ "$SCRIPT" == "Modelv1.py" ]]; then
+  EXTRA+=(--protocol "$PROTOCOL")
+fi
 
-echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  job=${SLURM_ARRAY_TASK_ID}  device=$DEVICE"
+echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  job=${SLURM_ARRAY_TASK_ID}  device=$DEVICE  protocol=$PROTOCOL"
 python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())" || true
-python "$SCRIPT" --job "${SLURM_ARRAY_TASK_ID}" --device "$DEVICE"
+python "$SCRIPT" --job "${SLURM_ARRAY_TASK_ID}" --device "$DEVICE" "${EXTRA[@]}"

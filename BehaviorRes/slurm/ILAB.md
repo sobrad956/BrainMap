@@ -76,7 +76,7 @@ ls ModelDataRightContra/sessions | wc -l
 python Modelv1.py --list-jobs | head
 ```
 
-You want `60 jobs` for Modelv1, `60` for Modelv2, `150` for Baselinev1.
+You want `60 jobs` for Modelv1 `--protocol fixed` (default), `60` for Modelv2, `150` for Baselinev1. Cross-validation is `python Modelv1.py --protocol cv --list-jobs`.
 
 Sync updated code from your laptop (exclude the venv):
 
@@ -96,11 +96,11 @@ sed -i 's/\r$//' slurm/submit.sh slurm/train.sbatch
 
 ## 4. How this repo’s jobs are structured
 
-`bash slurm/submit.sh Modelv1.py` asks Python for the config grid, then submits **one Slurm array**. Each array task is one `(behavior, holdout, pool, ablation)` and trains a **1-d** model.
+`bash slurm/submit.sh Modelv1.py` asks Python for the config grid, then submits **one Slurm array**. Each array task is one `(behavior, holdout, pool, ablation)` and trains a **1-d** model. Default `--protocol fixed` is the original 60-job single-split grid. `--protocol cv` expands to leave-one-mouse-out, leave-one-session-out, repeated trial splits, and per-session trial-extrapolation (last 10% of trials in each session).
 
 | Script | Array size | Writes under |
 |---|---|---|
-| `Modelv1.py` | 60 | `Modelv1/<behavior>/jobs/<index>_<tag>/` |
+| `Modelv1.py` | 60 (fixed) / large (cv) | `Modelv1/<behavior>/` or `Modelv1/<behavior>/cv/` |
 | `Modelv2.py` | 60 | `Modelv2/<behavior>/jobs/...` |
 | `Baselinev1.py` | 150 | `Baselinev1/<behavior>/jobs/...` |
 
@@ -129,6 +129,13 @@ source .venv/bin/activate
 
 ```bash
 bash slurm/submit.sh Modelv1.py
+```
+
+**Modelv1 cross-validation** (LOMO, LOSO, trial repeats, trial-extrapolation). This array is much larger than 60; results go to `Modelv1/<behavior>/cv/`:
+
+```bash
+python Modelv1.py --protocol cv --list-jobs | head
+bash slurm/submit.sh Modelv1.py --protocol cv
 ```
 
 **Same for the others:**
@@ -301,6 +308,7 @@ Merge per-task CSVs into each behavior folder:
 
 ```bash
 python Modelv1.py --aggregate
+python Modelv1.py --protocol cv --aggregate
 python Modelv2.py --aggregate
 python Baselinev1.py --aggregate
 ```

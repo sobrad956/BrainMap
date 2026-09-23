@@ -1,10 +1,14 @@
 """Formulation A set encoder on ModelDataRightContra (motor cortex only).
 
 Shared per-unit MLP + masked mean or attention pool + causal GRU.
-Neuron index is never a feature. Three holdouts: seen-session trials,
-held-out session of a seen mouse, held-out mouse.
+Neuron index is never a feature.
 
-Loss is trial-balanced MSE on z-scored |ω| and 2D paw speed (PDF eq. 7).
+Protocols:
+  fixed  original single splits (trial / session / mouse holdout).
+  cv     leave-one-mouse-out, leave-one-session-out, repeated random
+         trial splits, and trial-extrapolation (last 10% of each session).
+
+Loss is trial-balanced MSE on a z-scored 1-d behavior (PDF eq. 7).
 """
 
 from __future__ import annotations
@@ -54,7 +58,22 @@ DROPOUT = 0.1
 UNIT_DROPOUT = 0.15
 
 POOLS = ("mean", "attn")
-TASKS = ("trial_holdout", "session_holdout", "mouse_holdout")
+FIXED_TASKS = ("trial_holdout", "session_holdout", "mouse_holdout")
+CV_TASKS = ("trial_repeat", "trial_extrapolation", "session_loso", "mouse_lomo")
+TASKS = FIXED_TASKS
+TASK_LABELS = {
+    "trial_holdout": "trial",
+    "session_holdout": "session",
+    "mouse_holdout": "mouse",
+    "trial_repeat": "trial repeats",
+    "trial_extrapolation": "trial extrap.",
+    "session_loso": "session LOSO",
+    "mouse_lomo": "mouse LOMO",
+}
+N_TRIAL_REPEATS = 5
+EXTRAP_FRAC = 0.10
+MIN_EXTRAP_TRIALS = 10
+PROTOCOLS = ("fixed", "cv", "all")
 TARGETS = ("wheel_speed", "paw_vx", "paw_vy", "paw_vz", "paw_speed")
 TARGET_LABELS = {
     "wheel_speed": "wheel speed |ω|",
@@ -92,21 +111,44 @@ def device_of():
     return slurm_utils.device_of()
 
 
-def job_grid():
+def job_grid(protocol="fixed", trials=None, n_trial_repeats=N_TRIAL_REPEATS):
+    protocol = protocol or "fixed"
+    if protocol == "all":
+        return job_grid("fixed", trials, n_trial_repeats) + job_grid("cv", trials, n_trial_repeats)
+    if protocol == "fixed":
+        return [
+            {"protocol": "fixed", "target": beh, "task": t, "pool": p, "ablation": a, "fold": 0}
+            for beh in TARGETS
+            for a in ("none", "a1")
+            for t in FIXED_TASKS
+            for p in POOLS
+        ]
+    if trials is None:
+        trials, _ = load_corpus()
+    folds = cv_folds(trials, n_trial_repeats=n_trial_repeats)
     return [
-        {"target": beh, "task": t, "pool": p, "ablation": a}
+        {
+            "protocol": "cv",
+            "target": beh,
+            "task": spec["task"],
+            "pool": p,
+            "ablation": a,
+            "fold": int(spec["fold"]),
+            "fold_id": spec["fold_id"],
+        }
         for beh in TARGETS
         for a in ("none", "a1")
-        for t in TASKS
+        for spec in folds
         for p in POOLS
     ]
 
 
-def configure_out(target):
+def configure_out(target, protocol="fixed"):
     global OUT, CACHE
     if target not in TARGETS:
         raise SystemExit(f"unknown target {target!r}; choose from {TARGETS}")
-    OUT = MODEL_ROOT / target
+    protocol = protocol or "fixed"
+    OUT = MODEL_ROOT / target if protocol == "fixed" else MODEL_ROOT / target / "cv"
     CACHE = OUT / "cache"
     return OUT
 
@@ -307,6 +349,155 @@ def make_splits(trials):
     for name, sp in splits.items():
         log(f"split {name}: train={len(sp['train'])}  test={len(sp['test'])}  {sp['note']}")
     return splits
+
+
+def trial_frame(trials):
+    return pd.DataFrame(
+        [
+            {
+                "i": i,
+                "eid": t["eid"],
+                "mouse_id": t["mouse_id"],
+                "trial_index": t["trial_index"],
+            }
+            for i, t in enumerate(trials)
+        ]
+    )
+
+
+def _session_order(df, eid):
+    sub = df.loc[df.eid == eid].copy()
+    sub["_ord"] = pd.to_numeric(sub["trial_index"], errors="coerce")
+    sub = sub.sort_values(["_ord", "i"], na_position="last")
+    return sub["i"].to_numpy(dtype=int)
+
+
+def _random_trial_split(df, seed):
+    rng = np.random.default_rng(seed)
+    eids = np.array(sorted(df.eid.unique()))
+    n_hold_sess = max(1, int(round(0.10 * len(eids))))
+    hold_eids = set(rng.choice(eids, size=n_hold_sess, replace=False).tolist())
+    trial_test = []
+    for eid in sorted(hold_eids):
+        idx = df.loc[df.eid == eid, "i"].to_numpy()
+        n_te = max(1, int(round(0.10 * len(idx))))
+        pick = rng.choice(idx, size=n_te, replace=False)
+        trial_test.extend(pick.tolist())
+    trial_test = np.array(sorted(set(trial_test)), dtype=int)
+    trial_train = np.array(sorted(set(df.i) - set(trial_test)), dtype=int)
+    return {
+        "train": trial_train,
+        "test": trial_test,
+        "note": (
+            f"{n_hold_sess}/{len(eids)} sessions contribute held-out trials "
+            f"(seed={seed}; {', '.join(e[:8] for e in sorted(hold_eids))})"
+        ),
+        "hold_eids": sorted(hold_eids),
+    }
+
+
+def cv_folds(trials, n_trial_repeats=N_TRIAL_REPEATS, tasks=CV_TASKS):
+    """One split spec per CV fold. fold is 0..n-1 within each task."""
+    df = trial_frame(trials)
+    tasks = tuple(tasks)
+    out = []
+    if "trial_repeat" in tasks:
+        for k in range(int(n_trial_repeats)):
+            sp = _random_trial_split(df, seed=SEED + 1000 + k)
+            out.append({"task": "trial_repeat", "fold": k, "fold_id": f"rep{k}", **sp})
+    eids = sorted(df.eid.unique())
+    if "trial_extrapolation" in tasks:
+        k = 0
+        for eid in eids:
+            order = _session_order(df, eid)
+            if len(order) < MIN_EXTRAP_TRIALS:
+                continue
+            n_te = max(1, int(round(EXTRAP_FRAC * len(order))))
+            test = np.asarray(order[-n_te:], dtype=int)
+            train = np.asarray(order[:-n_te], dtype=int)
+            if len(train) < 8 or len(test) < 1:
+                continue
+            mouse = str(df.loc[df.eid == eid, "mouse_id"].iloc[0])
+            out.append(
+                {
+                    "task": "trial_extrapolation",
+                    "fold": k,
+                    "fold_id": str(eid)[:8],
+                    "train": train,
+                    "test": test,
+                    "note": (
+                        f"session {str(eid)[:8]} ({mouse}): train first {len(train)}/"
+                        f"{len(order)} trials, test last {len(test)} ({EXTRAP_FRAC:.0%})"
+                    ),
+                    "hold_eids": [eid],
+                }
+            )
+            k += 1
+    if "session_loso" in tasks:
+        k = 0
+        for eid in eids:
+            test = df.loc[df.eid == eid, "i"].to_numpy(dtype=int)
+            train = df.loc[df.eid != eid, "i"].to_numpy(dtype=int)
+            if len(test) < 1 or len(train) < 8:
+                continue
+            mouse = str(df.loc[df.eid == eid, "mouse_id"].iloc[0])
+            out.append(
+                {
+                    "task": "session_loso",
+                    "fold": k,
+                    "fold_id": str(eid)[:8],
+                    "train": train,
+                    "test": test,
+                    "note": f"left-out session {str(eid)[:8]} of {mouse}",
+                    "hold_eids": [eid],
+                }
+            )
+            k += 1
+    if "mouse_lomo" in tasks:
+        k = 0
+        for mouse in sorted(df.mouse_id.astype(str).unique()):
+            test = df.loc[df.mouse_id.astype(str) == mouse, "i"].to_numpy(dtype=int)
+            train = df.loc[df.mouse_id.astype(str) != mouse, "i"].to_numpy(dtype=int)
+            if len(test) < 1 or len(train) < 8:
+                continue
+            n_sess = int(df.loc[df.mouse_id.astype(str) == mouse, "eid"].nunique())
+            out.append(
+                {
+                    "task": "mouse_lomo",
+                    "fold": k,
+                    "fold_id": str(mouse),
+                    "train": train,
+                    "test": test,
+                    "note": f"left-out mouse {mouse} ({n_sess} session(s))",
+                    "hold_eids": sorted(df.loc[df.mouse_id.astype(str) == mouse, "eid"].unique()),
+                }
+            )
+            k += 1
+    log(
+        f"cv folds: {sum(1 for s in out if s['task']=='trial_repeat')} trial_repeat, "
+        f"{sum(1 for s in out if s['task']=='trial_extrapolation')} trial_extrapolation, "
+        f"{sum(1 for s in out if s['task']=='session_loso')} session_loso, "
+        f"{sum(1 for s in out if s['task']=='mouse_lomo')} mouse_lomo"
+    )
+    return out
+
+
+def summarize_folds(rows):
+    df = pd.DataFrame(rows)
+    if df.empty or "fold" not in df.columns:
+        return []
+    keys = [c for c in ("task", "pool", "target", "ablation") if c in df.columns]
+    metrics = [m for m in ("r2", "mean_trial_r2", "median_trial_r2", "rmse", "mae", "pearson") if m in df.columns]
+    out = []
+    for name, sub in df.groupby(keys, dropna=False):
+        rec = dict(zip(keys, name if isinstance(name, tuple) else (name,)))
+        rec["n_folds"] = int(len(sub))
+        for m in metrics:
+            rec[f"{m}_mean"] = float(sub[m].mean())
+            rec[f"{m}_std"] = float(sub[m].std(ddof=1)) if len(sub) > 1 else 0.0
+            rec[f"{m}_median"] = float(sub[m].median())
+        out.append(rec)
+    return out
 
 
 def train_val_split(train_idx, seed=SEED):
@@ -607,8 +798,13 @@ def model_tag(pool, use_anatomy=True):
     return pool if use_anatomy else f"{pool}_a1"
 
 
-def cache_dir(task, pool, use_anatomy=True):
-    d = CACHE / task / model_tag(pool, use_anatomy)
+def cache_dir(task, pool, use_anatomy=True, fold_id=None):
+    parts = [task]
+    if fold_id and str(fold_id) not in ("fixed", "", "0"):
+        safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in str(fold_id))
+        parts.append(safe)
+    parts.append(model_tag(pool, use_anatomy))
+    d = CACHE.joinpath(*parts)
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -617,9 +813,9 @@ def save_json(path, obj):
     Path(path).write_text(json.dumps(obj, indent=2, default=float))
 
 
-def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_anatomy=True):
+def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_anatomy=True, fold_id=None):
     tag = model_tag(pool, use_anatomy)
-    cdir = cache_dir(task, pool, use_anatomy)
+    cdir = cache_dir(task, pool, use_anatomy, fold_id=fold_id)
     ckpt = cdir / "model.pt"
     hist_path = cdir / "history.json"
     if ckpt.exists() and hist_path.exists():
@@ -832,7 +1028,7 @@ def style_plots():
 
 def plot_training(histories, out_dir, fname="train_curves.png", title="Formulation A training"):
     style_plots()
-    tasks = [t for t in TASKS if histories.get(t)]
+    tasks = [t for t in list(histories) if histories.get(t)]
     pools = list(dict.fromkeys(p for t in tasks for p in histories[t]))
     if not tasks or not pools:
         return
@@ -868,40 +1064,100 @@ def plot_r2_bars(rows, out_dir, suffix=""):
     style_plots()
     df = pd.DataFrame(rows)
     colors = {"mean": "#4C6A92", "attn": "#C47B3B"}
-    tasks = [t for t in TASKS if t in set(df.task)]
+    task_order = list(FIXED_TASKS) + list(CV_TASKS)
+    tasks = [t for t in task_order if t in set(df.task)]
     pools = [p for p in POOLS if p in set(df.pool)]
     if not tasks or not pools:
         return
+    has_folds = "fold" in df.columns and df.fold.nunique() > 1
     for metric, ylabel, fname in (
         ("r2", "held-out R² (concatenated bins)", "r2_concat"),
         ("mean_trial_r2", "held-out mean trial R²", "r2_trial"),
+        ("median_trial_r2", "held-out median trial R²", "r2_trial_median"),
     ):
-        fig, axes = plt.subplots(1, max(len(set(df.target)), 1), figsize=(5.2 * max(len(set(df.target)), 1), 4.2), sharey=False)
+        if metric not in df.columns:
+            continue
+        fig, axes = plt.subplots(1, max(len(set(df.target)), 1), figsize=(5.8 * max(len(set(df.target)), 1), 4.4), sharey=False)
         axes = np.atleast_1d(axes)
         plot_targets = [t for t in TARGETS if t in set(df.target)] or list(set(df.target))
         for ax, target in zip(axes, plot_targets):
             x = np.arange(len(tasks))
             width = 0.8 / max(len(pools), 1)
             for i, pool in enumerate(pools):
-                vals = []
+                vals, errs = [], []
                 for task in tasks:
                     sub = df[(df.task == task) & (df.pool == pool) & (df.target == target)]
-                    vals.append(float(sub[metric].iloc[0]) if len(sub) else np.nan)
+                    if sub.empty:
+                        vals.append(np.nan)
+                        errs.append(0.0)
+                    else:
+                        vals.append(float(sub[metric].mean()))
+                        errs.append(float(sub[metric].std(ddof=1)) if has_folds and len(sub) > 1 else 0.0)
+                xpos = x + (i - (len(pools) - 1) / 2) * width
                 ax.bar(
-                    x + (i - (len(pools) - 1) / 2) * width,
+                    xpos,
                     vals,
                     width,
+                    yerr=errs if has_folds else None,
+                    capsize=3 if has_folds else 0,
                     color=colors.get(pool, "#64748B"),
                     label=f"{pool} pool",
+                    ecolor="0.35",
                 )
             ax.axhline(0.0, color="0.6", lw=0.8)
             ax.set_xticks(x)
-            ax.set_xticklabels([t.replace("_holdout", "") for t in tasks])
+            ax.set_xticklabels([TASK_LABELS.get(t, t.replace("_holdout", "")) for t in tasks], rotation=20, ha="right")
             ax.set_ylabel(ylabel)
-            ax.set_title(TARGET_LABELS[target])
+            ax.set_title(TARGET_LABELS.get(target, target))
             ax.legend(frameon=False, fontsize=8)
         fig.tight_layout()
         fig.savefig(out_dir / f"{fname}{suffix}.png", dpi=150)
+        plt.close(fig)
+
+
+def plot_cv_fold_r2(rows, out_dir, suffix=""):
+    """Per-fold concatenated-bin R² distributions for each CV task."""
+    df = pd.DataFrame(rows)
+    if df.empty or "fold_id" not in df.columns:
+        return
+    style_plots()
+    tasks = [t for t in CV_TASKS if t in set(df.task)]
+    pools = [p for p in POOLS if p in set(df.pool)]
+    plot_targets = [t for t in TARGETS if t in set(df.target)] or list(set(df.target))
+    if not tasks or not pools:
+        return
+    for target in plot_targets:
+        fig, axes = plt.subplots(1, len(tasks), figsize=(4.6 * len(tasks), 4.2), sharey=False, squeeze=False)
+        for c, task in enumerate(tasks):
+            ax = axes[0, c]
+            sub = df[(df.task == task) & (df.target == target)]
+            data, labels, colors = [], [], []
+            palette = {"mean": "#4C6A92", "attn": "#C47B3B"}
+            for pool in pools:
+                vals = sub.loc[sub.pool == pool, "r2"].to_numpy(dtype=float)
+                if vals.size:
+                    data.append(vals)
+                    labels.append(pool)
+                    colors.append(palette.get(pool, "#64748B"))
+            if not data:
+                ax.set_axis_off()
+                continue
+            try:
+                bp = ax.boxplot(
+                    data, tick_labels=labels, patch_artist=True, medianprops={"color": "#111827"}
+                )
+            except TypeError:
+                bp = ax.boxplot(
+                    data, labels=labels, patch_artist=True, medianprops={"color": "#111827"}
+                )
+            for patch, color in zip(bp["boxes"], colors):
+                patch.set_facecolor(color)
+                patch.set_alpha(0.75)
+            ax.axhline(0.0, color="0.6", lw=0.8)
+            ax.set_ylabel("concatenated-bin R²")
+            ax.set_title(f"{TASK_LABELS.get(task, task)}\n{TARGET_LABELS.get(target, target)}")
+        fig.tight_layout()
+        fig.savefig(out_dir / f"r2_cv_folds_{target}{suffix}.png", dpi=150)
         plt.close(fig)
 
 
@@ -965,7 +1221,8 @@ def plot_ablation_compare(out_dir):
         ("attn", "a1"): "attn, no anatomy",
     }
     series = [("mean", "none", full), ("mean", "a1", a1), ("attn", "none", full), ("attn", "a1", a1)]
-    tasks = [t for t in TASKS if t in set(full.task) and t in set(a1.task)]
+    task_order = list(FIXED_TASKS) + list(CV_TASKS)
+    tasks = [t for t in task_order if t in set(full.task) and t in set(a1.task)]
     if not tasks:
         return
     plot_targets = [t for t in TARGETS if t in set(full.target) or t in set(a1.target)]
@@ -978,7 +1235,7 @@ def plot_ablation_compare(out_dir):
             vals = []
             for task in tasks:
                 sub = df[(df.task == task) & (df.pool == pool) & (df.target == target)]
-                vals.append(float(sub.r2.iloc[0]) if len(sub) else np.nan)
+                vals.append(float(sub.r2.mean()) if len(sub) else np.nan)
             ax.bar(
                 x + (i - 1.5) * width,
                 vals,
@@ -988,7 +1245,7 @@ def plot_ablation_compare(out_dir):
             )
         ax.axhline(0.0, color="0.6", lw=0.8)
         ax.set_xticks(x)
-        ax.set_xticklabels([t.replace("_holdout", "") for t in tasks])
+        ax.set_xticklabels([TASK_LABELS.get(t, t.replace("_holdout", "")) for t in tasks], rotation=20, ha="right")
         ax.set_ylabel("held-out R² (concatenated bins)")
         ax.set_title(TARGET_LABELS[target])
         ax.legend(frameon=False, fontsize=8)
@@ -1027,25 +1284,39 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
         "learns a useful cross-recording representation from activity alone."
         )
     lines.append("")
-    n_mot = [s["n_motor"] for s in session_meta if s["n_motor"] >= MIN_UNITS]
+    n_mot = [s["n_motor"] for s in (session_meta or []) if s.get("n_motor", 0) >= MIN_UNITS]
+    mot_rng = f"{min(n_mot)}–{max(n_mot)}" if n_mot else "n/a"
     tname = rows[0]["target"] if rows else "behavior"
+    n_sess = len(session_meta) if session_meta else "?"
     lines.append(
-        f"RightContra: {len(session_meta)} sessions. Motor units/session "
-        f"{min(n_mot)}–{max(n_mot)}. Trials shorter than {MIN_BINS} bins after "
-        f"motor filtering are dropped; T is cropped at {MAX_BINS} bins (2.56 s). "
+        f"RightContra: {n_sess} sessions. Motor units/session {mot_rng}. "
+        f"Trials shorter than {MIN_BINS} bins after motor filtering are dropped; "
+        f"T is cropped at {MAX_BINS} bins (2.56 s). "
         f"This folder trains a 1-d head on **{TARGET_LABELS.get(tname, tname)}** only; "
         "sibling folders hold the other behaviors."
     )
     lines.append("")
     lines.append("## Holdouts")
     lines.append("")
-    for task in TASKS:
-        if task not in splits:
-            continue
-        sp = splits[task]
+    row_tasks = set(df.task) if not df.empty and "task" in df.columns else set()
+    if any(t in row_tasks for t in CV_TASKS):
         lines.append(
-            f"- **{task}**: {sp['note']}. train n={len(sp['train'])}, test n={len(sp['test'])}."
+            "Cross-validation protocol: the model is retrained from scratch on every fold. "
+            "`trial_repeat` draws several random trial holdouts (same 10%-of-sessions / 10%-of-trials "
+            f"scheme as the original split, seeds {SEED + 1000}…). "
+            "`trial_extrapolation` is one fold per session: train on the first "
+            f"{1 - EXTRAP_FRAC:.0%} of that session's ordered trials, test on the last {EXTRAP_FRAC:.0%}. "
+            "`session_loso` leaves one session out; `mouse_lomo` leaves one mouse out. "
+            "The original single-split protocol is `--protocol fixed` (default)."
         )
+        lines.append("")
+    if splits:
+        for task, sp in splits.items():
+            n_tr = len(sp["train"]) if "train" in sp else int(sp.get("n_train", 0))
+            n_te = len(sp["test"]) if "test" in sp else int(sp.get("n_test", 0))
+            extra = f" fold_id={sp['fold_id']}" if sp.get("fold_id") not in (None, "fixed") else ""
+            counts = f" train n={n_tr}, test n={n_te}." if n_tr or n_te else ""
+            lines.append(f"- **{task}**{extra}: {sp.get('note', '')}.{counts}")
     lines.append("")
     lines.append("## Model")
     lines.append("")
@@ -1072,33 +1343,62 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
     lines.append("")
     lines.append("## Results")
     lines.append("")
-    lines.append(
-        "| task | pool | target | R² concat | mean trial R² | median trial R² | "
-        "RMSE | MAE | Pearson | n bins | n trials |"
-    )
-    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
-    for r in rows:
+    summary = summarize_folds(rows)
+    is_cv = bool(summary) and any(t in set(df.task) for t in CV_TASKS)
+    if summary and is_cv:
+        lines.append("Cross-validation summary (mean ± std across folds of concatenated-bin R²).")
+        lines.append("")
         lines.append(
-            f"| {r['task']} | {r['pool']} | {r['target']} | "
-            f"{r['r2']:.3f} | {r['mean_trial_r2']:.3f} | {r['median_trial_r2']:.3f} | "
-            f"{r['rmse']:.3f} | {r['mae']:.3f} | {r['pearson']:.3f} | "
-            f"{r['n_bins']} | {r['n_trials']} |"
+            "| task | pool | target | n folds | R² mean | R² std | R² median | "
+            "mean trial R² | median trial R² |"
         )
-    lines.append("")
+        lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|")
+        for r in summary:
+            lines.append(
+                f"| {r['task']} | {r['pool']} | {r['target']} | {r['n_folds']} | "
+                f"{r['r2_mean']:.3f} | {r['r2_std']:.3f} | {r['r2_median']:.3f} | "
+                f"{r['mean_trial_r2_mean']:.3f} | {r['median_trial_r2_mean']:.3f} |"
+            )
+        lines.append("")
+        lines.append("Per-fold scores are in `scores.csv` (column `fold_id`).")
+        lines.append("")
+    else:
+        lines.append(
+            "| task | pool | target | R² concat | mean trial R² | median trial R² | "
+            "RMSE | MAE | Pearson | n bins | n trials |"
+        )
+        lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+        for r in rows:
+            lines.append(
+                f"| {r['task']} | {r['pool']} | {r['target']} | "
+                f"{r['r2']:.3f} | {r['mean_trial_r2']:.3f} | {r['median_trial_r2']:.3f} | "
+                f"{r['rmse']:.3f} | {r['mae']:.3f} | {r['pearson']:.3f} | "
+                f"{r['n_bins']} | {r['n_trials']} |"
+            )
+        lines.append("")
     lines.append("### Best pool per task × target (concatenated-bin R²)")
     lines.append("")
-    run_tasks = [t for t in TASKS if t in set(df.task)]
+    task_order = list(FIXED_TASKS) + list(CV_TASKS)
+    run_tasks = [t for t in task_order if t in set(df.task)]
     run_pools = [p for p in POOLS if p in set(df.pool)]
     for task in run_tasks:
         for target in TARGETS:
             sub = df[(df.task == task) & (df.target == target)]
             if sub.empty:
                 continue
-            best = sub.loc[sub.r2.idxmax()]
-            lines.append(
-                f"- {task} / {target}: **{best.pool}** R²={best.r2:.3f} "
-                f"(mean trial R²={best.mean_trial_r2:.3f})"
-            )
+            if is_cv:
+                means = sub.groupby("pool")["r2"].mean()
+                best_pool = means.idxmax()
+                lines.append(
+                    f"- {task} / {target}: **{best_pool}** mean R²={means[best_pool]:.3f} "
+                    f"(n={int(sub.pool.value_counts().max())} folds)"
+                )
+            else:
+                best = sub.loc[sub.r2.idxmax()]
+                lines.append(
+                    f"- {task} / {target}: **{best.pool}** R²={best.r2:.3f} "
+                    f"(mean trial R²={best.mean_trial_r2:.3f})"
+                )
     lines.append("")
     lines.append("## Training diagnostics")
     lines.append("")
@@ -1118,7 +1418,10 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
             )
         lines.append("")
     if use_anatomy:
-        lines.append("Plots: `train_curves.png`, `r2_concat.png`, `r2_trial.png`, `examples_<task>.png`.")
+        lines.append(
+            "Plots: `train_curves.png`, `r2_concat.png`, `r2_trial.png`, "
+            "`r2_trial_median.png`, `r2_cv_folds_<target>.png`, `examples_<task>.png`."
+        )
     else:
         lines.append(
             "Plots: `train_curves_a1.png`, `r2_concat_a1.png`, `r2_trial_a1.png`, "
@@ -1150,15 +1453,49 @@ def pick_examples(trials, test_idx, preds_by_pool, k=2):
     return pack
 
 
-def process(pools=POOLS, tasks=TASKS, ablation="none", make_plots=True, job_index=None, target="wheel_speed", trials=None, session_meta=None):
+def _fold_specs(trials, protocol, tasks, n_trial_repeats, fold=None):
+    protocol = protocol or "fixed"
+    if protocol == "fixed":
+        splits = make_splits(trials)
+        specs = []
+        for t in tasks:
+            if t not in splits:
+                continue
+            specs.append({"task": t, "fold": 0, "fold_id": "fixed", **splits[t]})
+        return specs
+    wanted = tuple(t for t in tasks if t in CV_TASKS) or CV_TASKS
+    specs = cv_folds(trials, n_trial_repeats=n_trial_repeats, tasks=wanted)
+    if fold is not None:
+        if len(tasks) != 1:
+            raise SystemExit("cv --job needs a single task")
+        specs = [s for s in specs if s["task"] == tasks[0] and int(s["fold"]) == int(fold)]
+        if not specs:
+            log(f"no cv fold task={tasks[0]} fold={fold}")
+    return specs
+
+
+def process(
+    pools=POOLS,
+    tasks=TASKS,
+    ablation="none",
+    make_plots=True,
+    job_index=None,
+    target="wheel_speed",
+    trials=None,
+    session_meta=None,
+    protocol="fixed",
+    fold=None,
+    n_trial_repeats=N_TRIAL_REPEATS,
+):
     warnings.filterwarnings("ignore")
     set_seed(SEED)
     use_anatomy = ablation != "a1"
     suffix = "" if use_anatomy else "_a1"
-    configure_out(target)
+    protocol = protocol or "fixed"
+    configure_out(target, protocol)
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
-    log(f"device={device_of()}  target={target} ({TARGET_LABELS[target]})")
+    log(f"device={device_of()}  target={target} ({TARGET_LABELS[target]})  protocol={protocol}")
     if use_anatomy:
         log("Formulation A (full anatomical metadata)")
     else:
@@ -1166,44 +1503,69 @@ def process(pools=POOLS, tasks=TASKS, ablation="none", make_plots=True, job_inde
     if trials is None or session_meta is None:
         trials, session_meta = load_corpus()
     set_target(trials, target)
-    splits = make_splits(trials)
+    specs = _fold_specs(trials, protocol, tuple(tasks), n_trial_repeats, fold=fold)
+    compact = {}
+    for spec in specs:
+        compact.setdefault(spec["task"], []).append(spec)
     save_json(
         OUT / "splits.json",
         {
             t: {
-                "note": splits[t]["note"],
-                "n_train": int(len(splits[t]["train"])),
-                "n_test": int(len(splits[t]["test"])),
-                "hold_eids": splits[t]["hold_eids"],
+                "n_folds": len(lst),
+                "note": (
+                    f"{len(lst)} folds. first: {lst[0]['note']}"
+                    if len(lst) > 1
+                    else lst[0]["note"]
+                ),
+                "fold_ids": [s["fold_id"] for s in lst],
             }
-            for t in TASKS
+            for t, lst in compact.items()
         },
     )
+    report_splits = {
+        t: {
+            "note": (
+                f"{len(lst)} folds. {lst[0]['note']}"
+                if len(lst) > 1
+                else lst[0]["note"]
+            ),
+            "n_train": int(len(lst[0]["train"])),
+            "n_test": int(len(lst[0]["test"])),
+            "fold_id": None if len(lst) > 1 else lst[0]["fold_id"],
+        }
+        for t, lst in compact.items()
+    }
 
     rows = []
-    histories = {t: {} for t in tasks}
+    histories = {t: {} for t in compact}
     example_bank = {}
     scores_csv = OUT / f"scores{suffix}.csv"
     n_job = 0
-    for task in tasks:
-        log(f"==== {task} ====")
-        train_full = usable_idx(trials, splits[task]["train"])
-        test_idx = usable_idx(trials, splits[task]["test"])
+    for spec in specs:
+        task = spec["task"]
+        fold_id = spec["fold_id"]
+        fold_i = int(spec["fold"])
+        log(f"==== {task}  fold={fold_i} {fold_id} ====")
+        train_full = usable_idx(trials, spec["train"])
+        test_idx = usable_idx(trials, spec["test"])
         if len(train_full) < 8 or len(test_idx) < 1:
-            log(f"  skip {task}: too few usable trials for {target}")
+            log(f"  skip {task}/{fold_id}: too few usable trials for {target}")
             continue
-        tr_idx, va_idx = train_val_split(train_full)
+        tr_idx, va_idx = train_val_split(train_full, seed=SEED + 17 * fold_i)
         tr_idx, va_idx = usable_idx(trials, tr_idx), usable_idx(trials, va_idx)
+        if len(tr_idx) < 4:
+            log(f"  skip {task}/{fold_id}: empty train after val split")
+            continue
         y_mean, y_std = y_scaler_from(trials, tr_idx)
         stats = fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
         log(
             f"  areas={stats['n_areas']}  train_eids={stats['n_train_eids']}  "
-            f"y_mean={y_mean} y_std={y_std}"
+            f"y_mean={y_mean} y_std={y_std}  n_tr={len(tr_idx)} n_te={len(test_idx)}"
         )
         preds_by_pool = {}
         for pool in pools:
-            log(f"-- {task} / {pool}" + ("" if use_anatomy else " / A1"))
-            tag = f"{target}_{task}_{model_tag(pool, use_anatomy)}"
+            log(f"-- {task} / {fold_id} / {pool}" + ("" if use_anatomy else " / A1"))
+            tag = f"{target}_{task}_{fold_id}_{model_tag(pool, use_anatomy)}"
             idx = job_index if job_index is not None else n_job
             jdir = slurm_utils.begin_job(
                 OUT,
@@ -1213,27 +1575,42 @@ def process(pools=POOLS, tasks=TASKS, ablation="none", make_plots=True, job_inde
                 pool=pool,
                 ablation="none" if use_anatomy else "a1",
                 target=target,
+                protocol=protocol,
+                fold=fold_i,
+                fold_id=fold_id,
             )
             blob, hist = train_one(
-                pool, trials, tr_idx, va_idx, y_mean, y_std, stats, task, use_anatomy=use_anatomy
+                pool,
+                trials,
+                tr_idx,
+                va_idx,
+                y_mean,
+                y_std,
+                stats,
+                task,
+                use_anatomy=use_anatomy,
+                fold_id=None if protocol == "fixed" else fold_id,
             )
-            histories[task][pool] = hist
+            histories.setdefault(task, {})[pool] = hist
             recs = predict(blob, trials, test_idx, blob.get("stats", stats))
             preds_by_pool[pool] = recs
             scores = score_recs(recs, target=target)
             these = []
-            for target, sc in scores.items():
+            for tname, sc in scores.items():
                 row = {
+                    "protocol": protocol,
                     "task": task,
                     "pool": pool,
-                    "target": target,
+                    "target": tname,
                     "ablation": "none" if use_anatomy else "a1",
+                    "fold": fold_i,
+                    "fold_id": fold_id,
                     **sc,
                 }
                 rows.append(row)
                 these.append(row)
                 log(
-                    f"   {target:12s} R²={sc['r2']:+.3f}  trialR²={sc['mean_trial_r2']:+.3f}  "
+                    f"   {tname:12s} R²={sc['r2']:+.3f}  trialR²={sc['mean_trial_r2']:+.3f}  "
                     f"RMSE={sc['rmse']:.3f}  r={sc['pearson']:.3f}"
                 )
             pd.DataFrame(these).to_csv(jdir / "scores.csv", index=False)
@@ -1241,16 +1618,22 @@ def process(pools=POOLS, tasks=TASKS, ablation="none", make_plots=True, job_inde
             n_job += 1
             if make_plots:
                 pd.DataFrame(rows).to_csv(scores_csv, index=False)
-        if make_plots:
+        if make_plots and protocol == "fixed":
             example_bank[task] = pick_examples(trials, test_idx, preds_by_pool)
 
     if make_plots:
         title = "Formulation A training" if use_anatomy else "Control A1 training (no anatomical metadata)"
-        plot_training(histories, OUT, fname=f"train_curves{suffix}.png", title=title)
+        if protocol == "fixed":
+            plot_training(histories, OUT, fname=f"train_curves{suffix}.png", title=title)
+            plot_examples(example_bank, OUT, suffix=suffix)
         plot_r2_bars(rows, OUT, suffix=suffix)
-        plot_examples(example_bank, OUT, suffix=suffix)
+        if protocol == "cv":
+            plot_cv_fold_r2(rows, OUT, suffix=suffix)
+            summary = summarize_folds(rows)
+            pd.DataFrame(summary).to_csv(OUT / f"scores_summary{suffix}.csv", index=False)
+            save_json(OUT / f"scores_summary{suffix}.json", summary)
         write_report(
-            splits,
+            report_splits,
             rows,
             histories,
             session_meta,
@@ -1269,10 +1652,60 @@ def process(pools=POOLS, tasks=TASKS, ablation="none", make_plots=True, job_inde
     return rows
 
 
+def _aggregate_dir(d):
+    jobs = d / "jobs"
+    if not jobs.exists():
+        return
+    paths = sorted(jobs.glob("*/scores.csv"))
+    if not paths:
+        log(f"no per-job scores under {jobs}")
+        return
+    df = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
+    is_cv = "task" in df.columns and df["task"].isin(list(CV_TASKS)).any()
+    wrote_both = True
+    for ablation, dest in (("none", "scores.csv"), ("a1", "scores_a1.csv")):
+        if "ablation" in df.columns:
+            sub = df[df["ablation"] == ablation].copy()
+        else:
+            sub = df.copy() if ablation == "none" else pd.DataFrame()
+        if sub.empty:
+            wrote_both = False if ablation == "a1" else wrote_both
+            continue
+        sub.to_csv(d / dest, index=False)
+        log(f"wrote {d / dest}  ({len(sub)} rows)")
+        rows = sub.to_dict(orient="records")
+        suffix = "" if ablation == "none" else "_a1"
+        plot_r2_bars(rows, d, suffix=suffix)
+        splits = {}
+        for task, grp in sub.groupby("task"):
+            n_folds = int(grp["fold_id"].nunique()) if "fold_id" in grp.columns else 1
+            splits[task] = {
+                "note": f"{n_folds} fold(s) aggregated from jobs",
+                "n_train": 0,
+                "n_test": 0,
+            }
+        if is_cv:
+            plot_cv_fold_r2(rows, d, suffix=suffix)
+            summary = summarize_folds(rows)
+            pd.DataFrame(summary).to_csv(d / f"scores_summary{suffix}.csv", index=False)
+            save_json(d / f"scores_summary{suffix}.json", summary)
+            log("cv summary " + str(d / f"scores_summary{suffix}.csv"))
+        write_report(
+            splits,
+            rows,
+            {},
+            [],
+            d / f"REPORT{suffix}.md",
+            use_anatomy=ablation == "none",
+        )
+    if wrote_both and (d / "scores.csv").exists() and (d / "scores_a1.csv").exists():
+        plot_ablation_compare(d)
+
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--pools", nargs="*", default=list(POOLS))
-    p.add_argument("--tasks", nargs="*", default=list(TASKS))
+    p.add_argument("--pools", nargs="*", default=None)
+    p.add_argument("--tasks", nargs="*", default=None)
     p.add_argument(
         "--ablation",
         choices=["none", "a1"],
@@ -1280,32 +1713,59 @@ if __name__ == "__main__":
         help="none: full Formulation A. a1: Control A1, drop CCF xyz and region labels.",
     )
     p.add_argument("--targets", nargs="*", default=list(TARGETS), choices=list(TARGETS))
+    p.add_argument(
+        "--protocol",
+        choices=list(PROTOCOLS),
+        default="fixed",
+        help="fixed: original single holdouts (default). cv: LOSO/LOMO/trial repeats/"
+        "trial-extrapolation. all: run fixed then cv.",
+    )
+    p.add_argument(
+        "--trial-repeats",
+        type=int,
+        default=N_TRIAL_REPEATS,
+        help="Number of random trial-holdout repeats in --protocol cv (default 5).",
+    )
     slurm_utils.add_common_args(p)
     args = p.parse_args()
+    protocol = args.protocol
+    default_tasks = list(FIXED_TASKS) if protocol == "fixed" else list(CV_TASKS)
+    tasks = tuple(args.tasks) if args.tasks else tuple(default_tasks)
+    pools = tuple(args.pools) if args.pools else POOLS
     if args.list_jobs:
-        slurm_utils.print_jobs(job_grid())
+        slurm_utils.print_jobs(job_grid(protocol=protocol, n_trial_repeats=args.trial_repeats))
         raise SystemExit(0)
     slurm_utils.set_device(args.device)
     if args.aggregate:
-        for beh in args.targets:
-            d = MODEL_ROOT / beh
-            if (d / "jobs").exists():
-                slurm_utils.aggregate_scores(d)
+        protocols = ("fixed", "cv") if protocol == "all" else (protocol,)
+        for proto in protocols:
+            for beh in args.targets:
+                d = MODEL_ROOT / beh if proto == "fixed" else MODEL_ROOT / beh / "cv"
+                _aggregate_dir(d)
         raise SystemExit(0)
     job = slurm_utils.resolve_job_index(args.job)
     if job is None:
         trials, session_meta = load_corpus()
-        for beh in args.targets:
-            process(
-                pools=tuple(args.pools),
-                tasks=tuple(args.tasks),
-                ablation=args.ablation,
-                target=beh,
-                trials=trials,
-                session_meta=session_meta,
-            )
+        run_protocols = ("fixed", "cv") if protocol == "all" else (protocol,)
+        for proto in run_protocols:
+            proto_tasks = tasks
+            if protocol == "all":
+                proto_tasks = tuple(FIXED_TASKS) if proto == "fixed" else tuple(CV_TASKS)
+            for beh in args.targets:
+                process(
+                    pools=pools,
+                    tasks=proto_tasks,
+                    ablation=args.ablation,
+                    target=beh,
+                    trials=trials,
+                    session_meta=session_meta,
+                    protocol=proto,
+                    n_trial_repeats=args.trial_repeats,
+                )
     else:
-        cfg = slurm_utils.pick_config(job_grid(), job)
+        cfg = slurm_utils.pick_config(
+            job_grid(protocol=protocol, n_trial_repeats=args.trial_repeats), job
+        )
         process(
             pools=(cfg["pool"],),
             tasks=(cfg["task"],),
@@ -1313,4 +1773,7 @@ if __name__ == "__main__":
             target=cfg["target"],
             make_plots=False,
             job_index=job,
+            protocol=cfg.get("protocol", protocol),
+            fold=cfg.get("fold"),
+            n_trial_repeats=args.trial_repeats,
         )
