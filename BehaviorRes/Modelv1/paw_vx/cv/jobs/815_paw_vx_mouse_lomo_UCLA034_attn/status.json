@@ -1,0 +1,18 @@
+{
+  "job": 815,
+  "tag": "paw_vx_mouse_lomo_UCLA034_attn",
+  "slurm_job_id": "374600",
+  "slurm_array_task_id": "815",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "paw_vx",
+  "protocol": "cv",
+  "fold": 22,
+  "fold_id": "UCLA034",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 40,
+  "device": "cuda",
+  "updated_at": "2026-09-24T05:02:24.519234+00:00"
+}

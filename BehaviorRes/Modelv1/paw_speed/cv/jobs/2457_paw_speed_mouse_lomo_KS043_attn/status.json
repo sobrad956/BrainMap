@@ -1,0 +1,18 @@
+{
+  "job": 2457,
+  "tag": "paw_speed_mouse_lomo_KS043_attn",
+  "slurm_job_id": "376502",
+  "slurm_array_task_id": "455",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 9,
+  "fold_id": "KS043",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 34,
+  "device": "cuda",
+  "updated_at": "2026-09-24T09:17:37.358702+00:00"
+}

@@ -1,0 +1,18 @@
+{
+  "job": 685,
+  "tag": "paw_vx_session_loso_4aa1d525_attn",
+  "slurm_job_id": "374235",
+  "slurm_array_task_id": "685",
+  "task": "session_loso",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "paw_vx",
+  "protocol": "cv",
+  "fold": 9,
+  "fold_id": "4aa1d525",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 26,
+  "device": "cuda",
+  "updated_at": "2026-09-24T04:08:09.545417+00:00"
+}

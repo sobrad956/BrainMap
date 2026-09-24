@@ -1,0 +1,18 @@
+{
+  "job": 283,
+  "tag": "wheel_speed_trial_repeat_rep2_attn_a1",
+  "slurm_job_id": "373602",
+  "slurm_array_task_id": "283",
+  "task": "trial_repeat",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 2,
+  "fold_id": "rep2",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 12,
+  "device": "cuda",
+  "updated_at": "2026-09-24T02:20:07.781107+00:00"
+}

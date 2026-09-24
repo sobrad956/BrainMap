@@ -1,0 +1,18 @@
+{
+  "job": 1955,
+  "tag": "paw_vz_trial_repeat_rep4_attn_a1",
+  "slurm_job_id": "375863",
+  "slurm_array_task_id": "954",
+  "task": "trial_repeat",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_vz",
+  "protocol": "cv",
+  "fold": 4,
+  "fold_id": "rep4",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 14,
+  "device": "cuda",
+  "updated_at": "2026-09-24T07:45:38.643299+00:00"
+}

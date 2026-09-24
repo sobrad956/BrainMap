@@ -1,0 +1,18 @@
+{
+  "job": 2330,
+  "tag": "paw_speed_trial_extrapolation_fb70ebf7_mean",
+  "slurm_job_id": "376206",
+  "slurm_array_task_id": "328",
+  "task": "trial_extrapolation",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 48,
+  "fold_id": "fb70ebf7",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 9,
+  "device": "cuda",
+  "updated_at": "2026-09-24T08:20:08.455108+00:00"
+}

@@ -1,0 +1,18 @@
+{
+  "job": 1945,
+  "tag": "paw_vz_mouse_lomo_ZM_2245_attn",
+  "slurm_job_id": "375842",
+  "slurm_array_task_id": "944",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "paw_vz",
+  "protocol": "cv",
+  "fold": 31,
+  "fold_id": "ZM_2245",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 7,
+  "device": "cuda",
+  "updated_at": "2026-09-24T07:43:06.140855+00:00"
+}

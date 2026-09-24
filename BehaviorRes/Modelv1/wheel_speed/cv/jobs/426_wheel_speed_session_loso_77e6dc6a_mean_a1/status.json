@@ -1,0 +1,18 @@
+{
+  "job": 426,
+  "tag": "wheel_speed_session_loso_77e6dc6a_mean_a1",
+  "slurm_job_id": "373787",
+  "slurm_array_task_id": "426",
+  "task": "session_loso",
+  "pool": "mean",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 19,
+  "fold_id": "77e6dc6a",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 25,
+  "device": "cuda",
+  "updated_at": "2026-09-24T02:47:15.354450+00:00"
+}

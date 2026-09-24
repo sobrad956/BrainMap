@@ -1,0 +1,18 @@
+{
+  "job": 348,
+  "tag": "wheel_speed_trial_extrapolation_aa3432cd_mean_a1",
+  "slurm_job_id": "373680",
+  "slurm_array_task_id": "348",
+  "task": "trial_extrapolation",
+  "pool": "mean",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 30,
+  "fold_id": "aa3432cd",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 27,
+  "device": "cuda",
+  "updated_at": "2026-09-24T02:25:21.338140+00:00"
+}

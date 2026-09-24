@@ -1,0 +1,18 @@
+{
+  "job": 246,
+  "tag": "wheel_speed_mouse_lomo_NYU-48_mean",
+  "slurm_job_id": "372214",
+  "slurm_array_task_id": "246",
+  "task": "mouse_lomo",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 16,
+  "fold_id": "NYU-48",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 40,
+  "device": "cuda",
+  "updated_at": "2026-09-24T02:00:38.121283+00:00"
+}

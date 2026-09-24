@@ -1,0 +1,18 @@
+{
+  "job": 79,
+  "tag": "wheel_speed_trial_extrapolation_cb2ad999_attn",
+  "slurm_job_id": "369364",
+  "slurm_array_task_id": "79",
+  "task": "trial_extrapolation",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 34,
+  "fold_id": "cb2ad999",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 7,
+  "device": "cuda",
+  "updated_at": "2026-09-23T23:49:56.351127+00:00"
+}

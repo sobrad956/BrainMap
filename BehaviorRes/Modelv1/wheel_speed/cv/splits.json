@@ -1,0 +1,9 @@
+{
+  "mouse_lomo": {
+    "n_folds": 1,
+    "note": "left-out mouse ZM_2245 (1 session(s))",
+    "fold_ids": [
+      "ZM_2245"
+    ]
+  }
+}

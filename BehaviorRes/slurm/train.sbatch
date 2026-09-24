@@ -22,6 +22,9 @@ if [[ "$SCRIPT" == "Modelv1.py" ]]; then
   EXTRA+=(--protocol "$PROTOCOL")
 fi
 
-echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  job=${SLURM_ARRAY_TASK_ID}  device=$DEVICE  protocol=$PROTOCOL"
+OFFSET="${BEH_ARRAY_OFFSET:-0}"
+GLOBAL_JOB_ID=$((SLURM_ARRAY_TASK_ID + OFFSET))
+
+echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  local_job=${SLURM_ARRAY_TASK_ID}  global_job=${GLOBAL_JOB_ID}  offset=${OFFSET}  device=$DEVICE  protocol=$PROTOCOL"
 python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())" || true
-python "$SCRIPT" --job "${SLURM_ARRAY_TASK_ID}" --device "$DEVICE" "${EXTRA[@]}"
+python "$SCRIPT" --job "${GLOBAL_JOB_ID}" --device "$DEVICE" "${EXTRA[@]}"

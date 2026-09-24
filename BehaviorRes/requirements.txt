@@ -36,3 +36,4 @@ ONE-api==3.4.1
 ibllib==3.4.3
 iblatlas==0.10.0
 iblutil==1.20.0
+torch==2.7.0

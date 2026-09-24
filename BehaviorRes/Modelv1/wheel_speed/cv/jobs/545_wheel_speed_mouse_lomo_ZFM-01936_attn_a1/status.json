@@ -1,0 +1,18 @@
+{
+  "job": 545,
+  "tag": "wheel_speed_mouse_lomo_ZFM-01936_attn_a1",
+  "slurm_job_id": "374032",
+  "slurm_array_task_id": "545",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 26,
+  "fold_id": "ZFM-01936",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 15,
+  "device": "cuda",
+  "updated_at": "2026-09-24T03:33:33.584137+00:00"
+}

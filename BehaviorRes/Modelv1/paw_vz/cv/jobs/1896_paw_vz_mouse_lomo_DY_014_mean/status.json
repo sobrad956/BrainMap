@@ -1,0 +1,18 @@
+{
+  "job": 1896,
+  "tag": "paw_vz_mouse_lomo_DY_014_mean",
+  "slurm_job_id": "375717",
+  "slurm_array_task_id": "895",
+  "task": "mouse_lomo",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "paw_vz",
+  "protocol": "cv",
+  "fold": 7,
+  "fold_id": "DY_014",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 12,
+  "device": "cuda",
+  "updated_at": "2026-09-24T07:23:59.219543+00:00"
+}

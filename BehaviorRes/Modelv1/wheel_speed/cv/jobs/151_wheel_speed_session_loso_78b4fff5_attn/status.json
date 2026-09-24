@@ -1,0 +1,18 @@
+{
+  "job": 151,
+  "tag": "wheel_speed_session_loso_78b4fff5_attn",
+  "slurm_job_id": "369563",
+  "slurm_array_task_id": "151",
+  "task": "session_loso",
+  "pool": "attn",
+  "ablation": "none",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 20,
+  "fold_id": "78b4fff5",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 39,
+  "device": "cuda",
+  "updated_at": "2026-09-24T00:42:42.831239+00:00"
+}

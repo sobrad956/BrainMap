@@ -1,0 +1,2 @@
+protocol,task,pool,target,ablation,fold,fold_id,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials
+cv,trial_extrapolation,mean,paw_speed,a1,27,9468fa93,0.31255562216816346,402.6181945800781,282.9893493652344,0.6044854328633664,231,0.24339193174938084,0.45190569526019564,11

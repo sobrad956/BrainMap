@@ -1,0 +1,18 @@
+{
+  "job": 220,
+  "tag": "wheel_speed_mouse_lomo_CSHL060_mean",
+  "slurm_job_id": "371000",
+  "slurm_array_task_id": "220",
+  "task": "mouse_lomo",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 3,
+  "fold_id": "CSHL060",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 22,
+  "device": "cuda",
+  "updated_at": "2026-09-24T01:38:01.847538+00:00"
+}
