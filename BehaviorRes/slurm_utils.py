@@ -20,6 +20,32 @@ _STATUS_DIR = None
 _META = {}
 
 
+def _cuda_usable():
+    """True when this GPU can run a tiny GRU.
+
+    Newer iLab cards (Blackwell etc.) show up in nvidia-smi but the installed
+    Torch/cuDNN build has no RNN kernel image. GRU.to('cuda') then dies in
+    flatten_parameters. Disabling cuDNN uses generic CUDA kernels; if those
+    also fail, the caller should fall back to CPU.
+    """
+    import torch
+
+    if not torch.cuda.is_available():
+        return False
+    torch.backends.cudnn.enabled = False
+    torch.backends.cudnn.benchmark = False
+    try:
+        x = torch.zeros(1, device="cuda")
+        rnn = torch.nn.GRU(8, 8, batch_first=True).to("cuda")
+        y, _ = rnn(torch.zeros(2, 4, 8, device="cuda"))
+        torch.cuda.synchronize()
+        del x, rnn, y
+        return True
+    except RuntimeError as exc:
+        print(f"[slurm_utils] CUDA not usable for GRU ({exc}); will use CPU", flush=True)
+        return False
+
+
 def resolve_device(name="auto"):
     import torch
 
@@ -29,6 +55,9 @@ def resolve_device(name="auto"):
     if name == "cuda":
         if not torch.cuda.is_available():
             raise SystemExit("CUDA requested but torch.cuda.is_available() is False")
+        if not _cuda_usable():
+            print("[slurm_utils] --device cuda requested but GRU cannot run; using CPU", flush=True)
+            return torch.device("cpu")
         return torch.device("cuda")
     if name == "mps":
         if not getattr(torch.backends, "mps", None) or not torch.backends.mps.is_available():
@@ -36,7 +65,7 @@ def resolve_device(name="auto"):
         return torch.device("mps")
     if name != "auto":
         raise SystemExit(f"unknown device {name!r}; use auto, cpu, cuda, or mps")
-    if torch.cuda.is_available():
+    if _cuda_usable():
         return torch.device("cuda")
     if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
         return torch.device("mps")
