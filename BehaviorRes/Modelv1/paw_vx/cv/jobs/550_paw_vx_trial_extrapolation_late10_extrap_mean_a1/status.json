@@ -1,0 +1,18 @@
+{
+  "job": 550,
+  "tag": "paw_vx_trial_extrapolation_late10_extrap_mean_a1",
+  "slurm_job_id": "402968",
+  "slurm_array_task_id": "550",
+  "task": "trial_extrapolation",
+  "pool": "mean",
+  "ablation": "a1",
+  "target": "paw_vx",
+  "protocol": "cv",
+  "fold": 0,
+  "fold_id": "late10_extrap",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 10,
+  "device": "cuda",
+  "updated_at": "2026-09-30T21:14:50.371089+00:00"
+}

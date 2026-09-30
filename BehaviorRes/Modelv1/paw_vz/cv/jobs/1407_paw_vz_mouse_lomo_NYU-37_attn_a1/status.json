@@ -1,0 +1,18 @@
+{
+  "job": 1407,
+  "tag": "paw_vz_mouse_lomo_NYU-37_attn_a1",
+  "slurm_job_id": "403122",
+  "slurm_array_task_id": "406",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_vz",
+  "protocol": "cv",
+  "fold": 15,
+  "fold_id": "NYU-37",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 33,
+  "device": "cuda",
+  "updated_at": "2026-09-30T21:17:43.442387+00:00"
+}

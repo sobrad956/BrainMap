@@ -1,21 +1,21 @@
 # Modelv1 — Control A1 (set encoder without anatomical metadata)
 
-Built 2026-09-24T13:42:49.414634+00:00
+Built 2026-09-30T21:46:10.393524+00:00
 
 ## What this is
 
 Control A1 from the neural-decoding framework (PDF §6.12.1): the same set encoder, pooling, causal GRU, and 1-d behavior head as Formulation A, but the per-unit encoder is φ_θ([log1p count, session mean log-rate]). CCF xyz and Allen-region embeddings are removed. This tests whether the direct set model learns a useful cross-recording representation from activity alone.
 
-RightContra: ? sessions. Motor units/session n/a. Trials shorter than 13 bins after motor filtering are dropped; T is cropped at 128 bins (2.56 s). This folder trains a 1-d head on **paw vx** only; sibling folders hold the other behaviors.
+RightContra: ? sessions. Motor units/session n/a. Trials shorter than 13 bins after motor filtering are dropped; T is cropped at 128 bins (2.56 s). Paw vx/vy/vz/speed are the right paw that turns the wheel (`used_paw` == `wheel_paws`). This folder trains a 1-d head on **wheel-paw vx** only; sibling folders hold the other behaviors.
 
 ## Holdouts
 
-Cross-validation protocol: the model is retrained from scratch on every fold. `trial_repeat` draws several random trial holdouts (same 10%-of-sessions / 10%-of-trials scheme as the original split, seeds 1000…). `trial_extrapolation` is one fold per session: train on the first 90% of that session's ordered trials, test on the last 10%. `session_loso` leaves one session out; `mouse_lomo` leaves one mouse out. The original single-split protocol is `--protocol fixed` (default).
+Cross-validation protocol: the model is retrained from scratch on every fold. `trial_repeat` uses every trial: for each trial, 10% of finite time bins are held out at random for interpolation (seeds 1000…); the leftover 90% of bins are training targets. `trial_extrapolation` is one fold on the same trials: the first 90% of each trial's finite bins train, the last 10% are held out so the model must extrapolate those late bins. `session_loso` leaves one session out; `mouse_lomo` leaves one mouse out. The original single-split protocol is `--protocol fixed` (default).
 
 - **mouse_lomo**: 32 fold(s) aggregated from jobs.
 - **session_loso**: 52 fold(s) aggregated from jobs.
-- **trial_extrapolation**: 50 fold(s) aggregated from jobs.
-- **trial_repeat**: 5 fold(s) aggregated from jobs.
+- **trial_extrapolation**: 51 fold(s) aggregated from jobs.
+- **trial_repeat**: 10 fold(s) aggregated from jobs.
 
 ## Model
 
@@ -29,23 +29,23 @@ Cross-validation summary (mean ± std across folds of concatenated-bin R²).
 
 | task | pool | target | n folds | R² mean | R² std | R² median | mean trial R² | median trial R² |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| mouse_lomo | attn | paw_vx | 32 | -0.029 | 0.039 | -0.022 | -1.632 | -0.185 |
-| mouse_lomo | mean | paw_vx | 32 | -0.022 | 0.040 | -0.012 | -1.450 | -0.167 |
-| session_loso | attn | paw_vx | 52 | -0.032 | 0.047 | -0.017 | -2.022 | -0.200 |
-| session_loso | mean | paw_vx | 52 | -0.028 | 0.051 | -0.014 | -1.914 | -0.199 |
-| trial_extrapolation | attn | paw_vx | 50 | -0.188 | 0.800 | -0.023 | -0.788 | -0.189 |
-| trial_extrapolation | mean | paw_vx | 50 | -0.156 | 0.633 | -0.021 | -0.815 | -0.177 |
-| trial_repeat | attn | paw_vx | 5 | 0.023 | 0.016 | 0.022 | -0.530 | -0.105 |
-| trial_repeat | mean | paw_vx | 5 | 0.033 | 0.032 | 0.032 | -0.973 | -0.086 |
+| mouse_lomo | attn | paw_vx | 64 | -0.032 | 0.066 | -0.016 | -1.612 | -0.171 |
+| mouse_lomo | mean | paw_vx | 64 | -0.025 | 0.067 | -0.010 | -1.442 | -0.160 |
+| session_loso | attn | paw_vx | 104 | -0.034 | 0.066 | -0.017 | -1.928 | -0.188 |
+| session_loso | mean | paw_vx | 104 | -0.030 | 0.063 | -0.017 | -1.846 | -0.190 |
+| trial_extrapolation | attn | paw_vx | 51 | -0.184 | 0.792 | -0.023 | -2054.076 | -0.570 |
+| trial_extrapolation | mean | paw_vx | 51 | -0.153 | 0.627 | -0.020 | -2019.518 | -0.572 |
+| trial_repeat | attn | paw_vx | 10 | 0.026 | 0.012 | 0.028 | -1663960.758 | -0.742 |
+| trial_repeat | mean | paw_vx | 10 | 0.026 | 0.023 | 0.023 | -1988688.196 | -0.721 |
 
 Per-fold scores are in `scores.csv` (column `fold_id`).
 
 ### Best pool per task × target (concatenated-bin R²)
 
-- trial_repeat / paw_vx: **mean** mean R²=0.033 (n=5 folds)
-- trial_extrapolation / paw_vx: **mean** mean R²=-0.156 (n=50 folds)
-- session_loso / paw_vx: **mean** mean R²=-0.028 (n=52 folds)
-- mouse_lomo / paw_vx: **mean** mean R²=-0.022 (n=32 folds)
+- trial_repeat / paw_vx: **attn** mean R²=0.026 (n=10 folds)
+- trial_extrapolation / paw_vx: **mean** mean R²=-0.153 (n=51 folds)
+- session_loso / paw_vx: **mean** mean R²=-0.030 (n=104 folds)
+- mouse_lomo / paw_vx: **mean** mean R²=-0.025 (n=64 folds)
 
 ## Training diagnostics
 

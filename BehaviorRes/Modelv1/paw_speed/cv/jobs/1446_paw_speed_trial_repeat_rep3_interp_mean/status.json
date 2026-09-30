@@ -1,0 +1,18 @@
+{
+  "job": 1446,
+  "tag": "paw_speed_trial_repeat_rep3_interp_mean",
+  "slurm_job_id": "403261",
+  "slurm_array_task_id": "445",
+  "task": "trial_repeat",
+  "pool": "mean",
+  "ablation": "none",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 3,
+  "fold_id": "rep3_interp",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 26,
+  "device": "cuda",
+  "updated_at": "2026-09-30T21:24:36.037762+00:00"
+}
