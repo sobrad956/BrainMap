@@ -9,8 +9,9 @@ near-camera paw with more image-plane motion.
 
 Protocols:
   fixed  original single splits (trial / session / mouse holdout).
-  cv     leave-one-mouse-out, leave-one-session-out, repeated random
-         trial splits, and trial-extrapolation (last 10% of each session).
+  cv     leave-one-mouse-out, leave-one-session-out, within-trial bin
+         interpolation (trial repeats), and within-trial bin
+         extrapolation (last 10% of every trial).
 
 Loss is trial-balanced MSE on a z-scored 1-d behavior (PDF eq. 7).
 """
@@ -18,6 +19,7 @@ Loss is trial-balanced MSE on a z-scored 1-d behavior (PDF eq. 7).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import pickle
@@ -75,7 +77,7 @@ TASK_LABELS = {
     "mouse_lomo": "mouse LOMO",
 }
 N_TRIAL_REPEATS = 5
-EXTRAP_FRAC = 0.10
+EXTRAP_FRAC = 0.10  # within-trial holdout: last 10% (extrap) or random 10% (interp)
 MIN_EXTRAP_TRIALS = 10
 PROTOCOLS = ("fixed", "cv", "all")
 TARGETS = ("wheel_speed", "paw_vx", "paw_vy", "paw_vz", "paw_speed")
@@ -205,8 +207,16 @@ def set_target(trials, name):
     return trials
 
 
-def usable_idx(trials, idx, min_bins=MIN_BINS):
-    keep = [int(i) for i in np.asarray(idx) if int(trials[int(i)]["y_valid"].sum()) >= min_bins]
+def usable_idx(trials, idx, min_bins=MIN_BINS, mask_key=None):
+    keep = []
+    for i in np.asarray(idx):
+        t = trials[int(i)]
+        valid = np.asarray(t["y_valid"]).reshape(-1)
+        if mask_key and t.get(mask_key) is not None:
+            extra = np.asarray(t[mask_key], dtype=bool).reshape(-1)
+            valid = valid & extra[: valid.size]
+        if int(valid.sum()) >= min_bins:
+            keep.append(int(i))
     return np.asarray(keep, dtype=int)
 
 
@@ -397,28 +407,80 @@ def _session_order(df, eid):
     return sub["i"].to_numpy(dtype=int)
 
 
-def _random_trial_split(df, seed):
-    rng = np.random.default_rng(seed)
-    eids = np.array(sorted(df.eid.unique()))
-    n_hold_sess = max(1, int(round(0.10 * len(eids))))
-    hold_eids = set(rng.choice(eids, size=n_hold_sess, replace=False).tolist())
-    trial_test = []
-    for eid in sorted(hold_eids):
-        idx = df.loc[df.eid == eid, "i"].to_numpy()
-        n_te = max(1, int(round(0.10 * len(idx))))
-        pick = rng.choice(idx, size=n_te, replace=False)
-        trial_test.extend(pick.tolist())
-    trial_test = np.array(sorted(set(trial_test)), dtype=int)
-    trial_train = np.array(sorted(set(df.i) - set(trial_test)), dtype=int)
-    return {
-        "train": trial_train,
-        "test": trial_test,
-        "note": (
-            f"{n_hold_sess}/{len(eids)} sessions contribute held-out trials "
-            f"(seed={seed}; {', '.join(e[:8] for e in sorted(hold_eids))})"
-        ),
-        "hold_eids": sorted(hold_eids),
-    }
+def _trial_hash_seed(t, base):
+    key = f"{t.get('eid')}|{t.get('trial_index')}"
+    h = int(hashlib.md5(str(key).encode()).hexdigest()[:8], 16)
+    return int(base) ^ (h & 0x7FFFFFFF)
+
+
+def _finite_bin_split(valid, mode, seed=None):
+    """Split finite bins of one trial into train (90%) and test (10%)."""
+    valid = np.asarray(valid, dtype=bool).reshape(-1)
+    idx = np.flatnonzero(valid)
+    n = int(idx.size)
+    train_m = np.zeros(valid.shape, dtype=bool)
+    test_m = np.zeros(valid.shape, dtype=bool)
+    if n < 2:
+        return train_m, test_m
+    n_te = max(1, int(round(EXTRAP_FRAC * n)))
+    n_te = min(n_te, n - 1)
+    if mode == "extrap":
+        te = idx[-n_te:]
+        tr = idx[:-n_te]
+    else:
+        rng = np.random.default_rng(seed)
+        perm = rng.permutation(n)
+        te = idx[perm[:n_te]]
+        tr = idx[perm[n_te:]]
+    train_m[tr] = True
+    test_m[te] = True
+    return train_m, test_m
+
+
+def clear_bin_masks(trials):
+    for t in trials:
+        t.pop("train_bins", None)
+        t.pop("test_bins", None)
+
+
+def apply_bin_masks(trials, spec):
+    """Mark per-trial train_bins / test_bins for within-trial holdouts."""
+    mode = spec.get("bin_mode")
+    if not mode:
+        return
+    seed = int(spec.get("bin_seed", SEED))
+    for t in trials:
+        valid = t.get("y_valid")
+        if valid is None:
+            y = np.asarray(t["y"])
+            valid = np.isfinite(y).reshape(y.shape[0], -1).all(axis=1)
+        if mode == "extrap":
+            tr, te = _finite_bin_split(valid, "extrap")
+        else:
+            tr, te = _finite_bin_split(valid, "interp", seed=_trial_hash_seed(t, seed))
+        t["train_bins"] = tr
+        t["test_bins"] = te
+
+
+def restrict_recs(recs, trials, idx, mask_key):
+    """Keep predictions/targets only on bins marked by mask_key."""
+    out = []
+    for rec, i in zip(recs, idx):
+        t = trials[int(i)]
+        m = np.asarray(t[mask_key], dtype=bool).reshape(-1)
+        y = np.array(rec["y"], copy=True)
+        p = np.array(rec["pred"], copy=True)
+        n = min(int(m.size), int(len(y)), int(len(p)))
+        y, p = y[:n], p[:n]
+        extra = ~m[:n]
+        if y.ndim == 1:
+            y[extra] = np.nan
+            p[extra] = np.nan
+        else:
+            y[extra] = np.nan
+            p[extra] = np.nan
+        out.append({"pred": p, "y": y})
+    return out
 
 
 def cv_folds(trials, n_trial_repeats=N_TRIAL_REPEATS, tasks=CV_TASKS):
@@ -426,38 +488,43 @@ def cv_folds(trials, n_trial_repeats=N_TRIAL_REPEATS, tasks=CV_TASKS):
     df = trial_frame(trials)
     tasks = tuple(tasks)
     out = []
+    all_idx = df.i.to_numpy(dtype=int)
     if "trial_repeat" in tasks:
         for k in range(int(n_trial_repeats)):
-            sp = _random_trial_split(df, seed=SEED + 1000 + k)
-            out.append({"task": "trial_repeat", "fold": k, "fold_id": f"rep{k}", **sp})
-    eids = sorted(df.eid.unique())
-    if "trial_extrapolation" in tasks:
-        k = 0
-        for eid in eids:
-            order = _session_order(df, eid)
-            if len(order) < MIN_EXTRAP_TRIALS:
-                continue
-            n_te = max(1, int(round(EXTRAP_FRAC * len(order))))
-            test = np.asarray(order[-n_te:], dtype=int)
-            train = np.asarray(order[:-n_te], dtype=int)
-            if len(train) < 8 or len(test) < 1:
-                continue
-            mouse = str(df.loc[df.eid == eid, "mouse_id"].iloc[0])
+            seed = SEED + 1000 + k
             out.append(
                 {
-                    "task": "trial_extrapolation",
+                    "task": "trial_repeat",
                     "fold": k,
-                    "fold_id": str(eid)[:8],
-                    "train": train,
-                    "test": test,
+                    "fold_id": f"rep{k}_interp",
+                    "train": all_idx,
+                    "test": all_idx,
+                    "bin_mode": "interp",
+                    "bin_seed": seed,
                     "note": (
-                        f"session {str(eid)[:8]} ({mouse}): train first {len(train)}/"
-                        f"{len(order)} trials, test last {len(test)} ({EXTRAP_FRAC:.0%})"
+                        f"all {len(all_idx)} trials; per trial hold out {EXTRAP_FRAC:.0%} of "
+                        f"finite bins at random (seed={seed}); train on leftover bins; interpolate"
                     ),
-                    "hold_eids": [eid],
+                    "hold_eids": [],
                 }
             )
-            k += 1
+    eids = sorted(df.eid.unique())
+    if "trial_extrapolation" in tasks:
+        out.append(
+            {
+                "task": "trial_extrapolation",
+                "fold": 0,
+                "fold_id": "late10_extrap",
+                "train": all_idx,
+                "test": all_idx,
+                "bin_mode": "extrap",
+                "note": (
+                    f"all {len(all_idx)} trials; first {1 - EXTRAP_FRAC:.0%} of finite bins train, "
+                    f"last {EXTRAP_FRAC:.0%} test; extrapolate late bins"
+                ),
+                "hold_eids": [],
+            }
+        )
     if "session_loso" in tasks:
         k = 0
         for eid in eids:
@@ -541,7 +608,11 @@ def y_scaler_from(trials, idx):
         valid = t.get("y_valid")
         if valid is None:
             valid = np.isfinite(y).reshape(y.shape[0], -1).all(axis=1)
-        y = y.reshape(y.shape[0], -1)[np.asarray(valid, dtype=bool)]
+        valid = np.asarray(valid, dtype=bool).reshape(-1)
+        tb = t.get("train_bins")
+        if tb is not None:
+            valid = valid & np.asarray(tb, dtype=bool).reshape(-1)[: valid.size]
+        y = y.reshape(y.shape[0], -1)[valid[: y.shape[0]]]
         if y.size:
             chunks.append(y)
     if not chunks:
@@ -602,12 +673,13 @@ def encode_areas(areas, vocab):
 
 
 class TrialDS(Dataset):
-    def __init__(self, trials, idx, y_mean, y_std, stats):
+    def __init__(self, trials, idx, y_mean, y_std, stats, bin_key=None):
         self.trials = trials
         self.idx = np.asarray(idx)
         self.y_mean = y_mean
         self.y_std = y_std
         self.stats = stats
+        self.bin_key = bin_key
 
     def __len__(self):
         return len(self.idx)
@@ -618,18 +690,22 @@ class TrialDS(Dataset):
         valid = t.get("y_valid")
         if valid is None:
             valid = np.isfinite(y).all(axis=1)
-        valid = np.asarray(valid, dtype=bool)
-        y = np.where(valid[:, None], y, 0.0)
+        time_valid = np.asarray(valid, dtype=bool).reshape(-1)
+        loss_valid = time_valid.copy()
+        if self.bin_key and t.get(self.bin_key) is not None:
+            extra = np.asarray(t[self.bin_key], dtype=bool).reshape(-1)
+            loss_valid = time_valid & extra[: time_valid.size]
+        y = np.where(time_valid[:, None], y, 0.0)
         y = (y - self.y_mean) / self.y_std
         xyz = (t["xyz"] - self.stats["xyz_mean"]) / self.stats["xyz_std"]
         xyz = np.nan_to_num(xyz, nan=0.0).astype(np.float32)
         areas = encode_areas(t["areas"], self.stats["vocab"])
         rate = self.stats["rates"][t["eid"]]
-        return t["spikes"], y.astype(np.float32), valid, xyz, areas, rate
+        return t["spikes"], y.astype(np.float32), time_valid, loss_valid, xyz, areas, rate
 
 
 def collate(batch):
-    spikes, ys, valids, xyzs, areas, rates = zip(*batch)
+    spikes, ys, time_valids, loss_valids, xyzs, areas, rates = zip(*batch)
     B = len(batch)
     T = max(s.shape[0] for s in spikes)
     N = max(s.shape[1] for s in spikes)
@@ -640,16 +716,20 @@ def collate(batch):
     area = torch.zeros(B, N, dtype=torch.long)
     rate = torch.zeros(B, N, dtype=torch.float32)
     mask_t = torch.zeros(B, T, dtype=torch.bool)
+    mask_loss = torch.zeros(B, T, dtype=torch.bool)
     mask_n = torch.zeros(B, N, dtype=torch.bool)
     lengths = torch.zeros(B, dtype=torch.long)
-    for i, (s, yi, vi, zi, ai, ri) in enumerate(zip(spikes, ys, valids, xyzs, areas, rates)):
+    for i, (s, yi, ti, li, zi, ai, ri) in enumerate(
+        zip(spikes, ys, time_valids, loss_valids, xyzs, areas, rates)
+    ):
         n, tt = s.shape[1], s.shape[0]
         x[i, :n, :tt] = torch.from_numpy(s.T)
         y[i, :tt] = torch.from_numpy(yi)
         xyz[i, :n] = torch.from_numpy(zi)
         area[i, :n] = torch.from_numpy(ai)
         rate[i, :n] = torch.from_numpy(ri)
-        mask_t[i, :tt] = torch.from_numpy(np.asarray(vi, dtype=bool))
+        mask_t[i, :tt] = torch.from_numpy(np.asarray(ti, dtype=bool))
+        mask_loss[i, :tt] = torch.from_numpy(np.asarray(li, dtype=bool))
         mask_n[i, :n] = True
         lengths[i] = tt
     return {
@@ -659,6 +739,7 @@ def collate(batch):
         "area": area,
         "rate": rate,
         "mask_t": mask_t,
+        "mask_loss": mask_loss,
         "mask_n": mask_n,
         "lengths": lengths,
     }
@@ -795,6 +876,7 @@ def run_epoch(model, loader, opt, dev, train=True):
         area = batch["area"].to(dev)
         rate = batch["rate"].to(dev)
         mask_t = batch["mask_t"].to(dev)
+        mask_loss = batch["mask_loss"].to(dev)
         mask_n = batch["mask_n"].to(dev)
         lengths = batch["lengths"]
         if train:
@@ -809,7 +891,7 @@ def run_epoch(model, loader, opt, dev, train=True):
             lengths,
             unit_drop=UNIT_DROPOUT if train else 0.0,
         )
-        loss = trial_balanced_mse(pred, y, mask_t)
+        loss = trial_balanced_mse(pred, y, mask_loss)
         if train:
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -838,7 +920,7 @@ def save_json(path, obj):
     Path(path).write_text(json.dumps(obj, indent=2, default=float))
 
 
-def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_anatomy=True, fold_id=None):
+def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_anatomy=True, fold_id=None, bin_key=None):
     tag = model_tag(pool, use_anatomy)
     cdir = cache_dir(task, pool, use_anatomy, fold_id=fold_id)
     ckpt = cdir / "model.pt"
@@ -859,8 +941,8 @@ def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_
     extra = "" if use_anatomy else "  Control A1 (no xyz/region)"
     log(f"  {tag} params={n_params(model)}  device={dev}{extra}")
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
-    tr_ds = TrialDS(trials, train_idx, y_mean, y_std, stats)
-    va_ds = TrialDS(trials, val_idx, y_mean, y_std, stats)
+    tr_ds = TrialDS(trials, train_idx, y_mean, y_std, stats, bin_key=bin_key)
+    va_ds = TrialDS(trials, val_idx, y_mean, y_std, stats, bin_key=bin_key)
     tr_ld = DataLoader(tr_ds, batch_size=BATCH, shuffle=True, collate_fn=collate)
     va_ld = DataLoader(va_ds, batch_size=BATCH, shuffle=False, collate_fn=collate)
     best_val = math.inf
@@ -1005,18 +1087,18 @@ def _series(arr, j=0):
     return arr[:, j]
 
 
-def trial_r2_list(recs, j=0):
+def trial_r2_list(recs, j=0, min_bins=8):
     out = []
     for r in recs:
         yt, yp = _series(r["y"], j), _series(r["pred"], j)
         m = np.isfinite(yt) & np.isfinite(yp)
-        if m.sum() < 8:
+        if m.sum() < min_bins:
             continue
         out.append(float(r2_score(yt[m], yp[m])))
     return np.asarray(out, dtype=float)
 
 
-def score_recs(recs, target=None):
+def score_recs(recs, target=None, min_trial_bins=8):
     y = np.concatenate([np.asarray(r["y"]).reshape(len(r["y"]), -1) for r in recs], axis=0)
     p = np.concatenate([np.asarray(r["pred"]).reshape(len(r["pred"]), -1) for r in recs], axis=0)
     names = (target,) if target else TARGETS[: y.shape[1]]
@@ -1025,7 +1107,7 @@ def score_recs(recs, target=None):
         yt, yp = y[:, j], p[:, j]
         m = np.isfinite(yt) & np.isfinite(yp)
         yt, yp = yt[m], yp[m]
-        arr = trial_r2_list(recs, j)
+        arr = trial_r2_list(recs, j, min_bins=min_trial_bins)
         out[name] = {
             "r2": float(r2_score(yt, yp)) if m.sum() >= 10 else float("nan"),
             "rmse": float(np.sqrt(np.mean((yt - yp) ** 2))) if m.sum() else float("nan"),
@@ -1329,10 +1411,12 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
     if any(t in row_tasks for t in CV_TASKS):
         lines.append(
             "Cross-validation protocol: the model is retrained from scratch on every fold. "
-            "`trial_repeat` draws several random trial holdouts (same 10%-of-sessions / 10%-of-trials "
-            f"scheme as the original split, seeds {SEED + 1000}…). "
-            "`trial_extrapolation` is one fold per session: train on the first "
-            f"{1 - EXTRAP_FRAC:.0%} of that session's ordered trials, test on the last {EXTRAP_FRAC:.0%}. "
+            "`trial_repeat` uses every trial: for each trial, 10% of finite time bins are held "
+            f"out at random for interpolation (seeds {SEED + 1000}…); the leftover 90% of bins "
+            "are training targets. "
+            "`trial_extrapolation` is one fold on the same trials: the first "
+            f"{1 - EXTRAP_FRAC:.0%} of each trial's finite bins train, the last {EXTRAP_FRAC:.0%} "
+            "are held out so the model must extrapolate those late bins. "
             "`session_loso` leaves one session out; `mouse_lomo` leaves one mouse out. "
             "The original single-split protocol is `--protocol fixed` (default)."
         )
@@ -1573,21 +1657,43 @@ def process(
         fold_id = spec["fold_id"]
         fold_i = int(spec["fold"])
         log(f"==== {task}  fold={fold_i} {fold_id} ====")
-        train_full = usable_idx(trials, spec["train"])
-        test_idx = usable_idx(trials, spec["test"])
+        clear_bin_masks(trials)
+        bin_mode = spec.get("bin_mode")
+        if bin_mode:
+            apply_bin_masks(trials, spec)
+            train_full = usable_idx(
+                trials, spec["train"], min_bins=max(4, MIN_BINS // 2), mask_key="train_bins"
+            )
+            test_ok = usable_idx(trials, spec["test"], min_bins=1, mask_key="test_bins")
+            both = np.intersect1d(train_full, test_ok)
+            train_full, test_idx = both, both
+        else:
+            train_full = usable_idx(trials, spec["train"])
+            test_idx = usable_idx(trials, spec["test"])
         if len(train_full) < 8 or len(test_idx) < 1:
             log(f"  skip {task}/{fold_id}: too few usable trials for {target}")
             continue
         tr_idx, va_idx = train_val_split(train_full, seed=SEED + 17 * fold_i)
-        tr_idx, va_idx = usable_idx(trials, tr_idx), usable_idx(trials, va_idx)
+        if bin_mode:
+            tr_idx = usable_idx(
+                trials, tr_idx, min_bins=max(4, MIN_BINS // 2), mask_key="train_bins"
+            )
+            va_idx = usable_idx(trials, va_idx, min_bins=1, mask_key="train_bins")
+        else:
+            tr_idx, va_idx = usable_idx(trials, tr_idx), usable_idx(trials, va_idx)
         if len(tr_idx) < 4:
             log(f"  skip {task}/{fold_id}: empty train after val split")
             continue
         y_mean, y_std = y_scaler_from(trials, tr_idx)
         stats = fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
+        extra = ""
+        if bin_mode:
+            n_tr_bins = int(sum(int(np.asarray(trials[int(i)]["train_bins"]).sum()) for i in tr_idx))
+            n_te_bins = int(sum(int(np.asarray(trials[int(i)]["test_bins"]).sum()) for i in test_idx))
+            extra = f"  train_bins={n_tr_bins} test_bins={n_te_bins} mode={bin_mode}"
         log(
             f"  areas={stats['n_areas']}  train_eids={stats['n_train_eids']}  "
-            f"y_mean={y_mean} y_std={y_std}  n_tr={len(tr_idx)} n_te={len(test_idx)}"
+            f"y_mean={y_mean} y_std={y_std}  n_tr={len(tr_idx)} n_te={len(test_idx)}{extra}"
         )
         preds_by_pool = {}
         for pool in pools:
@@ -1617,11 +1723,14 @@ def process(
                 task,
                 use_anatomy=use_anatomy,
                 fold_id=None if protocol == "fixed" else fold_id,
+                bin_key="train_bins" if bin_mode else None,
             )
             histories.setdefault(task, {})[pool] = hist
             recs = predict(blob, trials, test_idx, blob.get("stats", stats))
+            if bin_mode:
+                recs = restrict_recs(recs, trials, test_idx, "test_bins")
             preds_by_pool[pool] = recs
-            scores = score_recs(recs, target=target)
+            scores = score_recs(recs, target=target, min_trial_bins=2 if bin_mode else 8)
             these = []
             for tname, sc in scores.items():
                 row = {
@@ -1632,6 +1741,7 @@ def process(
                     "ablation": "none" if use_anatomy else "a1",
                     "fold": fold_i,
                     "fold_id": fold_id,
+                    "bin_mode": bin_mode or "",
                     **sc,
                 }
                 rows.append(row)
@@ -1751,7 +1861,7 @@ if __name__ == "__main__":
         "--trial-repeats",
         type=int,
         default=N_TRIAL_REPEATS,
-        help="Number of random trial-holdout repeats in --protocol cv (default 5).",
+        help="Number of random within-trial bin-interpolation repeats in --protocol cv (default 5).",
     )
     slurm_utils.add_common_args(p)
     args = p.parse_args()
