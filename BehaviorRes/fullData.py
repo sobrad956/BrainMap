@@ -302,6 +302,37 @@ def select_used_paw(pose, t0, t1):
     return "right"
 
 
+def select_wheel_paw(dlc_pose, lp_pose, t0, t1, wheel_times, wheel_vel, first_move):
+    """Paw coupled to the wheel; fall back to the near-paw with more motion.
+
+    Stored traces can only hold one paw. If both paws turn the wheel, keep
+    the one with longer coupled time.
+    """
+    from label_wheel_paws import camera_xy, decide_label, paw_metrics
+
+    wheel_t, wheel_v = window_trace(wheel_times, wheel_vel, t0, t1)
+    fallback = select_used_paw(dlc_pose, t0, t1) or select_used_paw(lp_pose, t0, t1)
+    chosen = None
+    for pose in (lp_pose, dlc_pose):
+        if not pose:
+            continue
+        left = paw_metrics(
+            camera_xy(pose, "leftCamera"), t0, t1, wheel_t, wheel_v, first_move
+        )
+        right = paw_metrics(
+            camera_xy(pose, "rightCamera"), t0, t1, wheel_t, wheel_v, first_move
+        )
+        label = decide_label(left, right, fallback)
+        if label in ("left", "right"):
+            return label
+        if label == "both":
+            lc = float(left["coupled_s"]) if np.isfinite(left["coupled_s"]) else -1.0
+            rc = float(right["coupled_s"]) if np.isfinite(right["coupled_s"]) else -1.0
+            chosen = "left" if lc >= rc else "right"
+            break
+    return chosen or fallback
+
+
 RIGHT_CAMERA_SCALE = 2.0  # IBL right camera is 640x512; left is 1280x1024
 
 
@@ -743,9 +774,15 @@ def process_session(one, session, all_trials, clusters_all):
     for trial in trials.itertuples():
         t0 = float(trial.stimOn_times)
         t1 = float(trial.feedback_times)
-        side = select_used_paw(dlc_pose, t0, t1)
-        if side is None:
-            side = select_used_paw(lp_pose, t0, t1)
+        side = select_wheel_paw(
+            dlc_pose,
+            lp_pose,
+            t0,
+            t1,
+            wheel_times,
+            wheel_vel,
+            float(trial.actionTime) if pd.notna(trial.actionTime) else None,
+        )
         dlc_kin = paw_xyz_positions(dlc_pose, side)
         lp_kin = paw_xyz_positions(lp_pose, side)
         wheel_t, wheel_v = window_trace(wheel_times, wheel_vel, t0, t1)

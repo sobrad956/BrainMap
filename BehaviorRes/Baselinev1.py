@@ -1,9 +1,10 @@
 """Baselines for Modelv1 / Formulation A on ModelDataRightContra.
 
 Extends Modelv1.py: same corpus, holdouts, z-scored trial-balanced MSE,
-and evaluation. Implements PDF §6 baselines 0, 1, 2, 3, 6, 7, 9, 10, plus
-a Brain-Wide Map lagged linear decoder (session-specific, W=10, Ridge)
-adapted to this RightContra motor-cortex task.
+and evaluation. Paw targets are the right paw that turns the wheel.
+Implements PDF §6 baselines 0, 1, 2, 3, 6, 7, 9, 10, plus a Brain-Wide
+Map lagged linear decoder (session-specific, W=10, Ridge) adapted to
+this RightContra motor-cortex task.
 """
 
 from __future__ import annotations
@@ -1180,6 +1181,7 @@ def write_report(splits, rows, histories, session_meta, path):
     lines.append(
         "Baselines from the neural-decoding framework, evaluated on the same "
         "ModelDataRightContra motor-cortex corpus and holdouts as `Modelv1.py`. "
+        "Paw vx/vy/vz/speed are the right paw that turns the wheel. "
         "Each behavior is a separate 1-d model (this folder is one target). "
         "Cross-recording models do not use a globally fixed neuron index. "
         "Session-specific models (B9, B10, BWM) are within-session references; "

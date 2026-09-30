@@ -126,6 +126,7 @@ def _trace(rec, lp_key, dlc_key, absval=False):
 
 
 def trial_behaviors(rec):
+    """Wheel |ω| and the wheel-coupled paw (Lightning Pose, DLC fallback)."""
     vx = _trace(rec, "lp_vx", "dlc_vx")
     vy = _trace(rec, "lp_vy", "dlc_vy")
     speed = _trace(rec, "lp_speed", "dlc_speed")
@@ -163,8 +164,13 @@ def usable_idx(trials, idx, min_bins=MIN_BINS):
     return np.asarray(keep, dtype=int)
 
 
+def paw_is_wheel_paw(rec):
+    """True when stored DLC/LP traces are the right paw that turns the wheel."""
+    return rec.get("used_paw") == "right" and rec.get("wheel_paws") == "right"
+
+
 def load_corpus():
-    """Motor MOp/MOs units only; log1p counts; CCF and area kept as metadata."""
+    """Motor MOp/MOs; paw kinematics are the wheel-coupled right paw."""
     pkls = sorted(p for p in SESS.glob("*.pkl") if not p.name.endswith(".tmp"))
     trials = []
     session_meta = []
@@ -200,6 +206,8 @@ def load_corpus():
         )
         areas = units["brain_area"].astype(str).to_numpy()[m]
         for rec in payload["trials"]:
+            if not paw_is_wheel_paw(rec):
+                continue
             spikes = np.asarray(rec.get("spike_counts", []), dtype=np.float32)
             if spikes.ndim != 2 or spikes.shape[1] <= m.max():
                 continue

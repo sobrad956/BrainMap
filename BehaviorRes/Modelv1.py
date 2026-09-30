@@ -3,6 +3,10 @@
 Shared per-unit MLP + masked mean or attention pool + causal GRU.
 Neuron index is never a feature.
 
+Paw vx/vy/vz/speed are the right paw that turns the wheel (`used_paw` ==
+`wheel_paws` == right after rebuild_wheel_paw_traces.py), not the
+near-camera paw with more image-plane motion.
+
 Protocols:
   fixed  original single splits (trial / session / mouse holdout).
   cv     leave-one-mouse-out, leave-one-session-out, repeated random
@@ -77,17 +81,17 @@ PROTOCOLS = ("fixed", "cv", "all")
 TARGETS = ("wheel_speed", "paw_vx", "paw_vy", "paw_vz", "paw_speed")
 TARGET_LABELS = {
     "wheel_speed": "wheel speed |ω|",
-    "paw_vx": "paw vx",
-    "paw_vy": "paw vy",
-    "paw_vz": "paw vz",
-    "paw_speed": "paw speed (2D, x-y)",
+    "paw_vx": "wheel-paw vx",
+    "paw_vy": "wheel-paw vy",
+    "paw_vz": "wheel-paw vz",
+    "paw_speed": "wheel-paw speed (2D, x-y)",
 }
 TARGET_YLABELS = {
     "wheel_speed": "|ω| (rad/s)",
-    "paw_vx": "vx (px/s)",
-    "paw_vy": "vy (px/s)",
-    "paw_vz": "vz (px/s)",
-    "paw_speed": "2D speed (px/s)",
+    "paw_vx": "wheel-paw vx (px/s)",
+    "paw_vy": "wheel-paw vy (px/s)",
+    "paw_vz": "wheel-paw vz (px/s)",
+    "paw_speed": "wheel-paw 2D speed (px/s)",
 }
 N_OUT = 1
 MODEL_ROOT = ROOT / "Modelv1"
@@ -168,6 +172,7 @@ def _trace(rec, lp_key, dlc_key, absval=False):
 
 
 def trial_behaviors(rec):
+    """Wheel |ω| and the wheel-coupled paw (Lightning Pose, DLC fallback)."""
     vx = _trace(rec, "lp_vx", "dlc_vx")
     vy = _trace(rec, "lp_vy", "dlc_vy")
     speed = _trace(rec, "lp_speed", "dlc_speed")
@@ -205,13 +210,26 @@ def usable_idx(trials, idx, min_bins=MIN_BINS):
     return np.asarray(keep, dtype=int)
 
 
+def paw_is_wheel_paw(rec):
+    """True when stored DLC/LP traces are the right paw that turns the wheel.
+
+    After rebuild_wheel_paw_traces.py, used_paw is that paw and matches
+    wheel_paws. Drop anything else so trainers never see the old max-speed
+    near-paw traces.
+    """
+    used = rec.get("used_paw")
+    wheel = rec.get("wheel_paws")
+    return used == "right" and wheel == "right"
+
+
 def load_corpus():
-    """Motor MOp/MOs units only; log1p counts; CCF and area kept as metadata."""
+    """Motor MOp/MOs; paw kinematics are the wheel-coupled right paw."""
     pkls = sorted(p for p in SESS.glob("*.pkl") if not p.name.endswith(".tmp"))
     trials = []
     session_meta = []
     log(f"loading {len(pkls)} sessions from ModelDataRightContra")
     n_motor = []
+    n_wrong_paw = 0
     for path in pkls:
         with path.open("rb") as fh:
             payload = pickle.load(fh)
@@ -245,10 +263,13 @@ def load_corpus():
             spikes = np.asarray(rec.get("spike_counts", []), dtype=np.float32)
             if spikes.ndim != 2 or spikes.shape[1] <= m.max():
                 continue
-            behaviors = trial_behaviors(rec)
             n = min(spikes.shape[0], MAX_BINS)
             if n < MIN_BINS:
                 continue
+            if not paw_is_wheel_paw(rec):
+                n_wrong_paw += 1
+                continue
+            behaviors = trial_behaviors(rec)
             spikes = spikes[:n, m]
             packed = {}
             for name, beh in behaviors.items():
@@ -267,6 +288,8 @@ def load_corpus():
                     "mouse_id": mouse,
                     "session_date": date,
                     "trial_index": rec.get("trial_index"),
+                    "used_paw": rec.get("used_paw"),
+                    "wheel_paws": rec.get("wheel_paws"),
                     "spikes": np.log1p(np.clip(spikes, 0, None)).astype(np.float32),
                     "behaviors": packed,
                     "xyz": xyz,
@@ -276,7 +299,9 @@ def load_corpus():
     log(
         f"corpus: {len(trials)} trials, "
         f"{pd.DataFrame(session_meta).eid.nunique()} sessions, "
-        f"motor units/session {min(n_motor)}–{max(n_motor)}"
+        f"motor units/session {min(n_motor)}–{max(n_motor)}; "
+        f"dropped {n_wrong_paw} trials whose stored paw traces are not the "
+        f"wheel-coupled right paw"
     )
     return trials, session_meta
 
@@ -1292,6 +1317,8 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
         f"RightContra: {n_sess} sessions. Motor units/session {mot_rng}. "
         f"Trials shorter than {MIN_BINS} bins after motor filtering are dropped; "
         f"T is cropped at {MAX_BINS} bins (2.56 s). "
+        "Paw vx/vy/vz/speed are the right paw that turns the wheel "
+        "(`used_paw` == `wheel_paws`). "
         f"This folder trains a 1-d head on **{TARGET_LABELS.get(tname, tname)}** only; "
         "sibling folders hold the other behaviors."
     )

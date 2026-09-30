@@ -15,7 +15,8 @@ Models
     cnn, gru, lstm, cnn_gru, transformer, ridge
     Ridge uses a causal sliding window on permutation-invariant population
     statistics (not raw unit-aligned counts). Deep models use MSE on
-    z-scored wheel |ω| and 2D paw speed, early stopping, disk cache.
+    z-scored wheel |ω| and 2D speed of the paw that turns the wheel,
+    early stopping, disk cache.
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.utils.data import DataLoader, Dataset
 
 import slurm_utils
+import Modelv1 as mv
 
 ROOT = Path(__file__).resolve().parent
 DESKTOP = ROOT.parent
@@ -75,7 +77,10 @@ ALPHAS = np.array([0.1, 1.0, 10.0, 100.0, 1000.0, 1e4])
 MODELS = ("cnn", "gru", "lstm", "cnn_gru", "transformer", "ridge")
 TASKS = ("trial_holdout", "session_holdout", "mouse_holdout")
 TARGETS = ("wheel_speed", "paw_speed")
-TARGET_LABELS = {"wheel_speed": "wheel speed |ω|", "paw_speed": "paw speed (2D)"}
+TARGET_LABELS = {
+    "wheel_speed": "wheel speed |ω|",
+    "paw_speed": "wheel-paw speed (2D)",
+}
 
 # Fixed holdouts (documented decisions).
 HOLD_MOUSE = "ZM_2241"  # single session, 419 trials, 69 motor units
@@ -107,6 +112,7 @@ def motor_mask(units):
 
 
 def trial_targets(rec):
+    """|ω| and 2D speed of the wheel-coupled right paw (LP, DLC fallback)."""
     wheel = np.abs(np.asarray(rec.get("wheel_velocity", []), dtype=np.float32))
     paw = np.asarray(rec.get("lp_speed", []), dtype=np.float32)
     if paw.size == 0 or not np.isfinite(paw).any():
@@ -140,6 +146,8 @@ def load_corpus():
         if m.size < MIN_UNITS:
             continue
         for rec in payload["trials"]:
+            if not mv.paw_is_wheel_paw(rec):
+                continue
             spikes = np.asarray(rec.get("spike_counts", []), dtype=np.float32)
             if spikes.ndim != 2 or spikes.shape[1] <= m.max():
                 continue
@@ -833,6 +841,8 @@ def write_report(splits, rows, histories, session_meta, path):
     lines.append("")
     lines.append(
         "ModelDataRightContra is right-paw / right-hemisphere BWM trials. "
+        "Paw speed is the right paw that turns the wheel (`used_paw` == "
+        "`wheel_paws`), not the more-moving camera paw. "
         "Only MOp/MOs units enter the models. Sessions still differ in how many "
         "motor units they have (5–226) and those units are *different cells* — "
         "column 0 of `spike_counts` in session A is not the same neuron as "
@@ -846,8 +856,8 @@ def write_report(splits, rows, histories, session_meta, path):
         f"Trials shorter than {MIN_BINS} bins after motor filtering are dropped. "
         f"Sequences longer than {MAX_BINS} bins (2.56 s) are cropped from stimOn; "
         "that truncates <1% of raw RightContra trials. Spike counts are "
-        "`log1p`. Wheel target is `|ω|` (rad/s). Paw target is Lightning Pose 2D "
-        "speed, falling back to DLC."
+        "`log1p`. Wheel target is `|ω|` (rad/s). Paw target is 2D speed of "
+        "the wheel-coupled right paw (Lightning Pose, DLC fallback)."
     )
     lines.append("")
     lines.append("## Holdout tasks")

@@ -8,6 +8,7 @@ Two anatomical voxelizers, trained independently:
                plus an MLP spatial encoder (or a flat control).
 
 Same holdouts, trial-balanced MSE, and GRU decoder as Modelv1.
+Paw targets are the right paw that turns the wheel (Modelv1.load_corpus).
 Also writes occupancy / overlap diagnostics for the voxelizations.
 """
 
@@ -116,6 +117,7 @@ def motor_mask(units):
 
 
 def load_corpus():
+    """Same Modelv1 corpus: wheel-coupled right-paw traces on RightContra."""
     return mv1.load_corpus()
 
 
@@ -1220,7 +1222,8 @@ def write_report(splits, rows, histories, voxel_summaries, path):
         "Formulation B: motor units are assigned to a **fixed anatomical catalog** "
         "before any learned weights see the trial. Two catalogs are trained independently. "
         "Holdouts, trial-balanced MSE, and the GRU-64 decoder match Modelv1. "
-        "Each behavior is a separate 1-d model (this folder is one target)."
+        "Each behavior is a separate 1-d model (this folder is one target). "
+        "Paw vx/vy/vz/speed are the right paw that turns the wheel."
     )
     lines.append("")
     lines.append(

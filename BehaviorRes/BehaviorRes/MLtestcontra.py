@@ -140,6 +140,8 @@ def load_corpus():
         if m.size < MIN_UNITS:
             continue
         for rec in payload["trials"]:
+            if rec.get("used_paw") != "right" or rec.get("wheel_paws") != "right":
+                continue
             spikes = np.asarray(rec.get("spike_counts", []), dtype=np.float32)
             if spikes.ndim != 2 or spikes.shape[1] <= m.max():
                 continue
@@ -846,8 +848,8 @@ def write_report(splits, rows, histories, session_meta, path):
         f"Trials shorter than {MIN_BINS} bins after motor filtering are dropped. "
         f"Sequences longer than {MAX_BINS} bins (2.56 s) are cropped from stimOn; "
         "that truncates <1% of raw RightContra trials. Spike counts are "
-        "`log1p`. Wheel target is `|ω|` (rad/s). Paw target is Lightning Pose 2D "
-        "speed, falling back to DLC."
+        "`log1p`. Wheel target is `|ω|` (rad/s). Paw target is 2D speed of "
+        "the wheel-coupled right paw (Lightning Pose, DLC fallback)."
     )
     lines.append("")
     lines.append("## Holdout tasks")
