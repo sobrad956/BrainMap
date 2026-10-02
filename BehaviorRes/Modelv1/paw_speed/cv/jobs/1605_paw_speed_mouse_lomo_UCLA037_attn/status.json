@@ -1,7 +1,7 @@
 {
   "job": 1605,
   "tag": "paw_speed_mouse_lomo_UCLA037_attn",
-  "slurm_job_id": "403693",
+  "slurm_job_id": "406678",
   "slurm_array_task_id": "604",
   "task": "mouse_lomo",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 17,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:35:08.833460+00:00"
+  "updated_at": "2026-09-30T23:03:59.180071+00:00"
 }

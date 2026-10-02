@@ -1,7 +1,7 @@
 {
   "job": 1271,
   "tag": "paw_vz_trial_extrapolation_late10_extrap_attn_a1",
-  "slurm_job_id": "402790",
+  "slurm_job_id": "405630",
   "slurm_array_task_id": "270",
   "task": "trial_extrapolation",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 20,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:10:13.308256+00:00"
+  "updated_at": "2026-09-30T22:42:38.582113+00:00"
 }

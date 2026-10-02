@@ -1,7 +1,7 @@
 {
   "job": 498,
   "tag": "paw_vx_mouse_lomo_KS091_mean",
-  "slurm_job_id": "402852",
+  "slurm_job_id": "405409",
   "slurm_array_task_id": "498",
   "task": "mouse_lomo",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 17,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:10:16.098577+00:00"
+  "updated_at": "2026-09-30T22:38:09.602657+00:00"
 }

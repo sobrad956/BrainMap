@@ -1,9 +1,9 @@
 {
-  "mouse_lomo": {
+  "session_loso": {
     "n_folds": 1,
-    "note": "left-out mouse ZM_2245 (1 session(s))",
+    "note": "left-out session d33baf74 of ZM_2240",
     "fold_ids": [
-      "ZM_2245"
+      "d33baf74"
     ]
   }
 }

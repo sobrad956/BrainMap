@@ -1,7 +1,7 @@
 {
   "job": 1626,
   "tag": "paw_speed_trial_repeat_rep3_interp_mean_a1",
-  "slurm_job_id": "403714",
+  "slurm_job_id": "406699",
   "slurm_array_task_id": "625",
   "task": "trial_repeat",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 28,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:38:26.122071+00:00"
+  "updated_at": "2026-09-30T23:04:38.618869+00:00"
 }

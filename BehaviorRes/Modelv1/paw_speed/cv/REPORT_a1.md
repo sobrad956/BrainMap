@@ -1,6 +1,6 @@
 # Modelv1 — Control A1 (set encoder without anatomical metadata)
 
-Built 2026-09-30T21:46:44.566915+00:00
+Built 2026-10-02T17:15:36.506573+00:00
 
 ## What this is
 
@@ -29,23 +29,23 @@ Cross-validation summary (mean ± std across folds of concatenated-bin R²).
 
 | task | pool | target | n folds | R² mean | R² std | R² median | mean trial R² | median trial R² |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| mouse_lomo | attn | paw_speed | 64 | 0.127 | 0.239 | 0.168 | -27.226 | 0.139 |
-| mouse_lomo | mean | paw_speed | 64 | 0.116 | 0.238 | 0.161 | -26.806 | 0.159 |
-| session_loso | attn | paw_speed | 104 | 0.130 | 0.268 | 0.178 | -22.379 | -0.009 |
-| session_loso | mean | paw_speed | 104 | 0.122 | 0.251 | 0.173 | -23.062 | 0.010 |
-| trial_extrapolation | attn | paw_speed | 51 | -0.175 | 0.893 | 0.095 | -77490.594 | -0.023 |
-| trial_extrapolation | mean | paw_speed | 51 | -0.256 | 1.012 | 0.008 | -87754.720 | -0.070 |
-| trial_repeat | attn | paw_speed | 10 | 0.215 | 0.033 | 0.211 | -89294.633 | -0.424 |
-| trial_repeat | mean | paw_speed | 10 | 0.209 | 0.029 | 0.207 | -72405.833 | -0.339 |
+| mouse_lomo | attn | paw_speed | 64 | 0.144 | 0.229 | 0.171 | -25.317 | 0.184 |
+| mouse_lomo | mean | paw_speed | 64 | 0.137 | 0.222 | 0.177 | -24.882 | 0.195 |
+| session_loso | attn | paw_speed | 104 | 0.146 | 0.264 | 0.183 | -22.251 | 0.024 |
+| session_loso | mean | paw_speed | 104 | 0.144 | 0.246 | 0.181 | -22.914 | 0.040 |
+| trial_extrapolation | attn | paw_speed | 51 | -0.175 | 0.893 | 0.095 | -51746.922 | -0.028 |
+| trial_extrapolation | mean | paw_speed | 51 | -0.256 | 1.012 | 0.008 | -58597.953 | -0.074 |
+| trial_repeat | attn | paw_speed | 10 | 0.217 | 0.033 | 0.213 | -2421674.300 | -0.469 |
+| trial_repeat | mean | paw_speed | 10 | 0.214 | 0.029 | 0.214 | -2030230.610 | -0.359 |
 
 Per-fold scores are in `scores.csv` (column `fold_id`).
 
 ### Best pool per task × target (concatenated-bin R²)
 
-- trial_repeat / paw_speed: **attn** mean R²=0.215 (n=10 folds)
+- trial_repeat / paw_speed: **attn** mean R²=0.217 (n=10 folds)
 - trial_extrapolation / paw_speed: **attn** mean R²=-0.175 (n=51 folds)
-- session_loso / paw_speed: **attn** mean R²=0.130 (n=104 folds)
-- mouse_lomo / paw_speed: **attn** mean R²=0.127 (n=64 folds)
+- session_loso / paw_speed: **attn** mean R²=0.146 (n=104 folds)
+- mouse_lomo / paw_speed: **attn** mean R²=0.144 (n=64 folds)
 
 ## Training diagnostics
 

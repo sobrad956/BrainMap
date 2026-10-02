@@ -1,7 +1,7 @@
 {
   "job": 1088,
   "tag": "paw_vz_trial_repeat_rep4_interp_mean",
-  "slurm_job_id": "402156",
+  "slurm_job_id": "404188",
   "slurm_array_task_id": "87",
   "task": "trial_repeat",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 36,
   "device": "cuda",
-  "updated_at": "2026-09-30T20:55:25.709753+00:00"
+  "updated_at": "2026-09-30T22:20:19.271434+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 1686,
   "tag": "paw_speed_session_loso_9468fa93_mean_a1",
-  "slurm_job_id": "403777",
+  "slurm_job_id": "406760",
   "slurm_array_task_id": "685",
   "task": "session_loso",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 12,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:39:58.887496+00:00"
+  "updated_at": "2026-09-30T23:06:41.856814+00:00"
 }

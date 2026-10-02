@@ -1,7 +1,7 @@
 {
   "job": 1586,
   "tag": "paw_speed_mouse_lomo_NYU-37_mean",
-  "slurm_job_id": "403674",
+  "slurm_job_id": "406659",
   "slurm_array_task_id": "585",
   "task": "mouse_lomo",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 22,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:34:43.269491+00:00"
+  "updated_at": "2026-09-30T23:03:25.123019+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 181,
   "tag": "wheel_speed_trial_repeat_rep0_interp_attn_a1",
-  "slurm_job_id": "402330",
+  "slurm_job_id": "404202",
   "slurm_array_task_id": "181",
   "task": "trial_repeat",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 9,
   "device": "cuda",
-  "updated_at": "2026-09-30T20:55:48.648580+00:00"
+  "updated_at": "2026-09-30T22:20:29.335656+00:00"
 }

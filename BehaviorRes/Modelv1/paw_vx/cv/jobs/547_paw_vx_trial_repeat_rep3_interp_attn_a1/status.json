@@ -1,7 +1,7 @@
 {
   "job": 547,
   "tag": "paw_vx_trial_repeat_rep3_interp_attn_a1",
-  "slurm_job_id": "402929",
+  "slurm_job_id": "405484",
   "slurm_array_task_id": "547",
   "task": "trial_repeat",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 19,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:13:26.146439+00:00"
+  "updated_at": "2026-09-30T22:39:45.823281+00:00"
 }

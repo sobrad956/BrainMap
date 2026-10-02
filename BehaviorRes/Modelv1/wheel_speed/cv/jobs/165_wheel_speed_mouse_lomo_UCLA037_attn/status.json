@@ -1,7 +1,7 @@
 {
   "job": 165,
   "tag": "wheel_speed_mouse_lomo_UCLA037_attn",
-  "slurm_job_id": "402221",
+  "slurm_job_id": "404174",
   "slurm_array_task_id": "165",
   "task": "mouse_lomo",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 31,
   "device": "cuda",
-  "updated_at": "2026-09-30T20:54:00.196775+00:00"
+  "updated_at": "2026-09-30T22:19:57.167006+00:00"
 }

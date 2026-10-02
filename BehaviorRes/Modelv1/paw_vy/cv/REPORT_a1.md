@@ -1,6 +1,6 @@
 # Modelv1 — Control A1 (set encoder without anatomical metadata)
 
-Built 2026-09-30T21:46:22.460097+00:00
+Built 2026-10-02T17:15:22.153210+00:00
 
 ## What this is
 
@@ -29,23 +29,23 @@ Cross-validation summary (mean ± std across folds of concatenated-bin R²).
 
 | task | pool | target | n folds | R² mean | R² std | R² median | mean trial R² | median trial R² |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| mouse_lomo | attn | paw_vy | 64 | -0.011 | 0.080 | -0.001 | -4.202 | -0.103 |
-| mouse_lomo | mean | paw_vy | 64 | -0.012 | 0.073 | 0.003 | -4.652 | -0.105 |
-| session_loso | attn | paw_vy | 104 | -0.012 | 0.117 | 0.002 | -4.857 | -0.182 |
-| session_loso | mean | paw_vy | 104 | -0.013 | 0.107 | 0.007 | -4.247 | -0.139 |
-| trial_extrapolation | attn | paw_vy | 51 | -0.069 | 0.229 | -0.008 | -1584.044 | -0.397 |
-| trial_extrapolation | mean | paw_vy | 51 | -0.062 | 0.174 | -0.008 | -1651.352 | -0.362 |
-| trial_repeat | attn | paw_vy | 10 | 0.025 | 0.034 | 0.022 | -23095.070 | -0.629 |
-| trial_repeat | mean | paw_vy | 10 | 0.019 | 0.027 | 0.018 | -16761.385 | -0.623 |
+| mouse_lomo | attn | paw_vy | 64 | -0.032 | 0.123 | -0.007 | -4.010 | -0.153 |
+| mouse_lomo | mean | paw_vy | 64 | -0.033 | 0.105 | -0.005 | -4.420 | -0.156 |
+| session_loso | attn | paw_vy | 104 | -0.031 | 0.142 | -0.002 | -4.893 | -0.225 |
+| session_loso | mean | paw_vy | 104 | -0.030 | 0.140 | -0.001 | -4.269 | -0.188 |
+| trial_extrapolation | attn | paw_vy | 51 | -0.069 | 0.229 | -0.008 | -1060.850 | -0.443 |
+| trial_extrapolation | mean | paw_vy | 51 | -0.062 | 0.174 | -0.008 | -1108.657 | -0.412 |
+| trial_repeat | attn | paw_vy | 10 | 0.014 | 0.037 | 0.004 | -16781.455 | -0.763 |
+| trial_repeat | mean | paw_vy | 10 | 0.013 | 0.029 | 0.007 | -12780.755 | -0.757 |
 
 Per-fold scores are in `scores.csv` (column `fold_id`).
 
 ### Best pool per task × target (concatenated-bin R²)
 
-- trial_repeat / paw_vy: **attn** mean R²=0.025 (n=10 folds)
+- trial_repeat / paw_vy: **attn** mean R²=0.014 (n=10 folds)
 - trial_extrapolation / paw_vy: **mean** mean R²=-0.062 (n=51 folds)
-- session_loso / paw_vy: **attn** mean R²=-0.012 (n=104 folds)
-- mouse_lomo / paw_vy: **attn** mean R²=-0.011 (n=64 folds)
+- session_loso / paw_vy: **mean** mean R²=-0.030 (n=104 folds)
+- mouse_lomo / paw_vy: **attn** mean R²=-0.032 (n=64 folds)
 
 ## Training diagnostics
 

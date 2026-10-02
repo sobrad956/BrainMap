@@ -1,9 +1,9 @@
 {
   "session_loso": {
     "n_folds": 1,
-    "note": "left-out session e56541a5 of CSH_ZAD_026",
+    "note": "left-out session cef05f87 of PL033",
     "fold_ids": [
-      "e56541a5"
+      "cef05f87"
     ]
   }
 }

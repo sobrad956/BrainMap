@@ -1,7 +1,7 @@
 {
   "job": 391,
   "tag": "paw_vx_session_loso_4aa1d525_attn",
-  "slurm_job_id": "402729",
+  "slurm_job_id": "405214",
   "slurm_array_task_id": "391",
   "task": "session_loso",
   "pool": "attn",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 26,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:06:37.059365+00:00"
+  "updated_at": "2026-09-30T22:34:41.295724+00:00"
 }

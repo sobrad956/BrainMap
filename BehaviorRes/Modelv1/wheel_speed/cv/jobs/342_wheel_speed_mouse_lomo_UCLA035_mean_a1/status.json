@@ -1,7 +1,7 @@
 {
   "job": 342,
   "tag": "wheel_speed_mouse_lomo_UCLA035_mean_a1",
-  "slurm_job_id": "402616",
+  "slurm_job_id": "405138",
   "slurm_array_task_id": "342",
   "task": "mouse_lomo",
   "pool": "mean",
@@ -14,5 +14,5 @@
   "n_rows": 1,
   "best_epoch": 9,
   "device": "cuda",
-  "updated_at": "2026-09-30T21:01:55.087120+00:00"
+  "updated_at": "2026-09-30T22:33:01.526256+00:00"
 }
