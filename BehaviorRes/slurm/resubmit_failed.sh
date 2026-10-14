@@ -5,6 +5,8 @@
 #   bash slurm/resubmit_failed.sh 403918 403919
 #   bash slurm/resubmit_failed.sh --dry-run 403919
 #   bash slurm/resubmit_failed.sh --cpu 403919
+#   bash slurm/resubmit_failed.sh --protocol cv --temporal lstm --double --log1p
+#   bash slurm/resubmit_failed.sh --script modelv1clusters.py
 #
 # Pulls FAILED array tasks from sacct, reads BEH_ARRAY_OFFSET from the
 # original .out log, and sbatch's only those local task IDs.
@@ -15,13 +17,16 @@ cd "$ROOT"
 
 SCRIPT="Modelv1.py"
 PROTOCOL="cv"
+TEMPORAL="gru"
+DOUBLE=0
+LOG1P=0
 DEVICE="auto"
 SBATCH_GPU=(--gpus=1)
 DRY=0
 LOOKBACK="-14days"
 
 usage() {
-  echo "usage: bash slurm/resubmit_failed.sh [--dry-run] [--cpu] [--protocol cv] [array_jobid ...]" >&2
+  echo "usage: bash slurm/resubmit_failed.sh [--dry-run] [--cpu] [--protocol cv] [--temporal gru|lstm|transformer] [--double] [--log1p] [array_jobid ...]" >&2
   exit 1
 }
 
@@ -30,6 +35,9 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY=1; shift ;;
     --cpu) DEVICE="cpu"; SBATCH_GPU=(); shift ;;
     --protocol) PROTOCOL="$2"; shift 2 ;;
+    --temporal) TEMPORAL="$2"; shift 2 ;;
+    --double) DOUBLE=1; shift ;;
+    --log1p) LOG1P=1; shift ;;
     --script) SCRIPT="$2"; shift 2 ;;
     -h|--help) usage ;;
     --*) usage ;;
@@ -61,7 +69,7 @@ fi
 
 JOB_EXPORT="ALL,BEH_SCRIPT=${SCRIPT},BEH_DEVICE=${DEVICE},BEH_ROOT=${ROOT}"
 if [[ "$SCRIPT" == "Modelv1.py" ]]; then
-  JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL}"
+  JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL},BEH_TEMPORAL=${TEMPORAL},BEH_DOUBLE=${DOUBLE},BEH_LOG1P=${LOG1P}"
 fi
 
 offset_from_log() {

@@ -1,6 +1,11 @@
 """Formulation A set encoder on ModelDataRightContra (motor cortex only).
 
-Shared per-unit MLP + masked mean or attention pool + causal GRU.
+Shared per-unit MLP + masked mean or attention pool + causal temporal model.
+Default temporal backbone is a GRU (`--temporal gru`). `--temporal lstm` and
+`--temporal transformer` swap in an LSTM or a causal Transformer. `--double`
+adds one extra encoder MLP layer and one extra temporal layer. `--log1p`
+trains on log1p(clip(y, 0)) with a softplus head, decoded back with expm1.
+
 Neuron index is never a feature.
 
 Paw vx/vy/vz/speed are the right paw that turns the wheel (`used_paw` ==
@@ -33,6 +38,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from sklearn.metrics import mean_absolute_error, r2_score
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.utils.data import DataLoader, Dataset
@@ -64,6 +70,52 @@ DROPOUT = 0.1
 UNIT_DROPOUT = 0.15
 
 POOLS = ("mean", "attn")
+TEMPORALS = ("gru", "lstm", "transformer")
+N_HEADS = 4
+SIGNED_TARGETS = ("paw_vx", "paw_vy", "paw_vz")
+
+
+def variant_tag(temporal="gru", double=False, log1p=False):
+    """Cache / filename extras. Empty for the original GRU setup."""
+    parts = []
+    t = (temporal or "gru").lower()
+    if t != "gru":
+        parts.append(t)
+    if double:
+        parts.append("double")
+    if log1p:
+        parts.append("log1p")
+    return "_".join(parts)
+
+
+def file_suffix(use_anatomy=True, temporal="gru", double=False, log1p=False):
+    suffix = "" if use_anatomy else "_a1"
+    vt = variant_tag(temporal, double, log1p)
+    if vt:
+        suffix = f"{suffix}_{vt}" if suffix else f"_{vt}"
+    return suffix
+
+
+def invert_target(arr, log1p=False):
+    arr = np.asarray(arr, dtype=np.float32)
+    if not log1p:
+        return arr
+    return np.expm1(arr).astype(np.float32)
+
+
+def _as_flag(val, default=False):
+    if val is None or (isinstance(val, float) and np.isnan(val)):
+        return bool(default)
+    if isinstance(val, (bool, np.bool_)):
+        return bool(val)
+    s = str(val).strip().lower()
+    if s in ("1", "true", "yes", "y"):
+        return True
+    if s in ("0", "false", "no", "n", ""):
+        return False
+    return bool(default)
+
+
 FIXED_TASKS = ("trial_holdout", "session_holdout", "mouse_holdout")
 CV_TASKS = ("trial_repeat", "trial_extrapolation", "session_loso", "mouse_lomo")
 TASKS = FIXED_TASKS
@@ -117,36 +169,58 @@ def device_of():
     return slurm_utils.device_of()
 
 
-def job_grid(protocol="fixed", trials=None, n_trial_repeats=N_TRIAL_REPEATS):
+def job_grid(
+    protocol="fixed",
+    trials=None,
+    n_trial_repeats=N_TRIAL_REPEATS,
+    temporal="gru",
+    double=False,
+    log1p=False,
+):
     protocol = protocol or "fixed"
+    temporal = (temporal or "gru").lower()
     if protocol == "all":
-        return job_grid("fixed", trials, n_trial_repeats) + job_grid("cv", trials, n_trial_repeats)
+        return job_grid(
+            "fixed", trials, n_trial_repeats, temporal, double, log1p
+        ) + job_grid("cv", trials, n_trial_repeats, temporal, double, log1p)
     if protocol == "fixed":
-        return [
+        configs = [
             {"protocol": "fixed", "target": beh, "task": t, "pool": p, "ablation": a, "fold": 0}
             for beh in TARGETS
             for a in ("none", "a1")
             for t in FIXED_TASKS
             for p in POOLS
         ]
-    if trials is None:
-        trials, _ = load_corpus()
-    folds = cv_folds(trials, n_trial_repeats=n_trial_repeats)
-    return [
-        {
-            "protocol": "cv",
-            "target": beh,
-            "task": spec["task"],
-            "pool": p,
-            "ablation": a,
-            "fold": int(spec["fold"]),
-            "fold_id": spec["fold_id"],
-        }
-        for beh in TARGETS
-        for a in ("none", "a1")
-        for spec in folds
-        for p in POOLS
-    ]
+    else:
+        if trials is None:
+            trials, _ = load_corpus()
+        folds = cv_folds(trials, n_trial_repeats=n_trial_repeats)
+        configs = [
+            {
+                "protocol": "cv",
+                "target": beh,
+                "task": spec["task"],
+                "pool": p,
+                "ablation": a,
+                "fold": int(spec["fold"]),
+                "fold_id": spec["fold_id"],
+            }
+            for beh in TARGETS
+            for a in ("none", "a1")
+            for spec in folds
+            for p in POOLS
+        ]
+    extras = {}
+    if temporal != "gru":
+        extras["temporal"] = temporal
+    if double:
+        extras["double"] = True
+    if log1p:
+        extras["log1p"] = True
+    if extras:
+        for cfg in configs:
+            cfg.update(extras)
+    return configs
 
 
 def configure_out(target, protocol="fixed"):
@@ -190,10 +264,16 @@ def trial_behaviors(rec):
     }
 
 
-def set_target(trials, name):
-    """Bind one behavior as trial['y'] with shape (T, 1). Keeps time alignment."""
+def set_target(trials, name, log1p=False):
+    """Bind one behavior as trial['y'] with shape (T, 1). Keeps time alignment.
+
+    With log1p=True, train on log1p(clip(y, 0)). Validity still follows the
+    original finite bins. Signed traces (vx/vy/vz) are rectified at 0.
+    """
     if name not in TARGETS:
         raise ValueError(name)
+    if log1p and name in SIGNED_TARGETS:
+        log(f"log1p clips {name} at 0 (negative velocities become 0 before log1p)")
     for t in trials:
         raw = np.asarray(t["behaviors"][name], dtype=np.float32).reshape(-1)
         n = int(t["spikes"].shape[0])
@@ -201,9 +281,12 @@ def set_target(trials, name):
         m = min(n, raw.size)
         if m:
             y[:m] = raw[:m]
-        t["y"] = y.reshape(-1, 1)
         t["y_valid"] = np.isfinite(y)
+        if log1p:
+            y = np.log1p(np.clip(y, 0.0, None))
+        t["y"] = y.reshape(-1, 1)
         t["target"] = name
+        t["log1p"] = bool(log1p)
     return trials
 
 
@@ -761,9 +844,10 @@ class UnitEncoder(nn.Module):
     """φ_θ([x_nt, r̃_n, u_n]) shared across units and recordings.
 
     Control A1 drops CCF xyz and the region embedding: φ_θ([x_nt, u_n]).
+    `--double` adds one extra Linear+GELU block after the original MLP.
     """
 
-    def __init__(self, n_areas, d=D_MODEL, area_dim=AREA_DIM, use_anatomy=True):
+    def __init__(self, n_areas, d=D_MODEL, area_dim=AREA_DIM, use_anatomy=True, extra_layer=False):
         super().__init__()
         self.use_anatomy = use_anatomy
         if use_anatomy:
@@ -772,11 +856,10 @@ class UnitEncoder(nn.Module):
         else:
             self.area_emb = None
             in_dim = 1 + 1
-        self.mlp = nn.Sequential(
-            nn.Linear(in_dim, d),
-            nn.GELU(),
-            nn.Linear(d, d),
-        )
+        layers = [nn.Linear(in_dim, d), nn.GELU(), nn.Linear(d, d)]
+        if extra_layer:
+            layers.extend([nn.GELU(), nn.Linear(d, d)])
+        self.mlp = nn.Sequential(*layers)
 
     def forward(self, x, xyz, area, rate, mask_n):
         # x: (B, N, T)
@@ -820,36 +903,159 @@ class AttnPool(nn.Module):
 
 
 class Head(nn.Module):
-    def __init__(self, d, p=DROPOUT, n_out=N_OUT):
+    def __init__(self, d, p=DROPOUT, n_out=N_OUT, log1p=False):
         super().__init__()
         self.n_out = n_out
+        self.log1p = bool(log1p)
         self.net = nn.Sequential(nn.Dropout(p), nn.Linear(d, d), nn.GELU(), nn.Linear(d, n_out))
+        if self.log1p:
+            self.register_buffer("y_mean", torch.zeros(1, 1, n_out))
+            self.register_buffer("y_std", torch.ones(1, 1, n_out))
+
+    def set_scaler(self, y_mean, y_std):
+        if not self.log1p:
+            return
+        mean = torch.as_tensor(y_mean, dtype=torch.float32).reshape(1, 1, -1)
+        std = torch.as_tensor(y_std, dtype=torch.float32).reshape(1, 1, -1).clamp(min=1e-6)
+        self.y_mean = mean
+        self.y_std = std
 
     def forward(self, h):
-        return self.net(h)
+        z = self.net(h)
+        if not self.log1p:
+            return z
+        log_y = F.softplus(z * self.y_std + self.y_mean)
+        return (log_y - self.y_mean) / self.y_std
 
 
-class SetGRU(nn.Module):
-    def __init__(self, n_areas, pool="mean", use_anatomy=True):
+class SinusoidalPositionalEncoding(nn.Module):
+    def __init__(self, d, max_len=MAX_BINS + 16, dropout=DROPOUT):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        pe = torch.zeros(max_len, d)
+        pos = torch.arange(max_len, dtype=torch.float32).unsqueeze(1)
+        div = torch.exp(torch.arange(0, d, 2, dtype=torch.float32) * (-math.log(10000.0) / d))
+        pe[:, 0::2] = torch.sin(pos * div)
+        pe[:, 1::2] = torch.cos(pos * div)
+        self.register_buffer("pe", pe.unsqueeze(0))
+
+    def forward(self, x):
+        return self.dropout(x + self.pe[:, : x.size(1)])
+
+
+class CausalTransformer(nn.Module):
+    """Causal Transformer over the pooled (B, T, D) sequence."""
+
+    def __init__(self, d=D_MODEL, n_layers=1, nhead=N_HEADS, dropout=DROPOUT):
+        super().__init__()
+        self.pos = SinusoidalPositionalEncoding(d, dropout=dropout)
+        layer = nn.TransformerEncoderLayer(
+            d_model=d,
+            nhead=nhead,
+            dim_feedforward=4 * d,
+            dropout=dropout,
+            activation="gelu",
+            batch_first=True,
+        )
+        try:
+            self.enc = nn.TransformerEncoder(
+                layer, num_layers=n_layers, enable_nested_tensor=False
+            )
+        except TypeError:
+            self.enc = nn.TransformerEncoder(layer, num_layers=n_layers)
+
+    def forward(self, h, mask_t):
+        t_len = h.size(1)
+        causal = torch.zeros(t_len, t_len, device=h.device, dtype=h.dtype)
+        tri = torch.triu(torch.ones(t_len, t_len, device=h.device, dtype=torch.bool), diagonal=1)
+        causal = causal.masked_fill(tri, float("-inf"))
+        pad = ~mask_t.bool()
+        out = self.enc(self.pos(h), mask=causal, src_key_padding_mask=pad)
+        return out * mask_t.unsqueeze(-1).to(out.dtype)
+
+
+class SetSequence(nn.Module):
+    """Set encoder + causal temporal model (GRU, LSTM, or Transformer)."""
+
+    def __init__(
+        self,
+        n_areas,
+        pool="mean",
+        use_anatomy=True,
+        temporal="gru",
+        double=False,
+        log1p=False,
+    ):
         super().__init__()
         self.pool_name = pool
         self.use_anatomy = use_anatomy
-        self.enc = UnitEncoder(n_areas, use_anatomy=use_anatomy)
+        self.temporal = (temporal or "gru").lower()
+        if self.temporal not in TEMPORALS:
+            raise ValueError(f"unknown temporal {temporal!r}; choose from {TEMPORALS}")
+        self.double = bool(double)
+        self.log1p = bool(log1p)
+        n_layers = 2 if self.double else 1
+        self.enc = UnitEncoder(n_areas, use_anatomy=use_anatomy, extra_layer=self.double)
         self.pool = MeanPool(D_MODEL) if pool == "mean" else AttnPool(D_MODEL)
-        self.rnn = nn.GRU(D_MODEL, RNN_HIDDEN, num_layers=1, batch_first=True)
-        self.head = Head(RNN_HIDDEN)
+        rnn_drop = DROPOUT if n_layers > 1 else 0.0
+        if self.temporal == "lstm":
+            self.rnn = nn.LSTM(
+                D_MODEL, RNN_HIDDEN, num_layers=n_layers, batch_first=True, dropout=rnn_drop
+            )
+            self.head_dim = RNN_HIDDEN
+            self.use_pack = True
+        elif self.temporal == "transformer":
+            self.rnn = CausalTransformer(D_MODEL, n_layers=n_layers)
+            self.head_dim = D_MODEL
+            self.use_pack = False
+        else:
+            self.rnn = nn.GRU(
+                D_MODEL, RNN_HIDDEN, num_layers=n_layers, batch_first=True, dropout=rnn_drop
+            )
+            self.head_dim = RNN_HIDDEN
+            self.use_pack = True
+        self.head = Head(self.head_dim, log1p=self.log1p)
 
     def forward(self, x, xyz, area, rate, mask_n, mask_t, lengths, unit_drop=0.0):
         if self.training and unit_drop > 0:
             mask_n = apply_unit_dropout(mask_n, unit_drop)
         e = self.enc(x, xyz, area, rate, mask_n)
         h = self.pool(e, mask_n) * mask_t.unsqueeze(-1)
-        packed = pack_padded_sequence(
-            h, lengths.cpu(), batch_first=True, enforce_sorted=False
-        )
-        out, _ = self.rnn(packed)
-        out, _ = pad_packed_sequence(out, batch_first=True, total_length=x.shape[-1])
+        if self.use_pack:
+            packed = pack_padded_sequence(
+                h, lengths.cpu(), batch_first=True, enforce_sorted=False
+            )
+            out, _ = self.rnn(packed)
+            out, _ = pad_packed_sequence(out, batch_first=True, total_length=x.shape[-1])
+        else:
+            out = self.rnn(h, mask_t)
         return self.head(out)
+
+
+SetGRU = SetSequence
+
+
+def build_model(
+    n_areas,
+    pool="mean",
+    use_anatomy=True,
+    temporal="gru",
+    double=False,
+    log1p=False,
+    y_mean=None,
+    y_std=None,
+):
+    model = SetSequence(
+        n_areas,
+        pool=pool,
+        use_anatomy=use_anatomy,
+        temporal=temporal,
+        double=double,
+        log1p=log1p,
+    )
+    if log1p and y_mean is not None and y_std is not None:
+        model.head.set_scaler(y_mean, y_std)
+    return model
 
 
 def n_params(model):
@@ -901,16 +1107,18 @@ def run_epoch(model, loader, opt, dev, train=True):
     return total / max(n, 1)
 
 
-def model_tag(pool, use_anatomy=True):
-    return pool if use_anatomy else f"{pool}_a1"
+def model_tag(pool, use_anatomy=True, temporal="gru", double=False, log1p=False):
+    tag = pool if use_anatomy else f"{pool}_a1"
+    vt = variant_tag(temporal, double, log1p)
+    return f"{tag}_{vt}" if vt else tag
 
 
-def cache_dir(task, pool, use_anatomy=True, fold_id=None):
+def cache_dir(task, pool, use_anatomy=True, fold_id=None, temporal="gru", double=False, log1p=False):
     parts = [task]
     if fold_id and str(fold_id) not in ("fixed", "", "0"):
         safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in str(fold_id))
         parts.append(safe)
-    parts.append(model_tag(pool, use_anatomy))
+    parts.append(model_tag(pool, use_anatomy, temporal=temporal, double=double, log1p=log1p))
     d = CACHE.joinpath(*parts)
     d.mkdir(parents=True, exist_ok=True)
     return d
@@ -920,9 +1128,26 @@ def save_json(path, obj):
     Path(path).write_text(json.dumps(obj, indent=2, default=float))
 
 
-def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_anatomy=True, fold_id=None, bin_key=None):
-    tag = model_tag(pool, use_anatomy)
-    cdir = cache_dir(task, pool, use_anatomy, fold_id=fold_id)
+def train_one(
+    pool,
+    trials,
+    train_idx,
+    val_idx,
+    y_mean,
+    y_std,
+    stats,
+    task,
+    use_anatomy=True,
+    fold_id=None,
+    bin_key=None,
+    temporal="gru",
+    double=False,
+    log1p=False,
+):
+    tag = model_tag(pool, use_anatomy, temporal=temporal, double=double, log1p=log1p)
+    cdir = cache_dir(
+        task, pool, use_anatomy, fold_id=fold_id, temporal=temporal, double=double, log1p=log1p
+    )
     ckpt = cdir / "model.pt"
     hist_path = cdir / "history.json"
     if ckpt.exists() and hist_path.exists():
@@ -937,7 +1162,16 @@ def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_
         resume = False
 
     dev = device_of()
-    model = SetGRU(stats["n_areas"], pool=pool, use_anatomy=use_anatomy).to(dev)
+    model = build_model(
+        stats["n_areas"],
+        pool=pool,
+        use_anatomy=use_anatomy,
+        temporal=temporal,
+        double=double,
+        log1p=log1p,
+        y_mean=y_mean,
+        y_std=y_std,
+    ).to(dev)
     extra = "" if use_anatomy else "  Control A1 (no xyz/region)"
     log(f"  {tag} params={n_params(model)}  device={dev}{extra}")
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -956,6 +1190,9 @@ def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_
         "n_params": n_params(model),
         "use_anatomy": bool(use_anatomy),
         "ablation": "none" if use_anatomy else "a1",
+        "temporal": (temporal or "gru").lower(),
+        "double": bool(double),
+        "log1p": bool(log1p),
         "finished": False,
     }
     if resume:
@@ -982,6 +1219,9 @@ def train_one(pool, trials, train_idx, val_idx, y_mean, y_std, stats, task, use_
             "pool": pool,
             "n_areas": stats["n_areas"],
             "use_anatomy": bool(use_anatomy),
+            "temporal": (temporal or "gru").lower(),
+            "double": bool(double),
+            "log1p": bool(log1p),
             "best_val": best_val,
             "stats": {
                 "vocab": stats["vocab"],
@@ -1040,10 +1280,16 @@ def predict(blob, trials, idx, stats):
         "rates": {k: np.asarray(v, dtype=np.float32) for k, v in stats["rates"].items()},
     }
     dev = device_of()
-    model = SetGRU(
+    log1p = bool(blob.get("log1p", False))
+    model = build_model(
         blob["n_areas"],
         pool=blob["pool"],
         use_anatomy=blob.get("use_anatomy", True),
+        temporal=blob.get("temporal", "gru"),
+        double=blob.get("double", False),
+        log1p=log1p,
+        y_mean=blob.get("y_mean"),
+        y_std=blob.get("y_std"),
     ).to(dev)
     model.load_state_dict(blob["state_dict"])
     model.eval()
@@ -1069,6 +1315,8 @@ def predict(blob, trials, idx, stats):
                 T = int(lengths[b])
                 p = pred[b, :T] * blob["y_std"] + blob["y_mean"]
                 y = y_z[b, :T] * blob["y_std"] + blob["y_mean"]
+                p = invert_target(p, log1p=log1p)
+                y = invert_target(y, log1p=log1p)
                 valid = mt[b, :T]
                 p = p.astype(np.float32)
                 y = y.astype(np.float32)
@@ -1305,12 +1553,12 @@ def plot_examples(example_bank, out_dir, suffix=""):
         plt.close(fig)
 
 
-def plot_ablation_compare(out_dir):
+def plot_ablation_compare(out_dir, temporal="gru", double=False, log1p=False):
     """Control A1 vs full Formulation A (same splits, mean and attn pools)."""
-    full_path = out_dir / "scores.csv"
-    a1_path = out_dir / "scores_a1.csv"
+    full_path = out_dir / f"scores{file_suffix(True, temporal, double, log1p)}.csv"
+    a1_path = out_dir / f"scores{file_suffix(False, temporal, double, log1p)}.csv"
     if not full_path.exists() or not a1_path.exists():
-        log("skip a1_vs_full plot (need both scores.csv and scores_a1.csv)")
+        log(f"skip a1_vs_full plot (need both {full_path.name} and {a1_path.name})")
         return
     style_plots()
     full = pd.read_csv(full_path)
@@ -1358,7 +1606,8 @@ def plot_ablation_compare(out_dir):
         ax.legend(frameon=False, fontsize=8)
     fig.suptitle("Control A1: drop CCF xyz and region labels")
     fig.tight_layout()
-    fig.savefig(out_dir / "a1_vs_full.png", dpi=150)
+    vt = variant_tag(temporal, double, log1p)
+    fig.savefig(out_dir / f"a1_vs_full{('_' + vt) if vt else ''}.png", dpi=150)
     plt.close(fig)
 
 
@@ -1374,21 +1623,33 @@ def write_report(splits, rows, histories, session_meta, path, use_anatomy=True):
     lines.append("")
     lines.append("## What this is")
     lines.append("")
+    temporal = str((rows[0].get("temporal") if rows else "gru") or "gru").lower()
+    backbone = {
+        "gru": "causal GRU",
+        "lstm": "causal LSTM",
+        "transformer": "causal Transformer",
+    }.get(temporal, f"causal {temporal}")
+    extra_arch = []
+    if rows and _as_flag(rows[0].get("double"), False):
+        extra_arch.append("Double depth (extra encoder layer + extra temporal layer)")
+    if rows and _as_flag(rows[0].get("log1p"), False):
+        extra_arch.append("log1p(clip(y, 0)) target with a softplus head (decoded by expm1)")
+    arch_note = ("; " + "; ".join(extra_arch)) if extra_arch else ""
     if use_anatomy:
         lines.append(
             "Formulation A from the neural-decoding framework: a shared per-unit encoder "
             "φ_θ([log1p count, CCF xyz, region embedding, session mean log-rate]), "
-            "permutation-invariant pooling, then a causal GRU and a 1-d head for one "
+            f"permutation-invariant pooling, then a {backbone} and a 1-d head for one "
             f"behavior ({TARGET_LABELS.get(rows[0]['target'], 'target') if rows else 'behavior'}). "
-            "Only MOp/MOs units are used. Column *n* is not a global neuron identity."
+            f"Only MOp/MOs units are used. Column *n* is not a global neuron identity.{arch_note}"
         )
     else:
         lines.append(
             "Control A1 from the neural-decoding framework (PDF §6.12.1): the same set "
-            "encoder, pooling, causal GRU, and 1-d behavior head as Formulation A, but the "
+            f"encoder, pooling, {backbone}, and 1-d behavior head as Formulation A, but the "
             "per-unit encoder is φ_θ([log1p count, session mean log-rate]). CCF xyz and "
-        "Allen-region embeddings are removed. This tests whether the direct set model "
-        "learns a useful cross-recording representation from activity alone."
+            "Allen-region embeddings are removed. This tests whether the direct set model "
+            f"learns a useful cross-recording representation from activity alone.{arch_note}"
         )
     lines.append("")
     n_mot = [s["n_motor"] for s in (session_meta or []) if s.get("n_motor", 0) >= MIN_UNITS]
@@ -1597,11 +1858,17 @@ def process(
     protocol="fixed",
     fold=None,
     n_trial_repeats=N_TRIAL_REPEATS,
+    temporal="gru",
+    double=False,
+    log1p=False,
 ):
     warnings.filterwarnings("ignore")
     set_seed(SEED)
     use_anatomy = ablation != "a1"
-    suffix = "" if use_anatomy else "_a1"
+    temporal = (temporal or "gru").lower()
+    double = bool(double)
+    log1p = bool(log1p)
+    suffix = file_suffix(use_anatomy, temporal, double, log1p)
     protocol = protocol or "fixed"
     configure_out(target, protocol)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -1611,9 +1878,13 @@ def process(
         log("Formulation A (full anatomical metadata)")
     else:
         log("Control A1: encoder is φ_θ([log1p count, session mean log-rate]); no xyz/region")
+    log(
+        f"temporal={temporal}  double={int(double)}  log1p={int(log1p)}"
+        + ("  (original GRU)" if temporal == "gru" and not double and not log1p else "")
+    )
     if trials is None or session_meta is None:
         trials, session_meta = load_corpus()
-    set_target(trials, target)
+    set_target(trials, target, log1p=log1p)
     specs = _fold_specs(trials, protocol, tuple(tasks), n_trial_repeats, fold=fold)
     compact = {}
     for spec in specs:
@@ -1698,7 +1969,7 @@ def process(
         preds_by_pool = {}
         for pool in pools:
             log(f"-- {task} / {fold_id} / {pool}" + ("" if use_anatomy else " / A1"))
-            tag = f"{target}_{task}_{fold_id}_{model_tag(pool, use_anatomy)}"
+            tag = f"{target}_{task}_{fold_id}_{model_tag(pool, use_anatomy, temporal, double, log1p)}"
             idx = job_index if job_index is not None else n_job
             jdir = slurm_utils.begin_job(
                 OUT,
@@ -1711,6 +1982,9 @@ def process(
                 protocol=protocol,
                 fold=fold_i,
                 fold_id=fold_id,
+                temporal=temporal,
+                double=double,
+                log1p=log1p,
             )
             blob, hist = train_one(
                 pool,
@@ -1724,6 +1998,9 @@ def process(
                 use_anatomy=use_anatomy,
                 fold_id=None if protocol == "fixed" else fold_id,
                 bin_key="train_bins" if bin_mode else None,
+                temporal=temporal,
+                double=double,
+                log1p=log1p,
             )
             histories.setdefault(task, {})[pool] = hist
             recs = predict(blob, trials, test_idx, blob.get("stats", stats))
@@ -1742,6 +2019,9 @@ def process(
                     "fold": fold_i,
                     "fold_id": fold_id,
                     "bin_mode": bin_mode or "",
+                    "temporal": temporal,
+                    "double": double,
+                    "log1p": log1p,
                     **sc,
                 }
                 rows.append(row)
@@ -1779,7 +2059,7 @@ def process(
         )
         save_json(OUT / f"scores{suffix}.json", rows)
         if not use_anatomy:
-            plot_ablation_compare(OUT)
+            plot_ablation_compare(OUT, temporal=temporal, double=double, log1p=log1p)
         log("wrote " + str(OUT))
         print(pd.DataFrame(rows).to_string(index=False))
     else:
@@ -1789,7 +2069,28 @@ def process(
     return rows
 
 
-def _aggregate_dir(d):
+def _filter_variant(df, temporal="gru", double=False, log1p=False):
+    temporal = (temporal or "gru").lower()
+    out = df
+    if "temporal" in out.columns:
+        tcol = out["temporal"].fillna("gru").astype(str).str.lower()
+        out = out.loc[tcol == temporal]
+    elif temporal != "gru":
+        return out.iloc[0:0]
+    if "double" in out.columns:
+        dcol = out["double"].map(lambda x: _as_flag(x, False))
+        out = out.loc[dcol == bool(double)]
+    elif double:
+        return out.iloc[0:0]
+    if "log1p" in out.columns:
+        lcol = out["log1p"].map(lambda x: _as_flag(x, False))
+        out = out.loc[lcol == bool(log1p)]
+    elif log1p:
+        return out.iloc[0:0]
+    return out
+
+
+def _aggregate_dir(d, temporal="gru", double=False, log1p=False):
     jobs = d / "jobs"
     if not jobs.exists():
         return
@@ -1798,9 +2099,20 @@ def _aggregate_dir(d):
         log(f"no per-job scores under {jobs}")
         return
     df = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
+    df = _filter_variant(df, temporal=temporal, double=double, log1p=log1p)
+    if df.empty:
+        log(
+            f"no scores in {jobs} for temporal={temporal or 'gru'} "
+            f"double={int(bool(double))} log1p={int(bool(log1p))}"
+        )
+        return
     is_cv = "task" in df.columns and df["task"].isin(list(CV_TASKS)).any()
     wrote_both = True
-    for ablation, dest in (("none", "scores.csv"), ("a1", "scores_a1.csv")):
+    dests = {
+        "none": f"scores{file_suffix(True, temporal, double, log1p)}.csv",
+        "a1": f"scores{file_suffix(False, temporal, double, log1p)}.csv",
+    }
+    for ablation, dest in dests.items():
         if "ablation" in df.columns:
             sub = df[df["ablation"] == ablation].copy()
         else:
@@ -1811,7 +2123,7 @@ def _aggregate_dir(d):
         sub.to_csv(d / dest, index=False)
         log(f"wrote {d / dest}  ({len(sub)} rows)")
         rows = sub.to_dict(orient="records")
-        suffix = "" if ablation == "none" else "_a1"
+        suffix = file_suffix(ablation == "none", temporal, double, log1p)
         plot_r2_bars(rows, d, suffix=suffix)
         splits = {}
         for task, grp in sub.groupby("task"):
@@ -1835,8 +2147,8 @@ def _aggregate_dir(d):
             d / f"REPORT{suffix}.md",
             use_anatomy=ablation == "none",
         )
-    if wrote_both and (d / "scores.csv").exists() and (d / "scores_a1.csv").exists():
-        plot_ablation_compare(d)
+    if wrote_both and (d / dests["none"]).exists() and (d / dests["a1"]).exists():
+        plot_ablation_compare(d, temporal=temporal, double=double, log1p=log1p)
 
 
 if __name__ == "__main__":
@@ -1863,22 +2175,52 @@ if __name__ == "__main__":
         default=N_TRIAL_REPEATS,
         help="Number of random within-trial bin-interpolation repeats in --protocol cv (default 5).",
     )
+    p.add_argument(
+        "--temporal",
+        choices=list(TEMPORALS),
+        default="gru",
+        help="Causal temporal backbone. gru is the original Modelv1 (default). "
+        "lstm replaces the GRU with an LSTM. transformer uses a causal Transformer "
+        "on the pooled sequence.",
+    )
+    p.add_argument(
+        "--double",
+        action="store_true",
+        help="Add one extra encoder MLP layer and one extra temporal layer "
+        "(GRU/LSTM num_layers=2, or a 2-layer Transformer).",
+    )
+    p.add_argument(
+        "--log1p",
+        action="store_true",
+        help="Train on log1p(clip(y, 0)) with a softplus head; decode with expm1. "
+        "Omit this flag to keep the original identity target.",
+    )
     slurm_utils.add_common_args(p)
     args = p.parse_args()
     protocol = args.protocol
+    temporal = args.temporal
+    double = bool(args.double)
+    log1p = bool(args.log1p)
     default_tasks = list(FIXED_TASKS) if protocol == "fixed" else list(CV_TASKS)
     tasks = tuple(args.tasks) if args.tasks else tuple(default_tasks)
     pools = tuple(args.pools) if args.pools else POOLS
+    grid_kw = dict(
+        protocol=protocol,
+        n_trial_repeats=args.trial_repeats,
+        temporal=temporal,
+        double=double,
+        log1p=log1p,
+    )
     if args.list_jobs:
-        slurm_utils.print_jobs(job_grid(protocol=protocol, n_trial_repeats=args.trial_repeats))
+        slurm_utils.print_jobs(job_grid(**grid_kw))
         raise SystemExit(0)
-    slurm_utils.set_device(args.device)
+    slurm_utils.set_device(args.device, probe=temporal)
     if args.aggregate:
         protocols = ("fixed", "cv") if protocol == "all" else (protocol,)
         for proto in protocols:
             for beh in args.targets:
                 d = MODEL_ROOT / beh if proto == "fixed" else MODEL_ROOT / beh / "cv"
-                _aggregate_dir(d)
+                _aggregate_dir(d, temporal=temporal, double=double, log1p=log1p)
         raise SystemExit(0)
     job = slurm_utils.resolve_job_index(args.job)
     if job is None:
@@ -1898,11 +2240,12 @@ if __name__ == "__main__":
                     session_meta=session_meta,
                     protocol=proto,
                     n_trial_repeats=args.trial_repeats,
+                    temporal=temporal,
+                    double=double,
+                    log1p=log1p,
                 )
     else:
-        cfg = slurm_utils.pick_config(
-            job_grid(protocol=protocol, n_trial_repeats=args.trial_repeats), job
-        )
+        cfg = slurm_utils.pick_config(job_grid(**grid_kw), job)
         process(
             pools=(cfg["pool"],),
             tasks=(cfg["task"],),
@@ -1913,4 +2256,7 @@ if __name__ == "__main__":
             protocol=cfg.get("protocol", protocol),
             fold=cfg.get("fold"),
             n_trial_repeats=args.trial_repeats,
+            temporal=cfg.get("temporal", temporal),
+            double=_as_flag(cfg.get("double", double), double),
+            log1p=_as_flag(cfg.get("log1p", log1p), log1p),
         )

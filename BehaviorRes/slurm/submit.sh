@@ -5,6 +5,10 @@
 #   bash slurm/submit.sh Modelv1.py --cpu
 #   bash slurm/submit.sh Modelv1.py --protocol cv
 #   bash slurm/submit.sh Modelv1.py --protocol cv --cpu
+#   bash slurm/submit.sh Modelv1.py --protocol cv --temporal lstm
+#   bash slurm/submit.sh Modelv1.py --protocol cv --temporal transformer --double --log1p
+#   bash slurm/submit.sh modelv1clusters.py
+#   bash slurm/submit.sh modelv1clusters.py --cpu
 #
 # Extra arguments after the flags above are passed to sbatch.
 #
@@ -12,13 +16,18 @@
 #   python Modelv1.py --aggregate
 # After a cv array:
 #   python Modelv1.py --protocol cv --aggregate
+# After a variant array, pass the same architecture flags:
+#   python Modelv1.py --protocol cv --temporal lstm --aggregate
+#   python Modelv1.py --protocol cv --temporal transformer --double --log1p --aggregate
+# After the cluster experiment:
+#   python modelv1clusters.py --aggregate
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ $# -lt 1 ]]; then
-  echo "usage: bash slurm/submit.sh Modelv1.py [--cpu] [--protocol fixed|cv|all] [sbatch args...]" >&2
+  echo "usage: bash slurm/submit.sh Modelv1.py|modelv1clusters.py [--cpu] [--protocol fixed|cv|all] [--temporal gru|lstm|transformer] [--double] [--log1p] [sbatch args...]" >&2
   exit 1
 fi
 
@@ -27,6 +36,9 @@ shift
 
 DEVICE="auto"
 PROTOCOL="fixed"
+TEMPORAL="gru"
+DOUBLE=0
+LOG1P=0
 SBATCH_GPU=(--gpus=1)
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -38,6 +50,18 @@ while [[ $# -gt 0 ]]; do
     --protocol)
       PROTOCOL="$2"
       shift 2
+      ;;
+    --temporal)
+      TEMPORAL="$2"
+      shift 2
+      ;;
+    --double)
+      DOUBLE=1
+      shift
+      ;;
+    --log1p)
+      LOG1P=1
+      shift
       ;;
     *)
       break
@@ -55,10 +79,21 @@ mkdir -p "$ROOT/slurm/logs"
 LIST_ARGS=()
 JOB_EXPORT="ALL,BEH_SCRIPT=${SCRIPT},BEH_DEVICE=${DEVICE},BEH_ROOT=${ROOT}"
 if [[ "$SCRIPT" == "Modelv1.py" ]]; then
-  LIST_ARGS+=(--protocol "$PROTOCOL")
-  JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL}"
-elif [[ "$PROTOCOL" != "fixed" ]]; then
-  echo "$SCRIPT has no --protocol flag (only Modelv1.py does). got --protocol ${PROTOCOL}" >&2
+  LIST_ARGS+=(--protocol "$PROTOCOL" --temporal "$TEMPORAL")
+  JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL},BEH_TEMPORAL=${TEMPORAL},BEH_DOUBLE=${DOUBLE},BEH_LOG1P=${LOG1P}"
+  if [[ "$DOUBLE" == "1" ]]; then
+    LIST_ARGS+=(--double)
+  fi
+  if [[ "$LOG1P" == "1" ]]; then
+    LIST_ARGS+=(--log1p)
+  fi
+elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
+  if [[ "$PROTOCOL" != "fixed" || "$TEMPORAL" != "gru" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
+    echo "modelv1clusters.py has a fixed GRU+attn A1 grid (loss × sampling × fold). do not pass --protocol/--temporal/--double/--log1p" >&2
+    exit 1
+  fi
+elif [[ "$PROTOCOL" != "fixed" || "$TEMPORAL" != "gru" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
+  echo "$SCRIPT only forwards Modelv1.py architecture flags. got protocol=${PROTOCOL} temporal=${TEMPORAL} double=${DOUBLE} log1p=${LOG1P}" >&2
   exit 1
 fi
 
@@ -71,7 +106,11 @@ if [[ -z "$N" || ! "$N" =~ ^[0-9]+$ || "$N" -lt 1 ]]; then
   exit 1
 fi
 LAST="$((N - 1))"
-echo "submitting $SCRIPT  protocol=${PROTOCOL}  array=0-${LAST}  device=${DEVICE}  ($N configs)"
+if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
+  echo "submitting $SCRIPT  array=0-${LAST}  device=${DEVICE}  ($N configs)"
+else
+  echo "submitting $SCRIPT  protocol=${PROTOCOL}  temporal=${TEMPORAL}  double=${DOUBLE}  log1p=${LOG1P}  array=0-${LAST}  device=${DEVICE}  ($N configs)"
+fi
 printf '%s\n' "$JOB_LIST"
 
 MAX_ARRAY_SIZE=1001

@@ -138,6 +138,13 @@ python Modelv1.py --protocol cv --list-jobs | head
 bash slurm/submit.sh Modelv1.py --protocol cv
 ```
 
+**Modelv1Clusters** (GRU + attention, no anatomy; MSE vs onset/peak L1; uniform vs inverse-frequency sampling). Keep `Modelv1Clusters/atlas_trial_clusters.json` next to the scores. Results go to `Modelv1Clusters/<behavior>/cv/`:
+
+```bash
+python modelv1clusters.py --list-jobs | head
+bash slurm/submit.sh modelv1clusters.py
+```
+
 **Same for the others:**
 
 ```bash
@@ -309,6 +316,7 @@ Merge per-task CSVs into each behavior folder:
 ```bash
 python Modelv1.py --aggregate
 python Modelv1.py --protocol cv --aggregate
+python modelv1clusters.py --aggregate
 python Modelv2.py --aggregate
 python Baselinev1.py --aggregate
 ```

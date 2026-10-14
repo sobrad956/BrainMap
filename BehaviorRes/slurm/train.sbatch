@@ -17,14 +17,24 @@ fi
 SCRIPT="${BEH_SCRIPT:?set BEH_SCRIPT to e.g. Modelv1.py}"
 DEVICE="${BEH_DEVICE:-auto}"
 PROTOCOL="${BEH_PROTOCOL:-fixed}"
+TEMPORAL="${BEH_TEMPORAL:-gru}"
+DOUBLE="${BEH_DOUBLE:-0}"
+LOG1P="${BEH_LOG1P:-0}"
 EXTRA=()
 if [[ "$SCRIPT" == "Modelv1.py" ]]; then
-  EXTRA+=(--protocol "$PROTOCOL")
+  EXTRA+=(--protocol "$PROTOCOL" --temporal "$TEMPORAL")
+  if [[ "$DOUBLE" == "1" ]]; then
+    EXTRA+=(--double)
+  fi
+  if [[ "$LOG1P" == "1" ]]; then
+    EXTRA+=(--log1p)
+  fi
 fi
+# modelv1clusters.py: grid is --job only (GRU + attn, Control A1).
 
 OFFSET="${BEH_ARRAY_OFFSET:-0}"
 GLOBAL_JOB_ID=$((SLURM_ARRAY_TASK_ID + OFFSET))
 
-echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  local_job=${SLURM_ARRAY_TASK_ID}  global_job=${GLOBAL_JOB_ID}  offset=${OFFSET}  device=$DEVICE  protocol=$PROTOCOL"
+echo "host=$(hostname)  cwd=$(pwd)  cuda=${CUDA_VISIBLE_DEVICES:-}  script=$SCRIPT  local_job=${SLURM_ARRAY_TASK_ID}  global_job=${GLOBAL_JOB_ID}  offset=${OFFSET}  device=$DEVICE  protocol=$PROTOCOL  temporal=$TEMPORAL  double=$DOUBLE  log1p=$LOG1P"
 python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())" || true
 python "$SCRIPT" --job "${GLOBAL_JOB_ID}" --device "$DEVICE" "${EXTRA[@]}"

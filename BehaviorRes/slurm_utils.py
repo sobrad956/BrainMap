@@ -20,13 +20,14 @@ _STATUS_DIR = None
 _META = {}
 
 
-def _cuda_usable():
-    """True when this GPU can run a tiny GRU.
+def _cuda_usable(probe="gru"):
+    """True when this GPU can run a tiny probe of the requested backbone.
 
     Newer iLab cards (Blackwell etc.) show up in nvidia-smi but the installed
-    Torch/cuDNN build has no RNN kernel image. GRU.to('cuda') then dies in
+    Torch/cuDNN build has no RNN kernel image. GRU/LSTM then die in
     flatten_parameters. Disabling cuDNN uses generic CUDA kernels; if those
-    also fail, the caller should fall back to CPU.
+    also fail, the caller should fall back to CPU. Transformer probes skip the
+    RNN kernels so they can still use CUDA on those cards.
     """
     import torch
 
@@ -34,19 +35,34 @@ def _cuda_usable():
         return False
     torch.backends.cudnn.enabled = False
     torch.backends.cudnn.benchmark = False
+    probe = (probe or "gru").lower()
     try:
         x = torch.zeros(1, device="cuda")
-        rnn = torch.nn.GRU(8, 8, batch_first=True).to("cuda")
-        y, _ = rnn(torch.zeros(2, 4, 8, device="cuda"))
+        seq = torch.zeros(2, 4, 8, device="cuda")
+        if probe == "transformer":
+            layer = torch.nn.TransformerEncoderLayer(
+                d_model=8, nhead=2, dim_feedforward=16, batch_first=True
+            )
+            enc = torch.nn.TransformerEncoder(layer, num_layers=1).to("cuda")
+            y = enc(seq)
+            del enc, layer, y
+        elif probe == "lstm":
+            rnn = torch.nn.LSTM(8, 8, batch_first=True).to("cuda")
+            y, _ = rnn(seq)
+            del rnn, y
+        else:
+            rnn = torch.nn.GRU(8, 8, batch_first=True).to("cuda")
+            y, _ = rnn(seq)
+            del rnn, y
         torch.cuda.synchronize()
-        del x, rnn, y
+        del x, seq
         return True
     except RuntimeError as exc:
-        print(f"[slurm_utils] CUDA not usable for GRU ({exc}); will use CPU", flush=True)
+        print(f"[slurm_utils] CUDA not usable for {probe} ({exc}); will use CPU", flush=True)
         return False
 
 
-def resolve_device(name="auto"):
+def resolve_device(name="auto", probe="gru"):
     import torch
 
     name = (name or "auto").lower()
@@ -55,8 +71,11 @@ def resolve_device(name="auto"):
     if name == "cuda":
         if not torch.cuda.is_available():
             raise SystemExit("CUDA requested but torch.cuda.is_available() is False")
-        if not _cuda_usable():
-            print("[slurm_utils] --device cuda requested but GRU cannot run; using CPU", flush=True)
+        if not _cuda_usable(probe):
+            print(
+                f"[slurm_utils] --device cuda requested but {probe} cannot run; using CPU",
+                flush=True,
+            )
             return torch.device("cpu")
         return torch.device("cuda")
     if name == "mps":
@@ -65,16 +84,16 @@ def resolve_device(name="auto"):
         return torch.device("mps")
     if name != "auto":
         raise SystemExit(f"unknown device {name!r}; use auto, cpu, cuda, or mps")
-    if _cuda_usable():
+    if _cuda_usable(probe):
         return torch.device("cuda")
     if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
 
 
-def set_device(name="auto"):
+def set_device(name="auto", probe="gru"):
     global _DEVICE
-    _DEVICE = resolve_device(name)
+    _DEVICE = resolve_device(name, probe=probe)
     return _DEVICE
 
 
