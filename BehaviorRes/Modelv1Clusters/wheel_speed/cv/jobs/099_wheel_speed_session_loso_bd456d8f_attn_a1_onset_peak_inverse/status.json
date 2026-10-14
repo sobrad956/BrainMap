@@ -1,0 +1,20 @@
+{
+  "job": 99,
+  "tag": "wheel_speed_session_loso_bd456d8f_attn_a1_onset_peak_inverse",
+  "slurm_job_id": "504656",
+  "slurm_array_task_id": "99",
+  "task": "session_loso",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 23,
+  "fold_id": "bd456d8f",
+  "loss": "onset_peak",
+  "sampling": "inverse",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 4,
+  "device": "cuda",
+  "updated_at": "2026-10-14T15:20:50.501817+00:00"
+}

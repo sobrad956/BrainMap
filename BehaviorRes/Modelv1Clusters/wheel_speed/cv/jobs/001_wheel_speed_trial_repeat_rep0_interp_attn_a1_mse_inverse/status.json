@@ -1,0 +1,20 @@
+{
+  "job": 1,
+  "tag": "wheel_speed_trial_repeat_rep0_interp_attn_a1_mse_inverse",
+  "slurm_job_id": "503774",
+  "slurm_array_task_id": "1",
+  "task": "trial_repeat",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 0,
+  "fold_id": "rep0_interp",
+  "loss": "mse",
+  "sampling": "inverse",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 6,
+  "device": "cuda",
+  "updated_at": "2026-10-14T14:28:02.705656+00:00"
+}

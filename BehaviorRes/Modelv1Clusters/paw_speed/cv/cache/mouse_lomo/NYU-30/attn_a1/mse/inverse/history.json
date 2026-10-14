@@ -1,0 +1,35 @@
+{
+  "train": [
+    0.8214549072967404
+  ],
+  "val": [
+    0.9605742063637412
+  ],
+  "train_mse": [
+    0.8214549072967404
+  ],
+  "val_mse": [
+    0.9605742063637412
+  ],
+  "train_onset": [
+    0.0
+  ],
+  "val_onset": [
+    0.0
+  ],
+  "train_peak": [
+    0.0
+  ],
+  "val_peak": [
+    0.0
+  ],
+  "best_epoch": 1,
+  "n_params": 37761,
+  "use_anatomy": false,
+  "ablation": "a1",
+  "loss": "mse",
+  "sampling": "inverse",
+  "temporal": "gru",
+  "finished": false,
+  "bad": 0
+}

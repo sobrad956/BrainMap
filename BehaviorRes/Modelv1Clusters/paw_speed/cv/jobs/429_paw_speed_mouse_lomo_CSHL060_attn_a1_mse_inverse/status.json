@@ -1,0 +1,20 @@
+{
+  "job": 429,
+  "tag": "paw_speed_mouse_lomo_CSHL060_attn_a1_mse_inverse",
+  "slurm_job_id": "507830",
+  "slurm_array_task_id": "429",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 3,
+  "fold_id": "CSHL060",
+  "loss": "mse",
+  "sampling": "inverse",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 13,
+  "device": "cuda",
+  "updated_at": "2026-10-14T19:50:40.669724+00:00"
+}

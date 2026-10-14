@@ -1,0 +1,20 @@
+{
+  "job": 231,
+  "tag": "wheel_speed_mouse_lomo_UCLA033_attn_a1_onset_peak_inverse",
+  "slurm_job_id": "505551",
+  "slurm_array_task_id": "231",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 21,
+  "fold_id": "UCLA033",
+  "loss": "onset_peak",
+  "sampling": "inverse",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 6,
+  "device": "cuda",
+  "updated_at": "2026-10-14T16:54:14.131923+00:00"
+}

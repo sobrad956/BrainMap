@@ -1,0 +1,2 @@
+protocol,task,pool,target,ablation,loss,sampling,fold,fold_id,bin_mode,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials
+cv,mouse_lomo,attn,wheel_speed,a1,onset_peak,inverse,16,NYU-48,,0.3256792707950067,0.8799772262573242,0.56504887342453,0.5805122397402861,7360,0.2986238654527223,0.34373209006641225,353
