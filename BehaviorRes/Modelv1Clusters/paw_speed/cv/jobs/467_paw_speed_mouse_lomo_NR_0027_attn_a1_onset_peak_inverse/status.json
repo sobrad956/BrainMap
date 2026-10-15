@@ -12,13 +12,9 @@
   "fold_id": "NR_0027",
   "loss": "onset_peak",
   "sampling": "inverse",
-  "state": "training",
-  "epoch": 14,
-  "train": 1.0582133814247263,
-  "val": 1.1018487759258435,
-  "best_epoch": 13,
-  "best_val": 1.0834114879184629,
-  "n_params": 37761,
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 25,
   "device": "cuda",
-  "updated_at": "2026-10-14T20:34:49.703325+00:00"
+  "updated_at": "2026-10-14T20:39:26.179819+00:00"
 }

@@ -1,0 +1,20 @@
+{
+  "job": 539,
+  "tag": "paw_speed_mouse_lomo_ZM_2241_attn_a1_onset_peak_inverse",
+  "slurm_job_id": "508852",
+  "slurm_array_task_id": "539",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 30,
+  "fold_id": "ZM_2241",
+  "loss": "onset_peak",
+  "sampling": "inverse",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 18,
+  "device": "cuda",
+  "updated_at": "2026-10-14T21:37:09.941407+00:00"
+}

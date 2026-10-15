@@ -12,13 +12,9 @@
   "fold_id": "NYU-21",
   "loss": "onset_peak",
   "sampling": "uniform",
-  "state": "training",
-  "epoch": 11,
-  "train": 0.9817030056403764,
-  "val": 0.9946706433880528,
-  "best_epoch": 10,
-  "best_val": 0.9871265146988423,
-  "n_params": 37761,
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 15,
   "device": "cuda",
-  "updated_at": "2026-10-14T20:34:53.239714+00:00"
+  "updated_at": "2026-10-14T20:36:58.507095+00:00"
 }
