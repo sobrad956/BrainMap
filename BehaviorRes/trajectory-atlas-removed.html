@@ -68,14 +68,14 @@ svg.heat { width: 100%; height: auto; display: block; }
   <p class="cap">Pinned trial (accent) vs 5 PCA neighbors · line stops at trial end · y fixed</p>
 
   <h2 id="density">Trajectory-level density map (time-series space)</h2>
-  <p>One point is one entire trial. Coordinates are the UMAP of this signal’s PCA scores (Berman et al. 2014 Figs 4 and 7). Color is local density or nearest-neighbor rarity in the original time-series distance space of the active signal. The field is a 48×48 Gaussian-smoothed PDF (σ=1.6). HDBSCAN is the watershed analogue of Fig 7.</p>
+  <p>One point is one entire trial. Coordinates are the UMAP of this signal’s PCA scores. Color is local density or nearest-neighbor rarity in the original time-series distance space of the active signal.</p>
   <div class="row" id="densPills"></div>
   <div class="row legend" id="densLegend"></div>
   <canvas class="map" id="densCanvas" width="720" height="460"></canvas>
   <p class="cap" id="densCap"></p>
 
   <h2 id="freq">How often each cluster occurs across mice and sessions</h2>
-  <p>After clusters are identified for the active signal: trial mass, share of mice that visit a mode, share of sessions that visit it, then occupancy heatmaps. Analogue of Berman Figs 8b and 9. U = unclustered.</p>
+  <p>After clusters are identified for the active signal: trial mass, share of mice that visit a mode, share of sessions that visit it, then occupancy heatmaps. U = unclustered.</p>
   <svg class="plot" id="visitBars" viewBox="0 0 720 240"></svg>
   <p class="cap">Grouped bars: % mice visiting · % sessions visiting · % of trials (mass).</p>
   <h3 id="contrast">Contrast × cluster occupancy</h3>
@@ -24400,7 +24400,7 @@ function pick(cv, ev) {
 function drawLines(cv, series, yMax, title, ylabel) {
   const ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
-  const padL = 48, padR = 10, padT = 22, padB = 24;
+  const padL = 64, padR = 12, padT = 28, padB = 38;
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const xmax = S().xmax;
   ctx.fillStyle = "#232833";
@@ -24413,9 +24413,10 @@ function drawLines(cv, series, yMax, title, ylabel) {
   ctx.fillStyle = "#9aa3b2";
   ctx.font = "10px ui-sans-serif";
   ctx.textAlign = "end";
+  ctx.textBaseline = "middle";
   [0, yMax / 2, yMax].forEach(t => {
     ctx.beginPath(); ctx.moveTo(padL, sy(t)); ctx.lineTo(W - padR, sy(t)); ctx.stroke();
-    ctx.fillText(yMax >= 100 ? String(Math.round(t)) : t.toFixed(1), padL - 4, sy(t) + 3);
+    ctx.fillText(yMax >= 100 ? String(Math.round(t)) : t.toFixed(1), padL - 6, sy(t));
   });
   series.forEach(s => {
     if (!s.points || s.points.length < 2) return;
@@ -24430,13 +24431,22 @@ function drawLines(cv, series, yMax, title, ylabel) {
     ctx.stroke();
   });
   ctx.globalAlpha = 1;
-  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
   ctx.fillStyle = "#e8eaed";
   ctx.font = "12px ui-sans-serif";
-  ctx.fillText(title, padL + 4, 14);
+  ctx.fillText(title, padL, 16);
   ctx.fillStyle = "#9aa3b2";
   ctx.font = "10px ui-sans-serif";
-  [0, 0.64, 1.28, 1.92, 2.56].forEach(t => ctx.fillText(t.toFixed(2) + "s", sx(t), H - 6));
+  ctx.textAlign = "center";
+  [0, 0.64, 1.28, 1.92, 2.56].forEach(t => ctx.fillText(t.toFixed(2), sx(t), H - 22));
+  ctx.fillText("time from stimOn (s)", padL + plotW / 2, H - 7);
+  ctx.save();
+  ctx.translate(14, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText(ylabel || "", 0, 0);
+  ctx.restore();
 }
 
 function svgEl(tag, attrs, text) {
@@ -24455,14 +24465,15 @@ function drawBars(svg) {
     { name: "% sessions visiting", data: freq.sess_visit_pct, color: COL.orange },
     { name: "% trials (mass)", data: freq.mass, color: COL.gray },
   ];
-  const W = 720, H = 240, padL = 40, padR = 10, padT = 28, padB = 36;
+  const W = 720, H = 256, padL = 52, padR = 10, padT = 28, padB = 50;
   const gW = W - padL - padR, gH = H - padT - padB;
   const n = cols.length, gw = gW / n, bw = gw / (series.length + 0.6);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
   svg.appendChild(svgEl("rect", { x: padL, y: padT, width: gW, height: gH, fill: "#232833" }));
   [0, 25, 50, 75, 100].forEach(t => {
     const y = padT + (1 - t / 100) * gH;
     svg.appendChild(svgEl("line", { x1: padL, x2: W - padR, y1: y, y2: y, stroke: "#2c3340" }));
-    svg.appendChild(svgEl("text", { x: padL - 4, y: y + 3, "text-anchor": "end", fill: "#9aa3b2", "font-size": 10 }, t + "%"));
+    svg.appendChild(svgEl("text", { x: padL - 6, y: y + 3, "text-anchor": "end", fill: "#9aa3b2", "font-size": 10 }, t + "%"));
   });
   cols.forEach((c, i) => {
     series.forEach((s, si) => {
@@ -24471,12 +24482,17 @@ function drawBars(svg) {
         x: padL + i * gw + (si + 0.3) * bw, y: padT + gH - h, width: bw - 1, height: Math.max(h, 0), fill: s.color,
       }));
     });
-    svg.appendChild(svgEl("text", { x: padL + i * gw + gw / 2, y: H - 8, "text-anchor": "middle", fill: "#9aa3b2", "font-size": 10 }, c));
+    svg.appendChild(svgEl("text", { x: padL + i * gw + gw / 2, y: H - 22, "text-anchor": "middle", fill: "#9aa3b2", "font-size": 10 }, c));
   });
   series.forEach((s, i) => {
     svg.appendChild(svgEl("rect", { x: padL + i * 160, y: 8, width: 10, height: 10, fill: s.color }));
     svg.appendChild(svgEl("text", { x: padL + 14 + i * 160, y: 17, fill: "#e8eaed", "font-size": 11 }, s.name));
   });
+  svg.appendChild(svgEl("text", { x: padL + gW / 2, y: H - 6, "text-anchor": "middle", fill: "#9aa3b2", "font-size": 11 }, "cluster"));
+  svg.appendChild(svgEl("text", {
+    x: 14, y: padT + gH / 2, "text-anchor": "middle", fill: "#9aa3b2", "font-size": 11,
+    transform: "rotate(-90 14 " + (padT + gH / 2) + ")",
+  }, "percent"));
 }
 
 function drawHeat(svg, rows, cols, z, opt) {
