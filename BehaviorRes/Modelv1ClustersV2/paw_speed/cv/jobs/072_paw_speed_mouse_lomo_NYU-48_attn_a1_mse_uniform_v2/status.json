@@ -1,0 +1,22 @@
+{
+  "job": 72,
+  "tag": "paw_speed_mouse_lomo_NYU-48_attn_a1_mse_uniform_v2",
+  "slurm_job_id": "531435",
+  "slurm_array_task_id": "72",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 16,
+  "fold_id": "NYU-48",
+  "loss": "mse",
+  "sampling": "uniform",
+  "head": "trace",
+  "horizon": "now",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 13,
+  "device": "cuda",
+  "updated_at": "2026-10-16T14:42:32.743585+00:00"
+}

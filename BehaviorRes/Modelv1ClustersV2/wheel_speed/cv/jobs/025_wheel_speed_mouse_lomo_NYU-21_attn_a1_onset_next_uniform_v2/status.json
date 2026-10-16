@@ -1,0 +1,22 @@
+{
+  "job": 25,
+  "tag": "wheel_speed_mouse_lomo_NYU-21_attn_a1_onset_next_uniform_v2",
+  "slurm_job_id": "531511",
+  "slurm_array_task_id": "25",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "wheel_speed",
+  "protocol": "cv",
+  "fold": 13,
+  "fold_id": "NYU-21",
+  "loss": "bce",
+  "sampling": "uniform",
+  "head": "onset",
+  "horizon": "next",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 9,
+  "device": "cuda",
+  "updated_at": "2026-10-16T14:48:25.149076+00:00"
+}

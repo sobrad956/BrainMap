@@ -1,0 +1,22 @@
+{
+  "job": 63,
+  "tag": "paw_speed_session_loso_d33baf74_attn_a1_onset_next_inverse_v2",
+  "slurm_job_id": "531628",
+  "slurm_array_task_id": "63",
+  "task": "session_loso",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 28,
+  "fold_id": "d33baf74",
+  "loss": "bce",
+  "sampling": "inverse",
+  "head": "onset",
+  "horizon": "next",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 9,
+  "device": "cuda",
+  "updated_at": "2026-10-16T15:17:32.362545+00:00"
+}

@@ -1,0 +1,22 @@
+{
+  "job": 82,
+  "tag": "paw_speed_mouse_lomo_UCLA034_attn_a1_onset_peak_uniform_v2",
+  "slurm_job_id": "531503",
+  "slurm_array_task_id": "82",
+  "task": "mouse_lomo",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 22,
+  "fold_id": "UCLA034",
+  "loss": "onset_peak",
+  "sampling": "uniform",
+  "head": "trace",
+  "horizon": "now",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 37,
+  "device": "cuda",
+  "updated_at": "2026-10-16T15:05:34.115091+00:00"
+}

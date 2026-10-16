@@ -1,0 +1,22 @@
+{
+  "job": 45,
+  "tag": "paw_speed_trial_repeat_rep0_interp_attn_a1_onset_next_uniform_v2",
+  "slurm_job_id": "531572",
+  "slurm_array_task_id": "45",
+  "task": "trial_repeat",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 0,
+  "fold_id": "rep0_interp",
+  "loss": "bce",
+  "sampling": "uniform",
+  "head": "onset",
+  "horizon": "next",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 16,
+  "device": "cuda",
+  "updated_at": "2026-10-16T15:04:44.127758+00:00"
+}
