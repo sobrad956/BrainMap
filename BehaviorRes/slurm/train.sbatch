@@ -30,7 +30,28 @@ if [[ "$SCRIPT" == "Modelv1.py" ]]; then
     EXTRA+=(--log1p)
   fi
 fi
-# modelv1clusters.py: grid is --job only (GRU + attn, Control A1).
+if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
+  if [[ "${BEH_PILOT:-0}" == "1" ]]; then
+    EXTRA+=(--pilot)
+  fi
+  if [[ -n "${BEH_LOSO_FOLDS:-}" ]]; then
+    EXTRA+=(--loso-folds "$BEH_LOSO_FOLDS")
+  fi
+  if [[ -n "${BEH_LOMO_FOLDS:-}" ]]; then
+    EXTRA+=(--lomo-folds "$BEH_LOMO_FOLDS")
+  fi
+  if [[ -n "${BEH_INTERP_FOLDS:-}" ]]; then
+    EXTRA+=(--interp-folds "$BEH_INTERP_FOLDS")
+  fi
+  if [[ -n "${BEH_FOLD_SEED:-}" ]]; then
+    EXTRA+=(--fold-seed "$BEH_FOLD_SEED")
+  fi
+  if [[ -n "${BEH_CLUSTER_TARGETS:-}" ]]; then
+    EXTRA+=(--targets)
+    IFS=',' read -r -a _tgts <<< "$BEH_CLUSTER_TARGETS"
+    EXTRA+=("${_tgts[@]}")
+  fi
+fi
 
 OFFSET="${BEH_ARRAY_OFFSET:-0}"
 GLOBAL_JOB_ID=$((SLURM_ARRAY_TASK_ID + OFFSET))

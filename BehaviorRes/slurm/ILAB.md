@@ -138,11 +138,28 @@ python Modelv1.py --protocol cv --list-jobs | head
 bash slurm/submit.sh Modelv1.py --protocol cv
 ```
 
-**Modelv1Clusters** (GRU + attention, no anatomy; MSE vs onset/peak L1; uniform vs inverse-frequency sampling). Keep `Modelv1Clusters/atlas_trial_clusters.json` next to the scores. Results go to `Modelv1Clusters/<behavior>/cv/`:
+**Modelv1Clusters** (GRU + attention, Control A1; MSE vs differentiable onset/peak; uniform vs capped inverse sampling). Atlas sidecar stays at `Modelv1Clusters/atlas_trial_clusters.json`. **New runs write to `Modelv1ClustersV2/`** (cache tag `v2`) so the original 544-job grid is not reused.
+
+Cheap experiment grid (**`--pilot`**: 5 random LOSO sessions + 5 random LOMO mice + 1 interpolation fold, seeded; 2 targets × 4 loss/sampling combos × 11 folds = **88 jobs** vs 544 full). Wheel-only is 44 jobs.
+
+```bash
+python modelv1clusters.py --pilot --list-jobs | head
+bash slurm/submit.sh modelv1clusters.py --pilot
+bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5 --fold-seed 0
+bash slurm/submit.sh modelv1clusters.py --pilot --targets wheel_speed
+```
+
+Full v2 grid (544 jobs; do not submit until the timing-loss scale is settled):
 
 ```bash
 python modelv1clusters.py --list-jobs | head
 bash slurm/submit.sh modelv1clusters.py
+```
+
+After either array:
+
+```bash
+python modelv1clusters.py --aggregate
 ```
 
 **Same for the others:**

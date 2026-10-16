@@ -15,23 +15,34 @@ Tasks:
 
 Comparison axes (train only; no trials are dropped):
   loss       mse          trial-balanced MSE (PDF eq. 7)
-             onset_peak   that MSE plus onset-time L1 and peak-time L1 (seconds)
+             onset_peak   that MSE plus differentiable timing terms:
+                          soft-argmax peak-time L1, soft-onset L1 (seconds,
+                          scaled into MSE units), and a Gaussian peak-window MSE
   sampling   uniform      shuffle, one pass per epoch
-             inverse      WeightedRandomSampler, p ∝ 1/n_stratum, strata
-                          computed on the current fold's train indices:
+             inverse      WeightedRandomSampler, p ∝ 1/n_stratum, weights
+                          clipped so max/min ≤ INV_MAX_RATIO, then renormalized.
+                          Strata on the current fold's train indices:
                           contrast × length × early/delayed onset
+
+Checkpoints are stored under cache/v2 so the original discrete-L1 grid is not reused.
+
+Local:
+  python modelv1clusters.py --self-test
+  python modelv1clusters.py --smoke --device mps
+  python modelv1clusters.py --pilot --list-jobs
+  python modelv1clusters.py --list-jobs
+  python modelv1clusters.py --job 0 --device cpu
+  python modelv1clusters.py --aggregate
 
 Reports per fold, then mean / median across folds with delete-1 jackknife SE:
   concatenated R², mean trial R², median trial R²
   the same three sliced by coarse-axis level and by Trajectory Atlas Removed
   cluster (wheel clusters for wheel_speed, paw clusters for paw_speed)
 
-Local:
-  python modelv1clusters.py --list-jobs
-  python modelv1clusters.py --job 0 --device cpu
-  python modelv1clusters.py --aggregate
-
-Slurm:
+Slurm (iLab; results under Modelv1ClustersV2):
+  python modelv1clusters.py --pilot --list-jobs
+  bash slurm/submit.sh modelv1clusters.py --pilot
+  bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5
   bash slurm/submit.sh modelv1clusters.py
   python modelv1clusters.py --aggregate
 """
@@ -58,8 +69,9 @@ if str(ROOT) not in sys.path:
 import Modelv1 as mv
 import slurm_utils
 
-mv.MODEL_ROOT = ROOT / "Modelv1Clusters"
-CLUSTER_JSON = mv.MODEL_ROOT / "atlas_trial_clusters.json"
+ATLAS_ROOT = ROOT / "Modelv1Clusters"
+mv.MODEL_ROOT = ROOT / "Modelv1ClustersV2"
+CLUSTER_JSON = ATLAS_ROOT / "atlas_trial_clusters.json"
 
 TARGETS = ("wheel_speed", "paw_speed")
 TASKS = ("trial_repeat", "session_loso", "mouse_lomo")
@@ -67,6 +79,7 @@ LOSSES = ("mse", "onset_peak")
 SAMPLINGS = ("uniform", "inverse")
 POOL = "attn"
 ABLATION = "a1"
+CACHE_VERSION = "v2"
 
 WHEEL_ON = 0.15
 PAW_ON = 150.0
@@ -75,6 +88,18 @@ LEN_SHORT = 20
 LEN_MID = 32
 LAM_ONSET = 1.0
 LAM_PEAK = 1.0
+# Softmax temperature in z-space for peak time. Smaller → closer to argmax.
+SOFT_PEAK_TAU = 0.4
+# Onset sigmoid temperature as a fraction of the raw-unit threshold.
+SOFT_ONSET_FRAC = 0.25
+# Seconds → loss units so ~200 ms of timing error is O(1), like z-space MSE.
+TIME_LOSS_SCALE = 5.0
+PEAK_WINDOW_SIGMA = 2.0
+INV_MAX_RATIO = 10.0
+SMOKE_FOLDS = 8
+PILOT_LOSO = 5
+PILOT_LOMO = 5
+PILOT_INTERP = 1
 CONTRAST_KEYS = (625, 1250, 2500, 10000)
 CONTRAST_LABEL = {
     625: "6.25%",
@@ -189,8 +214,13 @@ def annotate_trials(trials, target):
     return blob
 
 
-def inverse_weights(trials, idx, target=None):
-    """p ∝ 1/n_stratum on this train index list. Epoch size stays len(idx)."""
+def inverse_weights(trials, idx, target=None, max_ratio=INV_MAX_RATIO):
+    """p ∝ 1/n_stratum on this train index list. Epoch size stays len(idx).
+
+    After the 1/n weights, clip so max/min ≤ `max_ratio` and renormalize.
+    Uncapped inverse over-weights singleton delayed/long strata (~50–100×)
+    and starves the abundant short-early trials the pooled metric cares about.
+    """
     idx = np.asarray(idx, dtype=int)
     counts = defaultdict(int)
     keys = []
@@ -199,11 +229,17 @@ def inverse_weights(trials, idx, target=None):
         keys.append(s)
         counts[s] += 1
     w = np.array([1.0 / counts[s] for s in keys], dtype=np.float64)
-    w *= len(w) / w.sum()
+    w *= len(w) / max(w.sum(), 1e-12)
+    raw_ratio = float(w.max() / max(w.min(), 1e-12))
+    if max_ratio and raw_ratio > max_ratio:
+        cap = float(w.min() * max_ratio)
+        w = np.clip(w, 0.0, cap)
+        w *= len(w) / max(w.sum(), 1e-12)
+    ratio = float(w.max() / max(w.min(), 1e-12))
     log(
         f"    inverse sampling: {len(counts)} strata in train, "
         f"weight min/max={w.min():.3f}/{w.max():.3f}  "
-        f"max/min={w.max() / max(w.min(), 1e-12):.1f}"
+        f"max/min={ratio:.1f} (raw {raw_ratio:.1f}, cap {max_ratio:g})"
     )
     return torch.as_tensor(w, dtype=torch.double)
 
@@ -286,15 +322,86 @@ def cv_folds_clusters(trials, n_trial_repeats=1):
     return out
 
 
-def job_grid(trials=None, n_trial_repeats=1):
+def subsample_folds(folds, n_loso=None, n_lomo=None, n_interp=None, seed=0):
+    """Deterministic subset of CV folds. Same seed → same job indices on every worker."""
+    grouped = {"trial_repeat": [], "session_loso": [], "mouse_lomo": []}
+    for spec in folds:
+        grouped.setdefault(spec["task"], []).append(spec)
+    rng = np.random.RandomState(int(mv.SEED) + int(seed))
+
+    def pick(task, n):
+        specs = list(grouped.get(task, []))
+        if n is None or int(n) < 0 or int(n) >= len(specs):
+            return specs
+        n = int(n)
+        if n == 0:
+            return []
+        chosen = [specs[int(i)] for i in rng.choice(len(specs), size=n, replace=False)]
+        chosen.sort(key=lambda s: (int(s["fold"]), str(s["fold_id"])))
+        return chosen
+
+    out = pick("trial_repeat", n_interp) + pick("session_loso", n_loso) + pick("mouse_lomo", n_lomo)
+    log(
+        f"fold subset seed={seed}  "
+        f"interp={','.join(s['fold_id'] for s in out if s['task']=='trial_repeat') or '-'}  "
+        f"loso={','.join(s['fold_id'] for s in out if s['task']=='session_loso') or '-'}  "
+        f"lomo={','.join(s['fold_id'] for s in out if s['task']=='mouse_lomo') or '-'}"
+    )
+    return out
+
+
+def job_grid(
+    trials=None,
+    n_trial_repeats=1,
+    targets=None,
+    tasks=None,
+    losses=None,
+    samplings=None,
+    smoke=False,
+    smoke_folds=SMOKE_FOLDS,
+    pilot=False,
+    loso_folds=None,
+    lomo_folds=None,
+    interp_folds=None,
+    fold_seed=0,
+):
     if trials is None:
         trials, _ = mv.load_corpus()
     folds = cv_folds_clusters(trials, n_trial_repeats=n_trial_repeats)
+    targets = list(targets or TARGETS)
+    tasks = list(tasks or TASKS)
+    losses = list(losses or LOSSES)
+    samplings = list(samplings or SAMPLINGS)
+    if smoke:
+        targets = ["wheel_speed"]
+        tasks = ["session_loso"]
+        n_keep = max(1, int(smoke_folds))
+        folds = [
+            spec
+            for spec in folds
+            if spec["task"] == "session_loso" and int(spec["fold"]) < n_keep
+        ]
+    else:
+        n_loso = n_lomo = n_interp = None
+        if pilot:
+            n_loso = PILOT_LOSO if loso_folds is None else int(loso_folds)
+            n_lomo = PILOT_LOMO if lomo_folds is None else int(lomo_folds)
+            n_interp = PILOT_INTERP if interp_folds is None else int(interp_folds)
+        else:
+            n_loso = None if loso_folds is None else int(loso_folds)
+            n_lomo = None if lomo_folds is None else int(lomo_folds)
+            n_interp = None if interp_folds is None else int(interp_folds)
+        if any(v is not None for v in (n_loso, n_lomo, n_interp)):
+            folds = subsample_folds(
+                folds, n_loso=n_loso, n_lomo=n_lomo, n_interp=n_interp, seed=fold_seed
+            )
     configs = []
-    for beh in TARGETS:
+    for beh in targets:
         for spec in folds:
-            for loss in LOSSES:
-                for sampling in SAMPLINGS:
+            if spec["task"] not in tasks:
+                continue
+            for loss in losses:
+                for sampling in samplings:
                     configs.append(
                         {
                             "protocol": "cv",
@@ -329,30 +436,67 @@ def sticky_onset_times(series, mask, thr, binsize, sticky=2):
     return on, found
 
 
-def onset_l1(pred, y, mask, thr, binsize, lengths):
-    on_y, has_y = sticky_onset_times(y, mask, thr, binsize)
-    on_p, has_p = sticky_onset_times(pred, mask, thr, binsize)
-    last = lengths.to(dtype=pred.dtype) * binsize
-    pen = torch.zeros(pred.shape[0], device=pred.device, dtype=pred.dtype)
-    both = has_y & has_p
-    pen = torch.where(both, (on_y - on_p).abs(), pen)
-    pen = torch.where(has_y & ~has_p, (on_y - last).abs(), pen)
-    pen = torch.where(has_p & ~has_y, (on_p - last).abs(), pen)
-    use = has_y | has_p
-    if not bool(use.any()):
-        return pred.new_zeros(())
-    return pen[use].mean()
+def _masked_softmax(logits, mask):
+    return torch.softmax(logits.masked_fill(~mask, -1e9), dim=1)
 
 
-def peak_l1(pred, y, mask, binsize):
-    y_m = y.masked_fill(~mask, float("-inf"))
-    p_m = pred.masked_fill(~mask, float("-inf"))
-    ty = y_m.argmax(dim=1).to(dtype=pred.dtype) * binsize
-    tp = p_m.argmax(dim=1).to(dtype=pred.dtype) * binsize
+def soft_peak_time(series, mask, binsize, tau):
+    """Expected time of |series| mass. Differentiable in `series`."""
+    tau = max(float(tau), 1e-4)
+    w = _masked_softmax(series.abs() / tau, mask)
+    tgrid = torch.arange(series.size(1), device=series.device, dtype=series.dtype) * binsize
+    return (w * tgrid).sum(dim=1)
+
+
+def hard_peak_time(series, mask, binsize):
+    filled = series.abs().masked_fill(~mask, float("-inf"))
+    return filled.argmax(dim=1).to(dtype=series.dtype) * binsize
+
+
+def soft_peak_l1(pred, y, mask, binsize, tau):
     ok = mask.any(dim=1)
     if not bool(ok.any()):
         return pred.new_zeros(())
-    return (ty[ok] - tp[ok]).abs().mean()
+    return (soft_peak_time(pred, mask, binsize, tau)[ok] - hard_peak_time(y, mask, binsize)[ok]).abs().mean()
+
+
+def peak_window_mse(pred, y, mask, sigma=PEAK_WINDOW_SIGMA):
+    """z-space MSE concentrated around the true |y| peak (dense amplitude grad)."""
+    idx = y.abs().masked_fill(~mask, float("-inf")).argmax(dim=1).to(dtype=pred.dtype)
+    t = torch.arange(pred.size(1), device=pred.device, dtype=pred.dtype)
+    w = torch.exp(-0.5 * ((t.unsqueeze(0) - idx.unsqueeze(1)) / max(float(sigma), 0.5)) ** 2)
+    w = w * mask.to(dtype=pred.dtype)
+    w = w / w.sum(dim=1, keepdim=True).clamp(min=1e-6)
+    return ((pred - y).pow(2) * w).sum(dim=1).mean()
+
+
+def soft_onset_time(series, mask, thr, binsize, tau, sticky=2):
+    """Expected first sticky-crossing time. Differentiable in `series`."""
+    bsz, n_t = series.shape
+    tau = max(float(tau), 1e-6)
+    p_above = torch.sigmoid((series.abs() - thr) / tau) * mask.to(dtype=series.dtype)
+    if sticky >= 2:
+        hit = p_above.clone()
+        for k in range(1, sticky):
+            hit = hit * torch.cat([p_above[:, k:], p_above.new_zeros(bsz, k)], dim=1)
+    else:
+        hit = p_above
+    hit = hit.clamp(1e-6, 1.0 - 1e-6)
+    log_surv = torch.cumsum(torch.log1p(-hit), dim=1)
+    log_before = torch.cat([hit.new_zeros(bsz, 1), log_surv[:, :-1]], dim=1)
+    p_t = hit * torch.exp(log_before)
+    p_never = torch.exp(log_surv[:, -1])
+    tgrid = torch.arange(n_t, device=series.device, dtype=series.dtype) * binsize
+    last = mask.to(dtype=series.dtype).sum(dim=1).clamp(min=1.0) * binsize
+    return (p_t * tgrid).sum(dim=1) + p_never * last
+
+
+def soft_onset_l1(pred, y, mask, thr, binsize, tau, sticky=2):
+    on_y, has_y = sticky_onset_times(y, mask, thr, binsize, sticky=sticky)
+    if not bool(has_y.any()):
+        return pred.new_zeros(())
+    on_p = soft_onset_time(pred, mask, thr, binsize, tau, sticky=sticky)
+    return (on_p[has_y] - on_y[has_y]).abs().mean()
 
 
 def cluster_objective(pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, lam_on, lam_pk):
@@ -360,13 +504,18 @@ def cluster_objective(pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, 
     if not use_aux:
         z = pred.new_zeros(())
         return mse, mse, z, z
+    p_z = pred[..., 0]
+    y_z = y[..., 0]
+    pk_t = soft_peak_l1(p_z, y_z, mask_loss, mv.BINSIZE, SOFT_PEAK_TAU)
+    pk_w = peak_window_mse(p_z, y_z, mask_loss, PEAK_WINDOW_SIGMA)
     mean = pred.new_tensor(np.asarray(y_mean, dtype=np.float32)).view(1, 1, -1)
     std = pred.new_tensor(np.asarray(y_std, dtype=np.float32)).view(1, 1, -1)
     y0 = (y * std + mean)[..., 0]
     p0 = (pred * std + mean)[..., 0]
-    on = onset_l1(p0, y0, mask_loss, thr, mv.BINSIZE, lengths)
-    pk = peak_l1(p0, y0, mask_loss, mv.BINSIZE)
-    return mse + lam_on * on + lam_pk * pk, mse, on, pk
+    tau_on = max(float(thr) * SOFT_ONSET_FRAC, 1e-6)
+    on = soft_onset_l1(p0, y0, mask_loss, thr, mv.BINSIZE, tau_on)
+    aux = lam_on * TIME_LOSS_SCALE * on + lam_pk * TIME_LOSS_SCALE * pk_t + lam_pk * pk_w
+    return mse + aux, mse, on, pk_t
 
 
 def run_epoch_cluster(
@@ -426,7 +575,7 @@ def run_epoch_cluster(
 
 def cache_dir_cluster(task, fold_id, loss, sampling):
     base = mv.cache_dir(task, POOL, use_anatomy=False, fold_id=fold_id, temporal="gru")
-    d = base / loss / sampling
+    d = base / CACHE_VERSION / loss / sampling
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -451,17 +600,19 @@ def train_one_cluster(
     cdir = cache_dir_cluster(task, fold_id, loss, sampling)
     ckpt = cdir / "model.pt"
     hist_path = cdir / "history.json"
+    resume = False
+    blob = {}
     if ckpt.exists() and hist_path.exists():
         hist = json.loads(hist_path.read_text())
-        blob = torch.load(ckpt, map_location="cpu", weights_only=False)
-        if hist.get("finished", True):
-            log(f"  cache hit {task}/{fold_id}/{tag}")
-            return blob, hist
-        log(f"  resume {task}/{fold_id}/{tag} from epoch {len(hist.get('train', []))}")
-        resume = True
-    else:
-        resume = False
-        blob = {}
+        if str(hist.get("cache_version", "")) != CACHE_VERSION:
+            log(f"  ignore stale cache {task}/{fold_id}/{tag} (version {hist.get('cache_version')})")
+        else:
+            blob = torch.load(ckpt, map_location="cpu", weights_only=False)
+            if hist.get("finished", True):
+                log(f"  cache hit {task}/{fold_id}/{tag}")
+                return blob, hist
+            log(f"  resume {task}/{fold_id}/{tag} from epoch {len(hist.get('train', []))}")
+            resume = True
 
     dev = mv.device_of()
     model = mv.build_model(
@@ -507,6 +658,11 @@ def train_one_cluster(
         "loss": loss,
         "sampling": sampling,
         "temporal": "gru",
+        "cache_version": CACHE_VERSION,
+        "soft_peak_tau": SOFT_PEAK_TAU,
+        "soft_onset_frac": SOFT_ONSET_FRAC,
+        "time_loss_scale": TIME_LOSS_SCALE,
+        "inv_max_ratio": INV_MAX_RATIO,
         "finished": False,
     }
     if resume:
@@ -538,6 +694,7 @@ def train_one_cluster(
             "log1p": False,
             "loss": loss,
             "sampling": sampling,
+            "cache_version": CACHE_VERSION,
             "best_val": best_val,
             "stats": {
                 "vocab": stats["vocab"],
@@ -883,6 +1040,7 @@ def process(
     make_plots=True,
     lam_on=LAM_ONSET,
     lam_pk=LAM_PEAK,
+    max_fold=None,
 ):
     warnings.filterwarnings("ignore")
     mv.set_seed(mv.SEED)
@@ -903,6 +1061,8 @@ def process(
         specs = [s for s in specs if int(s["fold"]) == int(fold)]
     if fold_id is not None:
         specs = [s for s in specs if str(s["fold_id"]) == str(fold_id)]
+    if max_fold is not None:
+        specs = [s for s in specs if int(s["fold"]) <= int(max_fold)]
     if not specs:
         log(f"no folds for task={task} fold={fold}")
         return [], []
@@ -942,7 +1102,7 @@ def process(
             continue
         y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
         stats = mv.fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
-        tag = f"{target}_{task}_{fid}_attn_a1_{loss}_{sampling}"
+        tag = f"{target}_{task}_{fid}_attn_a1_{loss}_{sampling}_{CACHE_VERSION}"
         idx = job_index if job_index is not None else n_job
         jdir = slurm_utils.begin_job(
             mv.OUT,
@@ -987,6 +1147,7 @@ def process(
             "ablation": ABLATION,
             "loss": loss,
             "sampling": sampling,
+            "cache_version": CACHE_VERSION,
             "fold": fold_i,
             "fold_id": fid,
             "bin_mode": bin_mode or "",
@@ -1068,6 +1229,202 @@ def aggregate_all():
     print(pd.DataFrame(summary).to_string(index=False))
 
 
+def run_self_test():
+    """Gradient + inverse-cap checks. No corpus, no cache."""
+    torch.manual_seed(0)
+    bsz, n_t = 8, 40
+    t_idx = torch.arange(n_t, dtype=torch.float32)
+    y = torch.zeros(bsz, n_t, 1)
+    for i in range(bsz):
+        peak = 8.0 + 3.0 * i
+        y[i, :, 0] = torch.exp(-0.5 * ((t_idx - peak) / 2.0) ** 2) * (0.9 + 0.05 * i)
+    mask = torch.ones(bsz, n_t, dtype=torch.bool)
+    lengths = torch.full((bsz,), n_t)
+    y_mean = np.array([0.0], dtype=np.float32)
+    y_std = np.array([1.0], dtype=np.float32)
+    pred = (0.25 * y + 0.04).detach().clone().requires_grad_(True)
+    loss, mse, on, pk = cluster_objective(
+        pred, y, mask, y_mean, y_std, WHEEL_ON, lengths, True, 1.0, 1.0
+    )
+    (on + pk).backward()
+    g = float(pred.grad.abs().sum())
+    if not np.isfinite(g) or g <= 0:
+        raise SystemExit(f"self-test failed: timing terms have no gradient (g={g})")
+    pred_a = torch.randn(bsz, n_t, 1, requires_grad=True)
+    l_mse, _, _, _ = cluster_objective(
+        pred_a, y, mask, y_mean, y_std, WHEEL_ON, lengths, False, 1.0, 1.0
+    )
+    pred_b = pred_a.detach().clone().requires_grad_(True)
+    l_aux, _, on_b, pk_b = cluster_objective(
+        pred_b, y, mask, y_mean, y_std, WHEEL_ON, lengths, True, 1.0, 1.0
+    )
+    if abs((l_aux - l_mse).detach().item()) < 1e-8 and (on_b + pk_b).detach().item() <= 0:
+        raise SystemExit("self-test failed: onset_peak equals mse with zero aux")
+    fake = [{"stratum": "common"}] * 90 + [{"stratum": "rare"}]
+    w = inverse_weights(fake, np.arange(len(fake)))
+    ratio = float(w.max() / w.min())
+    if ratio > INV_MAX_RATIO + 1e-6:
+        raise SystemExit(f"self-test failed: inverse ratio {ratio:.2f} > cap {INV_MAX_RATIO}")
+    log(
+        f"self-test ok  timing_grad={g:.4g}  "
+        f"Δloss={abs((l_aux - l_mse).detach().item()):.4g}  inv_ratio={ratio:.2f}"
+    )
+    return True
+
+
+def _hist_path(fold_id, loss, sampling, target="wheel_speed"):
+    safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in str(fold_id))
+    return (
+        mv.MODEL_ROOT
+        / target
+        / "cv"
+        / "cache"
+        / "session_loso"
+        / safe
+        / "attn_a1"
+        / CACHE_VERSION
+        / loss
+        / sampling
+        / "history.json"
+    )
+
+
+def write_smoke_report(n_folds=SMOKE_FOLDS):
+    """Compare mse vs onset_peak on the smoke jobs. Does not walk cache/."""
+    root = mv.MODEL_ROOT / "wheel_speed" / "cv"
+    jobs = root / "jobs"
+    if not jobs.exists():
+        raise SystemExit(f"no smoke jobs under {jobs}")
+    recs = []
+    for sc_path in sorted(jobs.glob("*/scores.csv")):
+        df = pd.read_csv(sc_path)
+        if df.empty:
+            continue
+        row = df.iloc[0].to_dict()
+        sl_path = sc_path.parent / "scores_slices.csv"
+        delayed = long = None
+        if sl_path.exists():
+            sdf = pd.read_csv(sl_path)
+            for _, sl in sdf.iterrows():
+                if sl.get("slice_kind") == "onset" and str(sl.get("slice_key")) == "delayed":
+                    delayed = float(sl["r2"])
+                if sl.get("slice_kind") == "length" and str(sl.get("slice_key")) == "long":
+                    long = float(sl["r2"])
+        hp = _hist_path(row["fold_id"], row["loss"], row["sampling"])
+        train_mse0 = None
+        n_ep = 0
+        if hp.exists():
+            hist = json.loads(hp.read_text())
+            tm = hist.get("train_mse") or []
+            n_ep = len(tm)
+            if tm:
+                train_mse0 = float(tm[0])
+        recs.append(
+            {
+                "fold": int(row["fold"]),
+                "fold_id": str(row["fold_id"]),
+                "loss": str(row["loss"]),
+                "sampling": str(row["sampling"]),
+                "r2": float(row["r2"]),
+                "median_trial_r2": float(row.get("median_trial_r2", float("nan"))),
+                "delayed_r2": delayed,
+                "long_r2": long,
+                "train_mse0": train_mse0,
+                "n_epochs": n_ep,
+            }
+        )
+    if not recs:
+        raise SystemExit(f"empty smoke scores under {jobs}")
+
+    def _mean(vals):
+        x = [v for v in vals if v is not None and np.isfinite(v)]
+        return float(np.mean(x)) if x else float("nan")
+
+    combos = {}
+    for rec in recs:
+        key = (rec["loss"], rec["sampling"])
+        combos.setdefault(key, []).append(rec)
+
+    ident = []
+    deltas = []
+    for sampling in SAMPLINGS:
+        mse_map = {r["fold_id"]: r for r in combos.get(("mse", sampling), [])}
+        op_map = {r["fold_id"]: r for r in combos.get(("onset_peak", sampling), [])}
+        for fid, a in mse_map.items():
+            b = op_map.get(fid)
+            if not b or a["train_mse0"] is None or b["train_mse0"] is None:
+                continue
+            d = abs(a["train_mse0"] - b["train_mse0"])
+            deltas.append(d)
+            ident.append(d < 1e-8)
+
+    n_ident = int(sum(ident)) if ident else 0
+    n_pair = len(ident)
+    mean_d = _mean(deltas)
+    diverged = n_pair > 0 and n_ident == 0
+    table = []
+    for loss, sampling in ((ls, sm) for ls in LOSSES for sm in SAMPLINGS):
+        sub = combos.get((loss, sampling), [])
+        table.append(
+            {
+                "loss": loss,
+                "sampling": sampling,
+                "n": len(sub),
+                "r2": _mean([r["r2"] for r in sub]),
+                "median_trial_r2": _mean([r["median_trial_r2"] for r in sub]),
+                "delayed_r2": _mean([r["delayed_r2"] for r in sub]),
+                "long_r2": _mean([r["long_r2"] for r in sub]),
+            }
+        )
+    mse_u = next((t for t in table if t["loss"] == "mse" and t["sampling"] == "uniform"), {})
+    op_u = next((t for t in table if t["loss"] == "onset_peak" and t["sampling"] == "uniform"), {})
+    delayed_moved = (
+        np.isfinite(mse_u.get("delayed_r2", float("nan")))
+        and np.isfinite(op_u.get("delayed_r2", float("nan")))
+        and abs(op_u["delayed_r2"] - mse_u["delayed_r2"]) > 0.02
+    )
+    report = {
+        "cache_version": CACHE_VERSION,
+        "n_jobs": len(recs),
+        "n_folds": n_folds,
+        "train_mse_pairs": n_pair,
+        "train_mse_identical": n_ident,
+        "train_mse_mean_abs_delta": mean_d,
+        "train_mse_diverged": diverged,
+        "delayed_r2_moved": bool(delayed_moved),
+        "combos": table,
+        "folds": recs,
+        "pass": bool(diverged),
+    }
+    out = mv.MODEL_ROOT / "smoke_report.json"
+    mv.MODEL_ROOT.mkdir(parents=True, exist_ok=True)
+    mv.save_json(out, report)
+    log(f"smoke report → {out}")
+    log(
+        f"train_mse epoch-1: {n_pair} pairs, {n_ident} identical, "
+        f"mean |Δ|={mean_d:.4g}  diverged={diverged}"
+    )
+    print("loss         sampling   n   concat R²   med trial   delayed R²   long R²")
+    for t in table:
+        print(
+            f"{t['loss']:12s} {t['sampling']:8s} {t['n']:2d}  "
+            f"{t['r2']:+8.3f}   {t['median_trial_r2']:+8.3f}   "
+            f"{t['delayed_r2']:+8.3f}    {t['long_r2']:+8.3f}"
+        )
+    if diverged:
+        log("SMOKE PASS: onset_peak train_mse diverged from mse at epoch 1")
+    else:
+        log("SMOKE FAIL: onset_peak train_mse still matches mse (timing still detached?)")
+    if delayed_moved:
+        log(
+            f"delayed R² moved {mse_u['delayed_r2']:+.3f} → {op_u['delayed_r2']:+.3f} "
+            "(uniform mse vs onset_peak)"
+        )
+    else:
+        log("delayed R² did not move >0.02 on uniform mse vs onset_peak")
+    return report
+
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--targets", nargs="*", default=list(TARGETS), choices=list(TARGETS))
@@ -1077,38 +1434,102 @@ if __name__ == "__main__":
     p.add_argument("--trial-repeats", type=int, default=1)
     p.add_argument("--lam-onset", type=float, default=LAM_ONSET)
     p.add_argument("--lam-peak", type=float, default=LAM_PEAK)
+    p.add_argument("--self-test", action="store_true", help="Gradient and inverse-cap checks, then exit")
+    p.add_argument("--smoke", action="store_true", help="8-session wheel LOSO × loss × sampling into Modelv1ClustersV2")
+    p.add_argument("--smoke-folds", type=int, default=SMOKE_FOLDS)
+    p.add_argument(
+        "--pilot",
+        action="store_true",
+        help=f"Cheap CV grid: {PILOT_LOSO} random LOSO sessions, {PILOT_LOMO} random LOMO mice, {PILOT_INTERP} interp (seeded)",
+    )
+    p.add_argument("--loso-folds", type=int, default=None, help="Keep this many random session_loso folds")
+    p.add_argument("--lomo-folds", type=int, default=None, help="Keep this many random mouse_lomo folds")
+    p.add_argument("--interp-folds", type=int, default=None, help="Keep this many trial_repeat folds")
+    p.add_argument("--fold-seed", type=int, default=0, help="Added to SEED when sampling pilot folds")
     slurm_utils.add_common_args(p)
     args = p.parse_args()
     n_repeats = max(1, int(args.trial_repeats))
+    smoke_folds = max(1, int(args.smoke_folds))
+    grid_kw = dict(
+        n_trial_repeats=n_repeats,
+        targets=args.targets,
+        tasks=args.tasks,
+        losses=args.losses,
+        samplings=args.samplings,
+        smoke=args.smoke,
+        smoke_folds=smoke_folds,
+        pilot=args.pilot,
+        loso_folds=args.loso_folds,
+        lomo_folds=args.lomo_folds,
+        interp_folds=args.interp_folds,
+        fold_seed=args.fold_seed,
+    )
     if args.list_jobs:
-        slurm_utils.print_jobs(job_grid(n_trial_repeats=n_repeats))
+        slurm_utils.print_jobs(job_grid(**grid_kw))
+        raise SystemExit(0)
+    if args.self_test:
+        run_self_test()
         raise SystemExit(0)
     slurm_utils.set_device(args.device, probe="gru")
     if args.aggregate:
         aggregate_all()
         raise SystemExit(0)
+    if args.smoke:
+        args.targets = ["wheel_speed"]
+        args.tasks = ["session_loso"]
+        run_self_test()
     job = slurm_utils.resolve_job_index(args.job)
+    use_grid = bool(
+        args.smoke
+        or args.pilot
+        or args.loso_folds is not None
+        or args.lomo_folds is not None
+        or args.interp_folds is not None
+    )
     if job is None:
         trials, session_meta = mv.load_corpus()
-        for beh in args.targets:
-            for task in args.tasks:
-                for loss in args.losses:
-                    for sampling in args.samplings:
-                        process(
-                            target=beh,
-                            task=task,
-                            loss=loss,
-                            sampling=sampling,
-                            trials=trials,
-                            session_meta=session_meta,
-                            n_trial_repeats=n_repeats,
-                            lam_on=args.lam_onset,
-                            lam_pk=args.lam_peak,
-                        )
-        aggregate_all()
+        if use_grid:
+            configs = job_grid(trials=trials, **grid_kw)
+            for i, cfg in enumerate(configs):
+                process(
+                    target=cfg["target"],
+                    task=cfg["task"],
+                    loss=cfg["loss"],
+                    sampling=cfg["sampling"],
+                    fold=cfg["fold"],
+                    fold_id=cfg["fold_id"],
+                    trials=trials,
+                    session_meta=session_meta,
+                    n_trial_repeats=n_repeats,
+                    lam_on=args.lam_onset,
+                    lam_pk=args.lam_peak,
+                    make_plots=False,
+                    job_index=i,
+                )
+            if args.smoke:
+                write_smoke_report(n_folds=smoke_folds)
+            else:
+                aggregate_all()
+        else:
+            for beh in args.targets:
+                for task in args.tasks:
+                    for loss in args.losses:
+                        for sampling in args.samplings:
+                            process(
+                                target=beh,
+                                task=task,
+                                loss=loss,
+                                sampling=sampling,
+                                trials=trials,
+                                session_meta=session_meta,
+                                n_trial_repeats=n_repeats,
+                                lam_on=args.lam_onset,
+                                lam_pk=args.lam_peak,
+                            )
+            aggregate_all()
     else:
         trials, session_meta = mv.load_corpus()
-        cfg = slurm_utils.pick_config(job_grid(trials=trials, n_trial_repeats=n_repeats), job)
+        cfg = slurm_utils.pick_config(job_grid(trials=trials, **grid_kw), job)
         process(
             target=cfg["target"],
             task=cfg["task"],
