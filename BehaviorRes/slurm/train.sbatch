@@ -51,6 +51,9 @@ if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
     IFS=',' read -r -a _tgts <<< "$BEH_CLUSTER_TARGETS"
     EXTRA+=("${_tgts[@]}")
   fi
+  if [[ "${BEH_ONSET_RT:-0}" == "1" ]]; then
+    EXTRA+=(--onset-rt)
+  fi
 fi
 
 OFFSET="${BEH_ARRAY_OFFSET:-0}"

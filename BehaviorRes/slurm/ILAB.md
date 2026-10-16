@@ -147,6 +147,10 @@ python modelv1clusters.py --pilot --list-jobs | head
 bash slurm/submit.sh modelv1clusters.py --pilot
 bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5 --fold-seed 0
 bash slurm/submit.sh modelv1clusters.py --pilot --targets wheel_speed
+
+# onset / reaction-time (per-bin ‘has movement begun?’; now vs next 20 ms horizon)
+python modelv1clusters.py --pilot --onset-rt --list-jobs | head
+bash slurm/submit.sh modelv1clusters.py --pilot --onset-rt
 ```
 
 Full v2 grid (544 jobs; do not submit until the timing-loss scale is settled):

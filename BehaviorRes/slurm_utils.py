@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -148,10 +149,17 @@ def pick_config(configs, job):
 
 def print_jobs(configs):
     configs = list(configs)
-    print(f"{len(configs)} jobs  (sbatch --array=0-{max(len(configs) - 1, 0)})")
-    for i, cfg in enumerate(configs):
-        parts = "  ".join(f"{k}={v}" for k, v in cfg.items())
-        print(f"{i:3d}  {parts}")
+    try:
+        print(f"{len(configs)} jobs  (sbatch --array=0-{max(len(configs) - 1, 0)})")
+        for i, cfg in enumerate(configs):
+            parts = "  ".join(f"{k}={v}" for k, v in cfg.items())
+            print(f"{i:3d}  {parts}")
+    except BrokenPipeError:
+        # `... --list-jobs | head` closes stdout; not a real failure
+        try:
+            sys.stdout.close()
+        except Exception:
+            pass
 
 
 def tag_of(cfg):

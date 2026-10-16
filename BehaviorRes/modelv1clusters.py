@@ -43,8 +43,14 @@ Slurm (iLab; results under Modelv1ClustersV2):
   python modelv1clusters.py --pilot --list-jobs
   bash slurm/submit.sh modelv1clusters.py --pilot
   bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5
+  bash slurm/submit.sh modelv1clusters.py --pilot --onset-rt
   bash slurm/submit.sh modelv1clusters.py
   python modelv1clusters.py --aggregate
+
+Onset-RT mode (--onset-rt): causal GRU still sees neural bins ≤ t, but the
+readout is a per-bin Bernoulli logit “has movement begun?”. Horizon axis:
+  now   logit_t  → begun_t     (current 20 ms bin is allowed)
+  next  logit_t  → begun_{t+1} (current bin’s spikes cannot label themselves)
 """
 
 from __future__ import annotations
@@ -60,6 +66,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 ROOT = Path(__file__).resolve().parent
@@ -77,6 +84,7 @@ TARGETS = ("wheel_speed", "paw_speed")
 TASKS = ("trial_repeat", "session_loso", "mouse_lomo")
 LOSSES = ("mse", "onset_peak")
 SAMPLINGS = ("uniform", "inverse")
+HORIZONS = ("now", "next")
 POOL = "attn"
 ABLATION = "a1"
 CACHE_VERSION = "v2"
@@ -364,6 +372,8 @@ def job_grid(
     lomo_folds=None,
     interp_folds=None,
     fold_seed=0,
+    onset_rt=False,
+    horizons=None,
 ):
     if trials is None:
         trials, _ = mv.load_corpus()
@@ -395,6 +405,12 @@ def job_grid(
             folds = subsample_folds(
                 folds, n_loso=n_loso, n_lomo=n_lomo, n_interp=n_interp, seed=fold_seed
             )
+    onset_rt = bool(onset_rt)
+    if onset_rt:
+        losses = ["bce"]
+        horizons = list(horizons or HORIZONS)
+    else:
+        horizons = [None]
     configs = []
     for beh in targets:
         for spec in folds:
@@ -402,8 +418,8 @@ def job_grid(
                 continue
             for loss in losses:
                 for sampling in samplings:
-                    configs.append(
-                        {
+                    for horizon in horizons:
+                        cfg = {
                             "protocol": "cv",
                             "target": beh,
                             "task": spec["task"],
@@ -414,7 +430,10 @@ def job_grid(
                             "fold": int(spec["fold"]),
                             "fold_id": spec["fold_id"],
                         }
-                    )
+                        if onset_rt:
+                            cfg["head"] = "onset"
+                            cfg["horizon"] = horizon
+                        configs.append(cfg)
     return configs
 
 
@@ -518,6 +537,154 @@ def cluster_objective(pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, 
     return mse + aux, mse, on, pk_t
 
 
+def begun_step_labels(y, mask, y_mean, y_std, thr, binsize):
+    """Per-bin 1 if movement has begun (sticky onset on the speed trace)."""
+    mean = y.new_tensor(np.asarray(y_mean, dtype=np.float32)).view(1, 1, -1)
+    std = y.new_tensor(np.asarray(y_std, dtype=np.float32)).view(1, 1, -1)
+    y0 = (y * std + mean)[..., 0]
+    on, has = sticky_onset_times(y0, mask, thr, binsize)
+    tgrid = torch.arange(y0.size(1), device=y.device, dtype=y0.dtype) * binsize
+    label = (tgrid.unsqueeze(0) >= on.unsqueeze(1)) & has.unsqueeze(1) & mask
+    return label.to(dtype=y.dtype), has
+
+
+def shift_horizon(label, mask, horizon):
+    """Align targets to a causal readout.
+
+    now:  logit_t ↔ begun_t  (neural bins ≤ t, including the current 20 ms)
+    next: logit_t ↔ begun_{t+1}  (the labeled bin’s spikes are not in the input)
+    """
+    if horizon != "next":
+        return label, mask
+    lab = torch.zeros_like(label)
+    msk = torch.zeros_like(mask)
+    lab[:, :-1] = label[:, 1:]
+    msk[:, :-1] = mask[:, :-1] & mask[:, 1:]
+    return lab, msk
+
+
+def onset_bce(pred, label, mask):
+    """Trial-balanced BCE on per-bin ‘has movement begun?’ logits."""
+    logit = pred[..., 0]
+    bce = F.binary_cross_entropy_with_logits(logit, label, reduction="none")
+    w = mask.to(dtype=pred.dtype)
+    per = (bce * w).sum(dim=1) / w.sum(dim=1).clamp(min=1.0)
+    return per.mean()
+
+
+def build_onset_model(n_areas, y_mean, y_std):
+    """Same causal GRU+attn A1 backbone; readout is a Bernoulli logit, not speed."""
+    model = mv.build_model(
+        n_areas,
+        pool=POOL,
+        use_anatomy=False,
+        temporal="gru",
+        double=False,
+        log1p=False,
+        y_mean=y_mean,
+        y_std=y_std,
+    )
+    last = model.head.net[-1]
+    if getattr(last, "bias", None) is not None:
+        torch.nn.init.constant_(last.bias, -2.0)
+    return model
+
+
+def _align_logit_to_label_clock(logit, horizon):
+    """Place model outputs on the begun_t time axis."""
+    logit = np.asarray(logit, dtype=np.float32).reshape(-1)
+    if horizon != "next":
+        return logit
+    aligned = np.full_like(logit, np.nan)
+    if logit.size:
+        aligned[1:] = logit[:-1]
+    return aligned
+
+
+def _onset_from_prob(prob, valid, binsize, sticky=2):
+    p = np.asarray(prob, dtype=np.float64).reshape(-1)
+    m = np.asarray(valid, dtype=bool).reshape(-1)
+    run = 0
+    n = min(p.size, m.size)
+    for i in range(n):
+        hit = bool(m[i]) and np.isfinite(p[i]) and p[i] >= 0.5
+        run = run + 1 if hit else 0
+        if run >= sticky:
+            return (i - sticky + 1) * binsize
+    return float("nan")
+
+
+def predict_onset(blob, trials, idx, stats, horizon, thr):
+    """Causal logits → begun probabilities on the label clock (not denormalized speed)."""
+    stats = {
+        "vocab": stats["vocab"],
+        "n_areas": int(stats["n_areas"]),
+        "xyz_mean": np.asarray(stats["xyz_mean"], dtype=np.float32),
+        "xyz_std": np.asarray(stats["xyz_std"], dtype=np.float32),
+        "rates": {k: np.asarray(v, dtype=np.float32) for k, v in stats["rates"].items()},
+    }
+    dev = mv.device_of()
+    model = build_onset_model(blob["n_areas"], blob.get("y_mean"), blob.get("y_std")).to(dev)
+    model.load_state_dict(blob["state_dict"])
+    model.eval()
+    ds = mv.TrialDS(trials, idx, blob["y_mean"], blob["y_std"], stats)
+    ld = DataLoader(ds, batch_size=mv.BATCH, shuffle=False, collate_fn=mv.collate)
+    recs = []
+    y_mean = np.asarray(blob["y_mean"], dtype=np.float32).reshape(-1)
+    y_std = np.asarray(blob["y_std"], dtype=np.float32).reshape(-1)
+    with torch.no_grad():
+        for batch in ld:
+            logit = (
+                model(
+                    batch["x"].to(dev),
+                    batch["xyz"].to(dev),
+                    batch["area"].to(dev),
+                    batch["rate"].to(dev),
+                    batch["mask_n"].to(dev),
+                    batch["mask_t"].to(dev),
+                    batch["lengths"].to(dev),
+                    unit_drop=0.0,
+                )[..., 0]
+                .cpu()
+                .numpy()
+            )
+            y_z = batch["y"].numpy()[..., 0]
+            mt = batch["mask_t"].numpy()
+            lengths = batch["lengths"].numpy()
+            for b in range(logit.shape[0]):
+                T = int(lengths[b])
+                raw = logit[b, :T]
+                aligned = _align_logit_to_label_clock(raw, horizon)
+                valid = mt[b, :T].astype(bool)
+                if horizon == "next" and T:
+                    valid[0] = False
+                finite = valid & np.isfinite(aligned)
+                prob = np.full(T, np.nan, dtype=np.float32)
+                prob[finite] = 1.0 / (1.0 + np.exp(-np.clip(aligned[finite], -20, 20)))
+                y0 = y_z[b, :T] * y_std[0] + y_mean[0]
+                onset_true = _onset_from_prob(
+                    (np.abs(y0) >= thr).astype(np.float64),
+                    mt[b, :T].astype(bool),
+                    mv.BINSIZE,
+                )
+                label = np.zeros(T, dtype=np.float32)
+                if np.isfinite(onset_true):
+                    i0 = int(round(onset_true / mv.BINSIZE))
+                    label[max(i0, 0) :] = 1.0
+                recs.append(
+                    {
+                        "pred": prob,
+                        "y": label,
+                        "prob": prob,
+                        "logit": aligned.astype(np.float32),
+                        "onset_true": onset_true,
+                        "onset_pred": _onset_from_prob(prob, valid, mv.BINSIZE),
+                        "horizon": horizon,
+                    }
+                )
+    return recs
+
+
 def run_epoch_cluster(
     model,
     loader,
@@ -530,6 +697,8 @@ def run_epoch_cluster(
     use_aux=False,
     lam_on=LAM_ONSET,
     lam_pk=LAM_PEAK,
+    head="trace",
+    horizon="now",
 ):
     model.train(train)
     total = mse_tot = on_tot = pk_tot = 0.0
@@ -556,9 +725,16 @@ def run_epoch_cluster(
             lengths,
             unit_drop=mv.UNIT_DROPOUT if train else 0.0,
         )
-        loss, mse, on, pk = cluster_objective(
-            pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, lam_on, lam_pk
-        )
+        if head == "onset":
+            label, _ = begun_step_labels(y, mask_loss, y_mean, y_std, thr, mv.BINSIZE)
+            label, mask_on = shift_horizon(label, mask_loss, horizon)
+            loss = onset_bce(pred, label, mask_on)
+            mse = loss
+            on = pk = pred.new_zeros(())
+        else:
+            loss, mse, on, pk = cluster_objective(
+                pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, lam_on, lam_pk
+            )
         if train:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -573,9 +749,12 @@ def run_epoch_cluster(
     return total / d, mse_tot / d, on_tot / d, pk_tot / d
 
 
-def cache_dir_cluster(task, fold_id, loss, sampling):
+def cache_dir_cluster(task, fold_id, loss, sampling, head="trace", horizon=""):
     base = mv.cache_dir(task, POOL, use_anatomy=False, fold_id=fold_id, temporal="gru")
-    d = base / CACHE_VERSION / loss / sampling
+    if head == "onset":
+        d = base / CACHE_VERSION / "onset" / str(horizon or "now") / sampling
+    else:
+        d = base / CACHE_VERSION / loss / sampling
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -595,9 +774,11 @@ def train_one_cluster(
     bin_key=None,
     lam_on=LAM_ONSET,
     lam_pk=LAM_PEAK,
+    head="trace",
+    horizon="now",
 ):
-    tag = f"attn_a1_{loss}_{sampling}"
-    cdir = cache_dir_cluster(task, fold_id, loss, sampling)
+    tag = f"attn_a1_{loss}_{sampling}" if head != "onset" else f"attn_a1_onset_{horizon}_{sampling}"
+    cdir = cache_dir_cluster(task, fold_id, loss, sampling, head=head, horizon=horizon)
     ckpt = cdir / "model.pt"
     hist_path = cdir / "history.json"
     resume = False
@@ -615,17 +796,21 @@ def train_one_cluster(
             resume = True
 
     dev = mv.device_of()
-    model = mv.build_model(
-        stats["n_areas"],
-        pool=POOL,
-        use_anatomy=False,
-        temporal="gru",
-        double=False,
-        log1p=False,
-        y_mean=y_mean,
-        y_std=y_std,
-    ).to(dev)
-    log(f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn GRU")
+    if head == "onset":
+        model = build_onset_model(stats["n_areas"], y_mean, y_std).to(dev)
+        log(f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn GRU onset-RT horizon={horizon}")
+    else:
+        model = mv.build_model(
+            stats["n_areas"],
+            pool=POOL,
+            use_anatomy=False,
+            temporal="gru",
+            double=False,
+            log1p=False,
+            y_mean=y_mean,
+            y_std=y_std,
+        ).to(dev)
+        log(f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn GRU")
     opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
     tr_ds = mv.TrialDS(trials, train_idx, y_mean, y_std, stats, bin_key=bin_key)
     va_ds = mv.TrialDS(trials, val_idx, y_mean, y_std, stats, bin_key=bin_key)
@@ -657,6 +842,8 @@ def train_one_cluster(
         "ablation": ABLATION,
         "loss": loss,
         "sampling": sampling,
+        "head": head,
+        "horizon": horizon,
         "temporal": "gru",
         "cache_version": CACHE_VERSION,
         "soft_peak_tau": SOFT_PEAK_TAU,
@@ -694,6 +881,8 @@ def train_one_cluster(
             "log1p": False,
             "loss": loss,
             "sampling": sampling,
+            "head": head,
+            "horizon": horizon,
             "cache_version": CACHE_VERSION,
             "best_val": best_val,
             "stats": {
@@ -705,7 +894,16 @@ def train_one_cluster(
             },
         }
 
-    kw = dict(y_mean=y_mean, y_std=y_std, thr=thr, use_aux=use_aux, lam_on=lam_on, lam_pk=lam_pk)
+    kw = dict(
+        y_mean=y_mean,
+        y_std=y_std,
+        thr=thr,
+        use_aux=use_aux,
+        lam_on=lam_on,
+        lam_pk=lam_pk,
+        head=head,
+        horizon=horizon,
+    )
     for epoch in range(start_epoch, mv.MAX_EPOCHS + 1):
         tr_loss, tr_mse, tr_on, tr_pk = run_epoch_cluster(model, tr_ld, opt, dev, train=True, **kw)
         with torch.no_grad():
@@ -718,10 +916,16 @@ def train_one_cluster(
         hist["val_onset"].append(va_on)
         hist["train_peak"].append(tr_pk)
         hist["val_peak"].append(va_pk)
-        log(
-            f"    {tag} epoch {epoch:02d}  train={tr_loss:.4f}  val={va_loss:.4f}  "
-            f"mse={tr_mse:.4f}/{va_mse:.4f}  on={tr_on:.4f}  pk={tr_pk:.4f}"
-        )
+        if head == "onset":
+            log(
+                f"    {tag} epoch {epoch:02d}  train={tr_loss:.4f}  val={va_loss:.4f}  "
+                f"bce={tr_mse:.4f}/{va_mse:.4f}  horizon={horizon}"
+            )
+        else:
+            log(
+                f"    {tag} epoch {epoch:02d}  train={tr_loss:.4f}  val={va_loss:.4f}  "
+                f"mse={tr_mse:.4f}/{va_mse:.4f}  on={tr_on:.4f}  pk={tr_pk:.4f}"
+            )
         if va_loss + 1e-5 < best_val:
             best_val = va_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -756,7 +960,66 @@ def train_one_cluster(
     return out, hist
 
 
+def score_onset_pack(recs):
+    """Reaction-time metrics from per-bin begun probabilities."""
+    empty = {
+        "r2": float("nan"),
+        "mean_trial_r2": float("nan"),
+        "median_trial_r2": float("nan"),
+        "rmse": float("nan"),
+        "mae": float("nan"),
+        "pearson": float("nan"),
+        "onset_mae": float("nan"),
+        "onset_pearson": float("nan"),
+        "frac_40ms": float("nan"),
+        "frac_100ms": float("nan"),
+        "bin_acc": float("nan"),
+        "brier": float("nan"),
+        "n_bins": 0,
+        "n_trials": 0,
+        "n_onset": 0,
+    }
+    if not recs:
+        return empty
+    tt, tp = [], []
+    y_all, p_all = [], []
+    for r in recs:
+        ot, op = r.get("onset_true"), r.get("onset_pred")
+        if ot is not None and op is not None and np.isfinite(ot) and np.isfinite(op):
+            tt.append(float(ot))
+            tp.append(float(op))
+        y = np.asarray(r.get("y"), dtype=float).reshape(-1)
+        p = np.asarray(r.get("prob", r.get("pred")), dtype=float).reshape(-1)
+        m = np.isfinite(y) & np.isfinite(p)
+        if m.any():
+            y_all.append(y[m])
+            p_all.append(p[m])
+    out = dict(empty)
+    out["n_trials"] = len(recs)
+    out["n_onset"] = len(tt)
+    if tt:
+        tt, tp = np.asarray(tt), np.asarray(tp)
+        err = np.abs(tt - tp)
+        out["onset_mae"] = float(err.mean())
+        out["mae"] = out["onset_mae"]
+        out["frac_40ms"] = float((err <= 0.04).mean())
+        out["frac_100ms"] = float((err <= 0.10).mean())
+        if tt.size >= 8 and tt.std() > 1e-9 and tp.std() > 1e-9:
+            out["onset_pearson"] = float(np.corrcoef(tt, tp)[0, 1])
+            out["pearson"] = out["onset_pearson"]
+    if y_all:
+        y = np.concatenate(y_all)
+        p = np.clip(np.concatenate(p_all), 0.0, 1.0)
+        out["n_bins"] = int(y.size)
+        out["bin_acc"] = float(((p >= 0.5) == (y >= 0.5)).mean())
+        out["brier"] = float(np.mean((p - y) ** 2))
+        out["rmse"] = float(np.sqrt(out["brier"]))
+    return out
+
+
 def score_pack(recs, min_trial_bins=8, target="wheel_speed"):
+    if recs and "onset_pred" in recs[0]:
+        return score_onset_pack(recs)
     if not recs:
         return {
             "r2": float("nan"),
@@ -815,7 +1078,15 @@ def jackknife_mean_se(vals):
 def summarize(rows, slice_rows_all):
     df = pd.DataFrame(rows)
     keys = ["task", "target", "loss", "sampling"]
+    if not df.empty:
+        for extra in ("head", "horizon"):
+            if extra in df.columns:
+                keys.append(extra)
     metrics = ["r2", "mean_trial_r2", "median_trial_r2"]
+    if not df.empty:
+        for extra in ("onset_mae", "onset_pearson", "frac_40ms", "frac_100ms", "bin_acc", "brier"):
+            if extra in df.columns:
+                metrics.append(extra)
     out = []
     if not df.empty:
         for name, sub in df.groupby(keys, dropna=False):
@@ -850,7 +1121,7 @@ def plot_summary(summary, out_dir):
     import matplotlib.pyplot as plt
 
     df = pd.DataFrame(summary)
-    if df.empty:
+    if df.empty or "r2_mean" not in df.columns:
         return
     tasks = [t for t in TASKS if t in set(df.task)]
     combos = [(lo, sa) for lo in LOSSES for sa in SAMPLINGS]
@@ -1041,6 +1312,8 @@ def process(
     lam_on=LAM_ONSET,
     lam_pk=LAM_PEAK,
     max_fold=None,
+    head="trace",
+    horizon="now",
 ):
     warnings.filterwarnings("ignore")
     mv.set_seed(mv.SEED)
@@ -1049,7 +1322,7 @@ def process(
     mv.CACHE.mkdir(parents=True, exist_ok=True)
     log(
         f"device={mv.device_of()}  target={target}  task={task}  "
-        f"loss={loss}  sampling={sampling}  A1 attn GRU"
+        f"loss={loss}  sampling={sampling}  head={head}  horizon={horizon}  A1 attn GRU"
     )
     if trials is None or session_meta is None:
         trials, session_meta = mv.load_corpus()
@@ -1072,7 +1345,7 @@ def process(
     for spec in specs:
         fold_i = int(spec["fold"])
         fid = spec["fold_id"]
-        log(f"==== {task}  fold={fold_i} {fid}  {loss}/{sampling} ====")
+        log(f"==== {task}  fold={fold_i} {fid}  {loss}/{sampling}  head={head} horizon={horizon} ====")
         mv.clear_bin_masks(trials)
         bin_mode = spec.get("bin_mode")
         if bin_mode:
@@ -1102,7 +1375,10 @@ def process(
             continue
         y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
         stats = mv.fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
-        tag = f"{target}_{task}_{fid}_attn_a1_{loss}_{sampling}_{CACHE_VERSION}"
+        if head == "onset":
+            tag = f"{target}_{task}_{fid}_attn_a1_onset_{horizon}_{sampling}_{CACHE_VERSION}"
+        else:
+            tag = f"{target}_{task}_{fid}_attn_a1_{loss}_{sampling}_{CACHE_VERSION}"
         idx = job_index if job_index is not None else n_job
         jdir = slurm_utils.begin_job(
             mv.OUT,
@@ -1117,6 +1393,8 @@ def process(
             fold_id=fid,
             loss=loss,
             sampling=sampling,
+            head=head,
+            horizon=horizon,
         )
         blob, hist = train_one_cluster(
             trials,
@@ -1133,11 +1411,24 @@ def process(
             bin_key="train_bins" if bin_mode else None,
             lam_on=lam_on,
             lam_pk=lam_pk,
+            head=head,
+            horizon=horizon,
         )
-        recs = mv.predict(blob, trials, test_idx, blob.get("stats", stats))
-        if bin_mode:
-            recs = mv.restrict_recs(recs, trials, test_idx, "test_bins")
-        min_bins = 2 if bin_mode else 8
+        if head == "onset":
+            recs = predict_onset(
+                blob,
+                trials,
+                test_idx,
+                blob.get("stats", stats),
+                horizon=horizon,
+                thr=WHEEL_ON if target == "wheel_speed" else PAW_ON,
+            )
+            min_bins = 8
+        else:
+            recs = mv.predict(blob, trials, test_idx, blob.get("stats", stats))
+            if bin_mode:
+                recs = mv.restrict_recs(recs, trials, test_idx, "test_bins")
+            min_bins = 2 if bin_mode else 8
         sc = score_pack(recs, min_trial_bins=min_bins, target=target)
         row = {
             "protocol": "cv",
@@ -1147,6 +1438,8 @@ def process(
             "ablation": ABLATION,
             "loss": loss,
             "sampling": sampling,
+            "head": head,
+            "horizon": horizon,
             "cache_version": CACHE_VERSION,
             "fold": fold_i,
             "fold_id": fid,
@@ -1160,10 +1453,16 @@ def process(
         pd.DataFrame([row]).to_csv(jdir / "scores.csv", index=False)
         pd.DataFrame(slices).to_csv(jdir / "scores_slices.csv", index=False)
         slurm_utils.write_status(state="done", n_rows=1, best_epoch=hist.get("best_epoch"))
-        log(
-            f"   {target:12s} R²={sc['r2']:+.3f}  mean_trial={sc['mean_trial_r2']:+.3f}  "
-            f"median_trial={sc['median_trial_r2']:+.3f}  n={sc['n_trials']}"
-        )
+        if head == "onset":
+            log(
+                f"   {target:12s} horizon={horizon:4s}  onset_mae={sc.get('onset_mae', float('nan'))*1000:.0f}ms  "
+                f"acc={sc.get('bin_acc', float('nan')):.3f}  n={sc['n_trials']}"
+            )
+        else:
+            log(
+                f"   {target:12s} R²={sc['r2']:+.3f}  mean_trial={sc['mean_trial_r2']:+.3f}  "
+                f"median_trial={sc['median_trial_r2']:+.3f}  n={sc['n_trials']}"
+            )
         n_job += 1
         if make_plots:
             pd.DataFrame(rows).to_csv(mv.OUT / "scores.csv", index=False)
@@ -1265,9 +1564,17 @@ def run_self_test():
     ratio = float(w.max() / w.min())
     if ratio > INV_MAX_RATIO + 1e-6:
         raise SystemExit(f"self-test failed: inverse ratio {ratio:.2f} > cap {INV_MAX_RATIO}")
+    logit = torch.randn(bsz, n_t, 1, requires_grad=True)
+    lab = torch.zeros(bsz, n_t)
+    lab[:, 12:] = 1.0
+    bce = onset_bce(logit, lab, mask)
+    bce.backward()
+    if float(logit.grad.abs().sum()) <= 0:
+        raise SystemExit("self-test failed: onset BCE has no gradient")
     log(
         f"self-test ok  timing_grad={g:.4g}  "
-        f"Δloss={abs((l_aux - l_mse).detach().item()):.4g}  inv_ratio={ratio:.2f}"
+        f"Δloss={abs((l_aux - l_mse).detach().item()):.4g}  inv_ratio={ratio:.2f}  "
+        f"onset_bce_grad={float(logit.grad.abs().sum()):.4g}"
     )
     return True
 
@@ -1446,6 +1753,18 @@ if __name__ == "__main__":
     p.add_argument("--lomo-folds", type=int, default=None, help="Keep this many random mouse_lomo folds")
     p.add_argument("--interp-folds", type=int, default=None, help="Keep this many trial_repeat folds")
     p.add_argument("--fold-seed", type=int, default=0, help="Added to SEED when sampling pilot folds")
+    p.add_argument(
+        "--onset-rt",
+        action="store_true",
+        help="Decode movement onset (per-bin ‘has begun?’) instead of the speed trace; adds horizon now vs next",
+    )
+    p.add_argument(
+        "--horizons",
+        nargs="*",
+        default=list(HORIZONS),
+        choices=list(HORIZONS),
+        help="Onset-RT only: now = label_t from bins ≤ t; next = label_{t+1} from bins ≤ t",
+    )
     slurm_utils.add_common_args(p)
     args = p.parse_args()
     n_repeats = max(1, int(args.trial_repeats))
@@ -1463,6 +1782,8 @@ if __name__ == "__main__":
         lomo_folds=args.lomo_folds,
         interp_folds=args.interp_folds,
         fold_seed=args.fold_seed,
+        onset_rt=args.onset_rt,
+        horizons=args.horizons,
     )
     if args.list_jobs:
         slurm_utils.print_jobs(job_grid(**grid_kw))
@@ -1482,6 +1803,7 @@ if __name__ == "__main__":
     use_grid = bool(
         args.smoke
         or args.pilot
+        or args.onset_rt
         or args.loso_folds is not None
         or args.lomo_folds is not None
         or args.interp_folds is not None
@@ -1505,6 +1827,8 @@ if __name__ == "__main__":
                     lam_pk=args.lam_peak,
                     make_plots=False,
                     job_index=i,
+                    head=cfg.get("head", "trace"),
+                    horizon=cfg.get("horizon", "now"),
                 )
             if args.smoke:
                 write_smoke_report(n_folds=smoke_folds)
@@ -1544,4 +1868,6 @@ if __name__ == "__main__":
             n_trial_repeats=n_repeats,
             lam_on=args.lam_onset,
             lam_pk=args.lam_peak,
+            head=cfg.get("head", "trace"),
+            horizon=cfg.get("horizon", "now"),
         )

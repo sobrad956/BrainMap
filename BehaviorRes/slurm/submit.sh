@@ -9,6 +9,7 @@
 #   bash slurm/submit.sh Modelv1.py --protocol cv --temporal transformer --double --log1p
 #   bash slurm/submit.sh modelv1clusters.py
 #   bash slurm/submit.sh modelv1clusters.py --pilot
+#   bash slurm/submit.sh modelv1clusters.py --pilot --onset-rt
 #   bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5
 #   bash slurm/submit.sh modelv1clusters.py --cpu
 #
@@ -49,6 +50,7 @@ LOMO_FOLDS=""
 INTERP_FOLDS=""
 FOLD_SEED=""
 CLUSTER_TARGETS=""
+ONSET_RT=0
 SBATCH_GPU=(--gpus=1)
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -96,6 +98,10 @@ while [[ $# -gt 0 ]]; do
     --targets)
       CLUSTER_TARGETS="$2"
       shift 2
+      ;;
+    --onset-rt)
+      ONSET_RT=1
+      shift
       ;;
     *)
       break
@@ -146,7 +152,10 @@ elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
     IFS=',' read -r -a _tgts <<< "$CLUSTER_TARGETS"
     LIST_ARGS+=("${_tgts[@]}")
   fi
-  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=${CLUSTER_TARGETS}"
+  if [[ "$ONSET_RT" == "1" ]]; then
+    LIST_ARGS+=(--onset-rt)
+  fi
+  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=${CLUSTER_TARGETS},BEH_ONSET_RT=${ONSET_RT}"
 elif [[ "$PILOT" == "1" || -n "$LOSO_FOLDS" || -n "$LOMO_FOLDS" || -n "$INTERP_FOLDS" ]]; then
   echo "$SCRIPT does not take --pilot / --loso-folds / --lomo-folds; those are for modelv1clusters.py" >&2
   exit 1
