@@ -8,6 +8,7 @@
 #   bash slurm/resubmit_failed.sh --protocol cv --temporal lstm --double --log1p
 #   bash slurm/resubmit_failed.sh --script modelv1clusters.py --pilot --temporal transformer --paw-only \
 #       --heads trace+onset+direction --subsets full+length+shape
+#   bash slurm/resubmit_failed.sh --script graph.py --pilot --paw-only --region-gnn
 #
 # Pulls FAILED array tasks from sacct, reads BEH_ARRAY_OFFSET from the
 # original .out log, and sbatch's only those local task IDs.
@@ -26,6 +27,9 @@ PAW_ONLY=0
 CLUSTER_HEADS=""
 CLUSTER_SUBSETS=""
 CLUSTER_HORIZONS=""
+SHARED_ENCODER=0
+REGION_GNN=0
+FUNC_WINDOW=0
 DEVICE="auto"
 SBATCH_GPU=(--gpus=1)
 DRY=0
@@ -60,6 +64,9 @@ while [[ $# -gt 0 ]]; do
     --heads) CLUSTER_HEADS="$2"; shift 2 ;;
     --subsets) CLUSTER_SUBSETS="$2"; shift 2 ;;
     --horizons) CLUSTER_HORIZONS="$2"; shift 2 ;;
+    --shared-encoder) SHARED_ENCODER=1; shift ;;
+    --region-gnn) REGION_GNN=1; shift ;;
+    --func-window) FUNC_WINDOW=1; shift ;;
     -h|--help) usage ;;
     --*) usage ;;
     *) break ;;
@@ -93,6 +100,10 @@ if [[ "$SCRIPT" == "Modelv1.py" ]]; then
   JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL},BEH_TEMPORAL=${TEMPORAL},BEH_DOUBLE=${DOUBLE},BEH_LOG1P=${LOG1P}"
 elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
   JOB_EXPORT="${JOB_EXPORT},BEH_TEMPORAL=${TEMPORAL},BEH_PILOT=${PILOT},BEH_PAW_ONLY=${PAW_ONLY},BEH_HEADS=$(to_plus "$CLUSTER_HEADS"),BEH_SUBSETS=$(to_plus "$CLUSTER_SUBSETS"),BEH_HORIZONS=$(to_plus "$CLUSTER_HORIZONS")"
+elif [[ "$SCRIPT" == "heirarchical.py" ]]; then
+  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_PAW_ONLY=${PAW_ONLY},BEH_SHARED_ENCODER=${SHARED_ENCODER}"
+elif [[ "$SCRIPT" == "graph.py" ]]; then
+  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_PAW_ONLY=${PAW_ONLY},BEH_REGION_GNN=${REGION_GNN},BEH_FUNC_WINDOW=${FUNC_WINDOW}"
 fi
 
 offset_from_log() {

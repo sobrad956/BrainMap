@@ -95,6 +95,44 @@ if [[ "$SCRIPT" == "heirarchical.py" ]]; then
     EXTRA+=(--shared-encoder)
   fi
 fi
+if [[ "$SCRIPT" == "graph.py" ]]; then
+  if [[ "${BEH_PILOT:-0}" == "1" ]]; then
+    EXTRA+=(--pilot)
+  fi
+  if [[ -n "${BEH_LOSO_FOLDS:-}" ]]; then
+    EXTRA+=(--loso-folds "$BEH_LOSO_FOLDS")
+  fi
+  if [[ -n "${BEH_LOMO_FOLDS:-}" ]]; then
+    EXTRA+=(--lomo-folds "$BEH_LOMO_FOLDS")
+  fi
+  if [[ -n "${BEH_INTERP_FOLDS:-}" ]]; then
+    EXTRA+=(--interp-folds "$BEH_INTERP_FOLDS")
+  fi
+  if [[ -n "${BEH_FOLD_SEED:-}" ]]; then
+    EXTRA+=(--fold-seed "$BEH_FOLD_SEED")
+  fi
+  if [[ "${BEH_PAW_ONLY:-0}" == "1" ]]; then
+    EXTRA+=(--paw-only)
+  fi
+  if [[ "${BEH_REGION_GNN:-0}" == "1" ]]; then
+    EXTRA+=(--region-gnn)
+  fi
+  if [[ "${BEH_FUNC_WINDOW:-0}" == "1" ]]; then
+    EXTRA+=(--func-window)
+  fi
+  if [[ -n "${BEH_K_NEIGHBORS:-}" ]]; then
+    EXTRA+=(--k-neighbors "$BEH_K_NEIGHBORS")
+  fi
+  if [[ -n "${BEH_UNIT_LAYERS:-}" ]]; then
+    EXTRA+=(--unit-layers "$BEH_UNIT_LAYERS")
+  fi
+  if [[ -n "${BEH_LAMBDA_UNIT:-}" ]]; then
+    EXTRA+=(--lambda-unit "$BEH_LAMBDA_UNIT")
+  fi
+  if [[ -n "${BEH_LAMBDA_REGION:-}" ]]; then
+    EXTRA+=(--lambda-region "$BEH_LAMBDA_REGION")
+  fi
+fi
 
 OFFSET="${BEH_ARRAY_OFFSET:-0}"
 GLOBAL_JOB_ID=$((SLURM_ARRAY_TASK_ID + OFFSET))
