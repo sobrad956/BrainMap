@@ -102,8 +102,12 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --targets)
-      CLUSTER_TARGETS="$2"
-      shift 2
+      CLUSTER_TARGETS=""
+      shift
+      while [[ $# -gt 0 && "$1" != --* ]]; do
+        CLUSTER_TARGETS="${CLUSTER_TARGETS:+$CLUSTER_TARGETS,}$1"
+        shift
+      done
       ;;
     --onset-rt)
       ONSET_RT=1
@@ -114,16 +118,28 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --heads)
-      CLUSTER_HEADS="$2"
-      shift 2
+      CLUSTER_HEADS=""
+      shift
+      while [[ $# -gt 0 && "$1" != --* ]]; do
+        CLUSTER_HEADS="${CLUSTER_HEADS:+$CLUSTER_HEADS,}$1"
+        shift
+      done
       ;;
     --subsets)
-      CLUSTER_SUBSETS="$2"
-      shift 2
+      CLUSTER_SUBSETS=""
+      shift
+      while [[ $# -gt 0 && "$1" != --* ]]; do
+        CLUSTER_SUBSETS="${CLUSTER_SUBSETS:+$CLUSTER_SUBSETS,}$1"
+        shift
+      done
       ;;
     --horizons)
-      CLUSTER_HORIZONS="$2"
-      shift 2
+      CLUSTER_HORIZONS=""
+      shift
+      while [[ $# -gt 0 && "$1" != --* ]]; do
+        CLUSTER_HORIZONS="${CLUSTER_HORIZONS:+$CLUSTER_HORIZONS,}$1"
+        shift
+      done
       ;;
     *)
       break
@@ -211,6 +227,11 @@ N="$(printf '%s\n' "$JOB_LIST" | awk '$1 ~ /^[0-9]+$/ && !found {print $1; found
 if [[ -z "$N" || ! "$N" =~ ^[0-9]+$ || "$N" -lt 1 ]]; then
   echo "could not read job count from: python $SCRIPT ${LIST_ARGS[*]} --list-jobs" >&2
   python "$SCRIPT" "${LIST_ARGS[@]}" --list-jobs
+  exit 1
+fi
+if [[ "$SCRIPT" == "modelv1clusters.py" ]] && [[ "$CLUSTER_SUBSETS" == *length* || "$CLUSTER_SUBSETS" == *shape* ]] && (( N <= 88 )); then
+  echo "refusing to submit: --subsets=${CLUSTER_SUBSETS} but only $N jobs (full-corpus pilot is 88). length/shape never entered the grid." >&2
+  echo "python $SCRIPT ${LIST_ARGS[*]} --list-jobs" >&2
   exit 1
 fi
 LAST="$((N - 1))"
