@@ -1,7 +1,7 @@
 {
   "job": 40,
   "tag": "paw_speed_mouse_lomo_ZM_2240_attn_a1_transformer_mse_uniform_v2",
-  "slurm_job_id": "547271",
+  "slurm_job_id": "549251",
   "slurm_array_task_id": "40",
   "task": "mouse_lomo",
   "pool": "attn",
@@ -21,5 +21,5 @@
   "n_rows": 1,
   "best_epoch": 33,
   "device": "cuda",
-  "updated_at": "2026-10-18T15:12:07.222992+00:00"
+  "updated_at": "2026-10-18T15:51:44.827701+00:00"
 }

@@ -1,0 +1,2 @@
+protocol,task,pool,target,ablation,temporal,loss,sampling,head,horizon,subset_kind,subset_key,cache_version,fold,fold_id,bin_mode,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials
+cv,session_loso,attn,paw_speed,a1,transformer,mse,inverse,trace,now,length,21-32,v2,22,b69b86be,,0.21421410069926827,628.5108642578125,377.33544921875,0.47480653689581953,397,-0.46074650254634875,0.17549458443548882,16

@@ -1,7 +1,7 @@
 {
   "job": 2,
   "tag": "paw_speed_trial_repeat_rep0_interp_attn_a1_transformer_onset_peak_uniform_v2",
-  "slurm_job_id": "547233",
+  "slurm_job_id": "549206",
   "slurm_array_task_id": "2",
   "task": "trial_repeat",
   "pool": "attn",
@@ -21,5 +21,5 @@
   "n_rows": 1,
   "best_epoch": 38,
   "device": "cuda",
-  "updated_at": "2026-10-18T15:00:19.903966+00:00"
+  "updated_at": "2026-10-18T15:50:34.916874+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 34,
   "tag": "paw_speed_mouse_lomo_UCLA033_attn_a1_transformer_onset_peak_uniform_v2",
-  "slurm_job_id": "547265",
+  "slurm_job_id": "549245",
   "slurm_array_task_id": "34",
   "task": "mouse_lomo",
   "pool": "attn",
@@ -21,5 +21,5 @@
   "n_rows": 1,
   "best_epoch": 23,
   "device": "cuda",
-  "updated_at": "2026-10-18T15:10:34.233319+00:00"
+  "updated_at": "2026-10-18T15:51:30.191771+00:00"
 }
