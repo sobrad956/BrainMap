@@ -552,6 +552,15 @@ def job_grid(
                                 if head == "onset":
                                     cfg["horizon"] = horizon
                                 configs.append(cfg)
+    # Full-corpus trace first so a paw-only transformer trace pilot occupies
+    # jobs 0..43. Extra heads/subsets append after that and can be resubmitted
+    # without rewriting the 44 completed folders.
+    configs.sort(
+        key=lambda c: 0
+        if c.get("head", "trace") == "trace"
+        and str(c.get("subset_kind", "full")) in ("full", "", "None")
+        else 1
+    )
     return configs
 
 

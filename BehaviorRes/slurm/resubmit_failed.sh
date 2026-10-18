@@ -6,7 +6,8 @@
 #   bash slurm/resubmit_failed.sh --dry-run 403919
 #   bash slurm/resubmit_failed.sh --cpu 403919
 #   bash slurm/resubmit_failed.sh --protocol cv --temporal lstm --double --log1p
-#   bash slurm/resubmit_failed.sh --script modelv1clusters.py
+#   bash slurm/resubmit_failed.sh --script modelv1clusters.py --pilot --temporal transformer --paw-only \
+#       --heads trace+onset+direction --subsets full+length+shape
 #
 # Pulls FAILED array tasks from sacct, reads BEH_ARRAY_OFFSET from the
 # original .out log, and sbatch's only those local task IDs.
@@ -20,14 +21,29 @@ PROTOCOL="cv"
 TEMPORAL="gru"
 DOUBLE=0
 LOG1P=0
+PILOT=0
+PAW_ONLY=0
+CLUSTER_HEADS=""
+CLUSTER_SUBSETS=""
+CLUSTER_HORIZONS=""
 DEVICE="auto"
 SBATCH_GPU=(--gpus=1)
 DRY=0
 LOOKBACK="-14days"
 
 usage() {
-  echo "usage: bash slurm/resubmit_failed.sh [--dry-run] [--cpu] [--protocol cv] [--temporal gru|lstm|transformer] [--double] [--log1p] [array_jobid ...]" >&2
+  echo "usage: bash slurm/resubmit_failed.sh [--dry-run] [--cpu] [--protocol cv] [--temporal gru|lstm|transformer] [--double] [--log1p] [--script modelv1clusters.py] [--pilot] [--paw-only] [--heads a+b] [--subsets a+b] [array_jobid ...]" >&2
   exit 1
+}
+
+to_plus() {
+  local s="${1:-}"
+  s="${s//,/+}"
+  s="${s// /+}"
+  while [[ "$s" == *++* ]]; do s="${s//++/+}"; done
+  s="${s#+}"
+  s="${s%+}"
+  printf '%s' "$s"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -39,6 +55,11 @@ while [[ $# -gt 0 ]]; do
     --double) DOUBLE=1; shift ;;
     --log1p) LOG1P=1; shift ;;
     --script) SCRIPT="$2"; shift 2 ;;
+    --pilot) PILOT=1; shift ;;
+    --paw-only) PAW_ONLY=1; shift ;;
+    --heads) CLUSTER_HEADS="$2"; shift 2 ;;
+    --subsets) CLUSTER_SUBSETS="$2"; shift 2 ;;
+    --horizons) CLUSTER_HORIZONS="$2"; shift 2 ;;
     -h|--help) usage ;;
     --*) usage ;;
     *) break ;;
@@ -70,6 +91,8 @@ fi
 JOB_EXPORT="ALL,BEH_SCRIPT=${SCRIPT},BEH_DEVICE=${DEVICE},BEH_ROOT=${ROOT}"
 if [[ "$SCRIPT" == "Modelv1.py" ]]; then
   JOB_EXPORT="${JOB_EXPORT},BEH_PROTOCOL=${PROTOCOL},BEH_TEMPORAL=${TEMPORAL},BEH_DOUBLE=${DOUBLE},BEH_LOG1P=${LOG1P}"
+elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
+  JOB_EXPORT="${JOB_EXPORT},BEH_TEMPORAL=${TEMPORAL},BEH_PILOT=${PILOT},BEH_PAW_ONLY=${PAW_ONLY},BEH_HEADS=$(to_plus "$CLUSTER_HEADS"),BEH_SUBSETS=$(to_plus "$CLUSTER_SUBSETS"),BEH_HORIZONS=$(to_plus "$CLUSTER_HORIZONS")"
 fi
 
 offset_from_log() {

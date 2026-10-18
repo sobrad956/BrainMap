@@ -14,6 +14,9 @@
 #   bash slurm/submit.sh modelv1clusters.py --pilot --temporal transformer --paw-only \
 #       --heads trace,onset,direction --subsets full,length,shape
 #   bash slurm/submit.sh modelv1clusters.py --cpu
+#   bash slurm/submit.sh heirarchical.py --pilot
+#   bash slurm/submit.sh heirarchical.py --protocol cv --pilot --paw-only
+#   bash slurm/submit.sh heirarchical.py --pilot --shared-encoder
 #
 # Extra arguments after the flags above are passed to sbatch.
 #
@@ -28,13 +31,16 @@
 #   python modelv1clusters.py --aggregate
 # After a pilot array, pass the same fold flags:
 #   python modelv1clusters.py --pilot --aggregate
+# After Formulation C:
+#   python heirarchical.py --aggregate
+#   python heirarchical.py --pilot --aggregate
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ $# -lt 1 ]]; then
-  echo "usage: bash slurm/submit.sh Modelv1.py|modelv1clusters.py [--cpu] [--protocol fixed|cv|all] [--temporal gru|lstm|transformer] [--double] [--log1p] [--pilot] [--paw-only] [--heads trace,onset,direction] [--subsets full,length,shape] [--loso-folds N] [--lomo-folds N] [--interp-folds N] [--fold-seed N] [sbatch args...]" >&2
+  echo "usage: bash slurm/submit.sh Modelv1.py|modelv1clusters.py|heirarchical.py [--cpu] [--protocol fixed|cv|all] [--temporal gru|lstm|transformer] [--double] [--log1p] [--pilot] [--paw-only] [--heads trace,onset,direction] [--subsets full,length,shape] [--loso-folds N] [--lomo-folds N] [--interp-folds N] [--fold-seed N] [--shared-encoder] [sbatch args...]" >&2
   exit 1
 fi
 
@@ -57,6 +63,7 @@ PAW_ONLY=0
 CLUSTER_HEADS=""
 CLUSTER_SUBSETS=""
 CLUSTER_HORIZONS=""
+SHARED_ENCODER=0
 SBATCH_GPU=(--gpus=1)
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -141,6 +148,10 @@ while [[ $# -gt 0 ]]; do
         shift
       done
       ;;
+    --shared-encoder)
+      SHARED_ENCODER=1
+      shift
+      ;;
     *)
       break
       ;;
@@ -153,6 +164,17 @@ if [[ -f "$ROOT/.venv/bin/activate" ]]; then
 fi
 
 mkdir -p "$ROOT/slurm/logs"
+
+# Slurm --export is comma-delimited. List values must not contain commas.
+to_plus() {
+  local s="${1:-}"
+  s="${s//,/+}"
+  s="${s// /+}"
+  while [[ "$s" == *++* ]]; do s="${s//++/+}"; done
+  s="${s#+}"
+  s="${s%+}"
+  printf '%s' "$s"
+}
 
 LIST_ARGS=()
 JOB_EXPORT="ALL,BEH_SCRIPT=${SCRIPT},BEH_DEVICE=${DEVICE},BEH_ROOT=${ROOT}"
@@ -212,9 +234,36 @@ elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
     IFS=',' read -r -a _hz <<< "$CLUSTER_HORIZONS"
     LIST_ARGS+=("${_hz[@]}")
   fi
-  JOB_EXPORT="${JOB_EXPORT},BEH_TEMPORAL=${TEMPORAL},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=${CLUSTER_TARGETS},BEH_ONSET_RT=${ONSET_RT},BEH_PAW_ONLY=${PAW_ONLY},BEH_HEADS=${CLUSTER_HEADS},BEH_SUBSETS=${CLUSTER_SUBSETS},BEH_HORIZONS=${CLUSTER_HORIZONS}"
+  JOB_EXPORT="${JOB_EXPORT},BEH_TEMPORAL=${TEMPORAL},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=$(to_plus "$CLUSTER_TARGETS"),BEH_ONSET_RT=${ONSET_RT},BEH_PAW_ONLY=${PAW_ONLY},BEH_HEADS=$(to_plus "$CLUSTER_HEADS"),BEH_SUBSETS=$(to_plus "$CLUSTER_SUBSETS"),BEH_HORIZONS=$(to_plus "$CLUSTER_HORIZONS")"
+elif [[ "$SCRIPT" == "heirarchical.py" ]]; then
+  if [[ "$TEMPORAL" != "gru" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
+    echo "heirarchical.py is Formulation C on the attn-A1 GRU (no --temporal/--double/--log1p)" >&2
+    exit 1
+  fi
+  if [[ "$PILOT" == "1" ]]; then
+    LIST_ARGS+=(--pilot)
+  fi
+  if [[ -n "$LOSO_FOLDS" ]]; then
+    LIST_ARGS+=(--loso-folds "$LOSO_FOLDS")
+  fi
+  if [[ -n "$LOMO_FOLDS" ]]; then
+    LIST_ARGS+=(--lomo-folds "$LOMO_FOLDS")
+  fi
+  if [[ -n "$INTERP_FOLDS" ]]; then
+    LIST_ARGS+=(--interp-folds "$INTERP_FOLDS")
+  fi
+  if [[ -n "$FOLD_SEED" ]]; then
+    LIST_ARGS+=(--fold-seed "$FOLD_SEED")
+  fi
+  if [[ "$PAW_ONLY" == "1" ]]; then
+    LIST_ARGS+=(--paw-only)
+  fi
+  if [[ "$SHARED_ENCODER" == "1" ]]; then
+    LIST_ARGS+=(--shared-encoder)
+  fi
+  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_PAW_ONLY=${PAW_ONLY},BEH_SHARED_ENCODER=${SHARED_ENCODER}"
 elif [[ "$PILOT" == "1" || -n "$LOSO_FOLDS" || -n "$LOMO_FOLDS" || -n "$INTERP_FOLDS" ]]; then
-  echo "$SCRIPT does not take --pilot / --loso-folds / --lomo-folds; those are for modelv1clusters.py" >&2
+  echo "$SCRIPT does not take --pilot / --loso-folds / --lomo-folds; those are for modelv1clusters.py or heirarchical.py" >&2
   exit 1
 elif [[ "$PROTOCOL" != "fixed" || "$TEMPORAL" != "gru" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
   echo "$SCRIPT only forwards Modelv1.py architecture flags. got protocol=${PROTOCOL} temporal=${TEMPORAL} double=${DOUBLE} log1p=${LOG1P}" >&2
@@ -237,6 +286,8 @@ fi
 LAST="$((N - 1))"
 if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
   echo "submitting $SCRIPT  array=0-${LAST}  device=${DEVICE}  temporal=${TEMPORAL}  pilot=${PILOT}  paw_only=${PAW_ONLY}  heads=${CLUSTER_HEADS:-trace}  subsets=${CLUSTER_SUBSETS:-full}  loso=${LOSO_FOLDS:-all}  lomo=${LOMO_FOLDS:-all}  ($N configs)"
+elif [[ "$SCRIPT" == "heirarchical.py" ]]; then
+  echo "submitting $SCRIPT  array=0-${LAST}  device=${DEVICE}  Formulation C  pilot=${PILOT}  paw_only=${PAW_ONLY}  shared_encoder=${SHARED_ENCODER}  loso=${LOSO_FOLDS:-all}  lomo=${LOMO_FOLDS:-all}  ($N configs)"
 else
   echo "submitting $SCRIPT  protocol=${PROTOCOL}  temporal=${TEMPORAL}  double=${DOUBLE}  log1p=${LOG1P}  array=0-${LAST}  device=${DEVICE}  ($N configs)"
 fi
