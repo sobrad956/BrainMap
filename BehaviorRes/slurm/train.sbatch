@@ -51,8 +51,29 @@ if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
     IFS=',' read -r -a _tgts <<< "$BEH_CLUSTER_TARGETS"
     EXTRA+=("${_tgts[@]}")
   fi
+  if [[ -n "${BEH_TEMPORAL:-}" ]]; then
+    EXTRA+=(--temporal "$BEH_TEMPORAL")
+  fi
   if [[ "${BEH_ONSET_RT:-0}" == "1" ]]; then
     EXTRA+=(--onset-rt)
+  fi
+  if [[ "${BEH_PAW_ONLY:-0}" == "1" ]]; then
+    EXTRA+=(--paw-only)
+  fi
+  if [[ -n "${BEH_HEADS:-}" ]]; then
+    EXTRA+=(--heads)
+    IFS=',' read -r -a _heads <<< "$BEH_HEADS"
+    EXTRA+=("${_heads[@]}")
+  fi
+  if [[ -n "${BEH_SUBSETS:-}" ]]; then
+    EXTRA+=(--subsets)
+    IFS=',' read -r -a _subs <<< "$BEH_SUBSETS"
+    EXTRA+=("${_subs[@]}")
+  fi
+  if [[ -n "${BEH_HORIZONS:-}" ]]; then
+    EXTRA+=(--horizons)
+    IFS=',' read -r -a _hz <<< "$BEH_HORIZONS"
+    EXTRA+=("${_hz[@]}")
   fi
 fi
 

@@ -257,6 +257,7 @@ def trial_behaviors(rec):
         speed = np.hypot(vx[:n], vy[:n]).astype(np.float32) if n else speed
     return {
         "wheel_speed": _trace(rec, "wheel_velocity", "wheel_velocity", absval=True),
+        "wheel_signed": _trace(rec, "wheel_velocity", "wheel_velocity", absval=False),
         "paw_vx": vx,
         "paw_vy": vy,
         "paw_vz": _trace(rec, "lp_vz", "dlc_vz"),
@@ -943,35 +944,74 @@ class SinusoidalPositionalEncoding(nn.Module):
         return self.dropout(x + self.pe[:, : x.size(1)])
 
 
+class CausalEncoderLayer(nn.Module):
+    """Post-norm causal self-attention + FFN. Returns per-head attention if asked."""
+
+    def __init__(self, d=D_MODEL, nhead=N_HEADS, dropout=DROPOUT):
+        super().__init__()
+        self.nhead = nhead
+        self.mha = nn.MultiheadAttention(d, nhead, dropout=dropout, batch_first=True)
+        self.ff = nn.Sequential(
+            nn.Linear(d, 4 * d),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(4 * d, d),
+            nn.Dropout(dropout),
+        )
+        self.norm1 = nn.LayerNorm(d)
+        self.norm2 = nn.LayerNorm(d)
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, x, attn_mask, key_padding_mask, need_weights=False):
+        kw = dict(
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            need_weights=need_weights,
+        )
+        try:
+            attn_out, w = self.mha(x, x, x, average_attn_weights=False, **kw)
+        except TypeError:
+            attn_out, w = self.mha(x, x, x, **kw)
+        x = self.norm1(x + self.drop(attn_out))
+        x = self.norm2(x + self.ff(x))
+        return x, w
+
+
 class CausalTransformer(nn.Module):
-    """Causal Transformer over the pooled (B, T, D) sequence."""
+    """Causal Transformer over the pooled (B, T, D) sequence.
+
+    Attention is strictly lower-triangular over time, so token t may only
+    mix neural bins ≤ t. When `return_attn=True`, also returns a stack of
+    attention weights (n_layers, B, nhead, T, T) for temporal explainability.
+    """
 
     def __init__(self, d=D_MODEL, n_layers=1, nhead=N_HEADS, dropout=DROPOUT):
         super().__init__()
+        self.nhead = nhead
         self.pos = SinusoidalPositionalEncoding(d, dropout=dropout)
-        layer = nn.TransformerEncoderLayer(
-            d_model=d,
-            nhead=nhead,
-            dim_feedforward=4 * d,
-            dropout=dropout,
-            activation="gelu",
-            batch_first=True,
+        self.layers = nn.ModuleList(
+            [CausalEncoderLayer(d, nhead, dropout) for _ in range(n_layers)]
         )
-        try:
-            self.enc = nn.TransformerEncoder(
-                layer, num_layers=n_layers, enable_nested_tensor=False
-            )
-        except TypeError:
-            self.enc = nn.TransformerEncoder(layer, num_layers=n_layers)
 
-    def forward(self, h, mask_t):
+    def forward(self, h, mask_t, return_attn=False):
         t_len = h.size(1)
         causal = torch.zeros(t_len, t_len, device=h.device, dtype=h.dtype)
         tri = torch.triu(torch.ones(t_len, t_len, device=h.device, dtype=torch.bool), diagonal=1)
         causal = causal.masked_fill(tri, float("-inf"))
         pad = ~mask_t.bool()
-        out = self.enc(self.pos(h), mask=causal, src_key_padding_mask=pad)
-        return out * mask_t.unsqueeze(-1).to(out.dtype)
+        x = self.pos(h)
+        weights = []
+        for layer in self.layers:
+            x, w = layer(x, causal, pad, need_weights=return_attn)
+            if return_attn and w is not None:
+                if w.dim() == 3:
+                    w = w.unsqueeze(1)
+                weights.append(w)
+        out = x * mask_t.unsqueeze(-1).to(x.dtype)
+        if return_attn:
+            attn = torch.stack(weights, dim=0) if weights else None
+            return out, attn
+        return out
 
 
 class SetSequence(nn.Module):
@@ -1016,20 +1056,26 @@ class SetSequence(nn.Module):
             self.use_pack = True
         self.head = Head(self.head_dim, log1p=self.log1p)
 
-    def forward(self, x, xyz, area, rate, mask_n, mask_t, lengths, unit_drop=0.0):
+    def forward(self, x, xyz, area, rate, mask_n, mask_t, lengths, unit_drop=0.0, return_attn=False):
         if self.training and unit_drop > 0:
             mask_n = apply_unit_dropout(mask_n, unit_drop)
         e = self.enc(x, xyz, area, rate, mask_n)
         h = self.pool(e, mask_n) * mask_t.unsqueeze(-1)
+        attn = None
         if self.use_pack:
             packed = pack_padded_sequence(
                 h, lengths.cpu(), batch_first=True, enforce_sorted=False
             )
             out, _ = self.rnn(packed)
             out, _ = pad_packed_sequence(out, batch_first=True, total_length=x.shape[-1])
+        elif return_attn:
+            out, attn = self.rnn(h, mask_t, return_attn=True)
         else:
             out = self.rnn(h, mask_t)
-        return self.head(out)
+        pred = self.head(out)
+        if return_attn:
+            return pred, attn
+        return pred
 
 
 SetGRU = SetSequence

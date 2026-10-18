@@ -1,11 +1,14 @@
-"""Modelv1 cluster experiment: attn A1 GRU, loss × sampling, atlas slices.
+"""Modelv1 cluster experiment: attn A1, GRU or causal temporal Transformer.
 
-Copy of the Modelv1 training stack (imports Modelv1) with a fixed architecture
-and a 2×2 training comparison.
+Copy of the Modelv1 training stack (imports Modelv1) with a 2×2 training
+comparison and optional cluster-subset / direction / onset-RT heads.
 
 Architecture (every job):
-  GRU + attention pool, Control A1 (no CCF xyz / region), one target at a time
-  (wheel_speed or paw_speed).
+  unit attention pool, Control A1 (no CCF xyz / region), one kinematic target
+  at a time. Temporal backbone is GRU (default) or a causal Transformer
+  (`--temporal transformer`) whose per-head attention over time is returned
+  by the model when asked — that is the map of which past bins drive the
+  current prediction.
 
 Tasks:
   trial_repeat   within-trial 10% bin interpolation (default 1 repeat)
@@ -42,13 +45,26 @@ Reports per fold, then mean / median across folds with delete-1 jackknife SE:
 Slurm (iLab; results under Modelv1ClustersV2):
   python modelv1clusters.py --pilot --list-jobs
   bash slurm/submit.sh modelv1clusters.py --pilot
-  bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5
   bash slurm/submit.sh modelv1clusters.py --pilot --onset-rt
-  bash slurm/submit.sh modelv1clusters.py
+  bash slurm/submit.sh modelv1clusters.py --pilot --temporal transformer --paw-only \\
+      --heads trace,onset,direction --subsets full,length,shape
   python modelv1clusters.py --aggregate
 
-Onset-RT mode (--onset-rt): causal GRU still sees neural bins ≤ t, but the
-readout is a per-bin Bernoulli logit “has movement begun?”. Horizon axis:
+Heads (`--heads`):
+  trace      speed curve (MSE or MSE+timing)
+  onset      per-bin Bernoulli “has movement begun?” (--onset-rt still works)
+  direction  per-bin Bernoulli “wheel is turning right?” (trial choice = sign
+             of moving-wheel velocity; left=0, right=1). Same causal backbone;
+             BCE, no z-score. Inverse sampling still applies.
+
+`--paw-only` keeps the kinematic target at paw_speed (direction still uses
+the signed wheel). `--subsets full length shape` trains on the whole corpus
+and/or only trials in one length bin (13–20 / 21–32 / 33+) or shape cluster
+(peak = returns near 0 after the max; hill = max is at the end of the
+recording or does not return). LOSO/LOMO hold the same sessions/mice; train
+and test keep only that subset.
+
+Onset-RT horizon axis (onset head only):
   now   logit_t  → begun_t     (current 20 ms bin is allowed)
   next  logit_t  → begun_{t+1} (current bin’s spikes cannot label themselves)
 """
@@ -85,6 +101,10 @@ TASKS = ("trial_repeat", "session_loso", "mouse_lomo")
 LOSSES = ("mse", "onset_peak")
 SAMPLINGS = ("uniform", "inverse")
 HORIZONS = ("now", "next")
+HEADS = ("trace", "onset", "direction")
+SUBSET_KINDS = ("full", "length", "shape")
+LENGTH_KEYS = ("13-20", "21-32", "33+")
+SHAPE_KEYS = ("peak", "hill")
 POOL = "attn"
 ABLATION = "a1"
 CACHE_VERSION = "v2"
@@ -94,6 +114,8 @@ PAW_ON = 150.0
 ONSET_DELAYED_S = 0.40
 LEN_SHORT = 20
 LEN_MID = 32
+HILL_END_FRAC = 0.10
+PEAK_RETURN_FRAC = 0.20
 LAM_ONSET = 1.0
 LAM_PEAK = 1.0
 # Softmax temperature in z-space for peak time. Smaller → closer to argmax.
@@ -153,10 +175,40 @@ def contrast_label(key):
 def length_bin(n):
     n = int(n)
     if n <= LEN_SHORT:
-        return "short"
+        return "13-20"
     if n <= LEN_MID:
-        return "mid"
-    return "long"
+        return "21-32"
+    return "33+"
+
+
+def shape_bin(y, thr):
+    """peak = returns near 0 after the max; hill = max is at the end (or stays up)."""
+    y = np.asarray(y, dtype=np.float32).reshape(-1)
+    finite = np.isfinite(y)
+    if int(finite.sum()) < 3:
+        return "hill"
+    mag = np.where(finite, np.abs(y), 0.0)
+    peak_i = int(np.argmax(mag))
+    peak = float(mag[peak_i])
+    end_n = max(2, int(round(HILL_END_FRAC * mag.size)))
+    if peak_i >= mag.size - end_n:
+        return "hill"
+    end = float(np.mean(mag[-end_n:]))
+    floor = max(PEAK_RETURN_FRAC * peak, float(thr) if thr is not None else 0.0)
+    return "peak" if end <= floor else "hill"
+
+
+def wheel_direction(signed):
+    """left if mean signed velocity on moving bins is negative, else right."""
+    s = np.asarray(signed, dtype=np.float32).reshape(-1)
+    s = s[np.isfinite(s)]
+    if s.size == 0:
+        return None
+    moving = s[np.abs(s) >= WHEEL_ON]
+    val = float(moving.mean()) if moving.size else float(s[int(np.argmax(np.abs(s)))])
+    if not np.isfinite(val) or abs(val) < 1e-8:
+        return None
+    return "right" if val > 0 else "left"
 
 
 def onset_bin(onset_s):
@@ -207,9 +259,12 @@ def annotate_trials(trials, target):
         t["contrast_key"] = ck
         t["contrast"] = contrast_label(ck)
         t["len_bin"] = length_bin(n)
+        t["shape_bin"] = shape_bin(y, thr)
+        signed = t["behaviors"].get("wheel_signed")
+        t["wheel_dir"] = wheel_direction(signed if signed is not None else y)
         t["onset_s"] = on_s
         t["onset_bin"] = onset_bin(on_s)
-        t["stratum"] = f"{t['contrast']}|{t['len_bin']}|{t['onset_bin']}"
+        t["stratum"] = f"{t['contrast']}|{t['len_bin']}|{t['onset_bin']}|{t['shape_bin']}"
         t["atlas_c"] = cl
         if cl >= 0:
             t["atlas_name"] = names[cl] if cl < len(names) else f"c{cl}"
@@ -358,6 +413,48 @@ def subsample_folds(folds, n_loso=None, n_lomo=None, n_interp=None, seed=0):
     return out
 
 
+def expand_subsets(subsets):
+    out = []
+    seen = set()
+    for kind in subsets or ("full",):
+        kind = str(kind)
+        if kind == "full":
+            items = [("full", "full")]
+        elif kind == "length":
+            items = [("length", k) for k in LENGTH_KEYS]
+        elif kind == "shape":
+            items = [("shape", k) for k in SHAPE_KEYS]
+        else:
+            raise SystemExit(f"unknown subset {kind!r}; choose from {SUBSET_KINDS}")
+        for it in items:
+            if it not in seen:
+                seen.add(it)
+                out.append(it)
+    return out or [("full", "full")]
+
+
+def trial_in_subset(t, kind, key):
+    if kind in (None, "", "full"):
+        return True
+    if kind == "length":
+        return t.get("len_bin") == key
+    if kind == "shape":
+        return t.get("shape_bin") == key
+    return False
+
+
+def restrict_idx(idx, trials, kind, key, head="trace"):
+    keep = []
+    for i in np.asarray(idx, dtype=int):
+        t = trials[int(i)]
+        if not trial_in_subset(t, kind, key):
+            continue
+        if head == "direction" and t.get("wheel_dir") not in ("left", "right"):
+            continue
+        keep.append(int(i))
+    return np.asarray(keep, dtype=int)
+
+
 def job_grid(
     trials=None,
     n_trial_repeats=1,
@@ -374,6 +471,9 @@ def job_grid(
     fold_seed=0,
     onset_rt=False,
     horizons=None,
+    heads=None,
+    subsets=None,
+    temporal="gru",
 ):
     if trials is None:
         trials, _ = mv.load_corpus()
@@ -382,6 +482,9 @@ def job_grid(
     tasks = list(tasks or TASKS)
     losses = list(losses or LOSSES)
     samplings = list(samplings or SAMPLINGS)
+    temporal = (temporal or "gru").lower()
+    head_list = list(heads) if heads else (["onset"] if onset_rt else ["trace"])
+    subset_list = expand_subsets(subsets)
     if smoke:
         targets = ["wheel_speed"]
         tasks = ["session_loso"]
@@ -405,35 +508,50 @@ def job_grid(
             folds = subsample_folds(
                 folds, n_loso=n_loso, n_lomo=n_lomo, n_interp=n_interp, seed=fold_seed
             )
-    onset_rt = bool(onset_rt)
-    if onset_rt:
-        losses = ["bce"]
-        horizons = list(horizons or HORIZONS)
-    else:
-        horizons = [None]
+    if any(s[0] != "full" for s in subset_list) or "direction" in head_list:
+        mv.set_target(trials, targets[0], log1p=False)
+        annotate_trials(trials, targets[0])
     configs = []
     for beh in targets:
         for spec in folds:
             if spec["task"] not in tasks:
                 continue
-            for loss in losses:
-                for sampling in samplings:
-                    for horizon in horizons:
-                        cfg = {
-                            "protocol": "cv",
-                            "target": beh,
-                            "task": spec["task"],
-                            "pool": POOL,
-                            "ablation": ABLATION,
-                            "loss": loss,
-                            "sampling": sampling,
-                            "fold": int(spec["fold"]),
-                            "fold_id": spec["fold_id"],
-                        }
-                        if onset_rt:
-                            cfg["head"] = "onset"
-                            cfg["horizon"] = horizon
-                        configs.append(cfg)
+            for subset_kind, subset_key in subset_list:
+                for head in head_list:
+                    if head == "trace":
+                        head_losses = list(losses)
+                        head_horizons = [None]
+                    else:
+                        head_losses = ["bce"]
+                        if head == "onset":
+                            head_horizons = list(horizons or ("now",))
+                        else:
+                            head_horizons = [None]
+                    tr = restrict_idx(spec["train"], trials, subset_kind, subset_key, head)
+                    te = restrict_idx(spec["test"], trials, subset_kind, subset_key, head)
+                    if len(tr) < 8 or len(te) < 1:
+                        continue
+                    for loss in head_losses:
+                        for sampling in samplings:
+                            for horizon in head_horizons:
+                                cfg = {
+                                    "protocol": "cv",
+                                    "target": beh,
+                                    "task": spec["task"],
+                                    "pool": POOL,
+                                    "ablation": ABLATION,
+                                    "temporal": temporal,
+                                    "loss": loss,
+                                    "sampling": sampling,
+                                    "fold": int(spec["fold"]),
+                                    "fold_id": spec["fold_id"],
+                                    "head": head,
+                                    "subset_kind": subset_kind,
+                                    "subset_key": subset_key,
+                                }
+                                if head == "onset":
+                                    cfg["horizon"] = horizon
+                                configs.append(cfg)
     return configs
 
 
@@ -572,22 +690,44 @@ def onset_bce(pred, label, mask):
     return per.mean()
 
 
-def build_onset_model(n_areas, y_mean, y_std):
-    """Same causal GRU+attn A1 backbone; readout is a Bernoulli logit, not speed."""
+def build_head_model(n_areas, y_mean, y_std, head="trace", temporal="gru"):
+    """Shared attn A1 backbone; Bernoulli logit for onset/direction."""
     model = mv.build_model(
         n_areas,
         pool=POOL,
         use_anatomy=False,
-        temporal="gru",
+        temporal=temporal or "gru",
         double=False,
         log1p=False,
         y_mean=y_mean,
         y_std=y_std,
     )
-    last = model.head.net[-1]
-    if getattr(last, "bias", None) is not None:
-        torch.nn.init.constant_(last.bias, -2.0)
+    if head in ("onset", "direction"):
+        last = model.head.net[-1]
+        if getattr(last, "bias", None) is not None:
+            torch.nn.init.constant_(last.bias, -2.0 if head == "onset" else 0.0)
     return model
+
+
+def build_onset_model(n_areas, y_mean, y_std, temporal="gru"):
+    """Same causal backbone; readout is a Bernoulli logit, not speed."""
+    return build_head_model(n_areas, y_mean, y_std, head="onset", temporal=temporal)
+
+
+def bind_direction_labels(trials):
+    n_skip = 0
+    for t in trials:
+        n = int(t["spikes"].shape[0])
+        lab = t.get("wheel_dir")
+        if lab not in ("left", "right"):
+            t["y"] = np.full((n, 1), np.nan, dtype=np.float32)
+            t["y_valid"] = np.zeros(n, dtype=bool)
+            n_skip += 1
+            continue
+        val = 1.0 if lab == "right" else 0.0
+        t["y"] = np.full((n, 1), val, dtype=np.float32)
+        t["y_valid"] = np.ones(n, dtype=bool)
+    return n_skip
 
 
 def _align_logit_to_label_clock(logit, horizon):
@@ -624,7 +764,12 @@ def predict_onset(blob, trials, idx, stats, horizon, thr):
         "rates": {k: np.asarray(v, dtype=np.float32) for k, v in stats["rates"].items()},
     }
     dev = mv.device_of()
-    model = build_onset_model(blob["n_areas"], blob.get("y_mean"), blob.get("y_std")).to(dev)
+    model = build_onset_model(
+        blob["n_areas"],
+        blob.get("y_mean"),
+        blob.get("y_std"),
+        temporal=blob.get("temporal", "gru"),
+    ).to(dev)
     model.load_state_dict(blob["state_dict"])
     model.eval()
     ds = mv.TrialDS(trials, idx, blob["y_mean"], blob["y_std"], stats)
@@ -685,6 +830,112 @@ def predict_onset(blob, trials, idx, stats, horizon, thr):
     return recs
 
 
+def predict_direction(blob, trials, idx, stats):
+    """Causal logits → P(right) on each bin; trial call is the last valid bin."""
+    stats = {
+        "vocab": stats["vocab"],
+        "n_areas": int(stats["n_areas"]),
+        "xyz_mean": np.asarray(stats["xyz_mean"], dtype=np.float32),
+        "xyz_std": np.asarray(stats["xyz_std"], dtype=np.float32),
+        "rates": {k: np.asarray(v, dtype=np.float32) for k, v in stats["rates"].items()},
+    }
+    dev = mv.device_of()
+    model = build_head_model(
+        blob["n_areas"],
+        blob.get("y_mean"),
+        blob.get("y_std"),
+        head="direction",
+        temporal=blob.get("temporal", "gru"),
+    ).to(dev)
+    model.load_state_dict(blob["state_dict"])
+    model.eval()
+    ds = mv.TrialDS(trials, idx, blob["y_mean"], blob["y_std"], stats)
+    ld = DataLoader(ds, batch_size=mv.BATCH, shuffle=False, collate_fn=mv.collate)
+    recs = []
+    with torch.no_grad():
+        for batch in ld:
+            logit = (
+                model(
+                    batch["x"].to(dev),
+                    batch["xyz"].to(dev),
+                    batch["area"].to(dev),
+                    batch["rate"].to(dev),
+                    batch["mask_n"].to(dev),
+                    batch["mask_t"].to(dev),
+                    batch["lengths"].to(dev),
+                    unit_drop=0.0,
+                )[..., 0]
+                .cpu()
+                .numpy()
+            )
+            y = batch["y"].numpy()[..., 0]
+            mt = batch["mask_t"].numpy()
+            lengths = batch["lengths"].numpy()
+            for b in range(logit.shape[0]):
+                T = int(lengths[b])
+                valid = mt[b, :T].astype(bool)
+                raw = logit[b, :T]
+                prob = np.full(T, np.nan, dtype=np.float32)
+                finite = valid & np.isfinite(raw)
+                prob[finite] = 1.0 / (1.0 + np.exp(-np.clip(raw[finite], -20, 20)))
+                recs.append(
+                    {
+                        "pred": prob,
+                        "y": y[b, :T].astype(np.float32),
+                        "prob": prob,
+                        "logit": raw.astype(np.float32),
+                        "dir_true": float(y[b, :T][valid][-1]) if valid.any() else float("nan"),
+                        "dir_pred": float(prob[valid][-1] >= 0.5) if valid.any() else float("nan"),
+                    }
+                )
+    return recs
+
+
+def score_direction_pack(recs):
+    out = {
+        "r2": float("nan"),
+        "mean_trial_r2": float("nan"),
+        "median_trial_r2": float("nan"),
+        "rmse": float("nan"),
+        "mae": float("nan"),
+        "pearson": float("nan"),
+        "n_bins": 0,
+        "n_trials": 0,
+        "n_onset": 0,
+        "bin_acc": float("nan"),
+        "brier": float("nan"),
+        "dir_acc": float("nan"),
+        "frac_right": float("nan"),
+    }
+    y_all, p_all, yt, yp = [], [], [], []
+    for rec in recs:
+        y = np.asarray(rec["y"], dtype=np.float32).reshape(-1)
+        p = np.asarray(rec.get("prob", rec["pred"]), dtype=np.float32).reshape(-1)
+        m = np.isfinite(y) & np.isfinite(p)
+        if not m.any():
+            continue
+        y_all.append(y[m])
+        p_all.append(np.clip(p[m], 0.0, 1.0))
+        yt.append(float(y[m][-1] >= 0.5))
+        yp.append(float(p[m][-1] >= 0.5))
+    out["n_trials"] = len(yt)
+    out["n_onset"] = len(yt)
+    if yt:
+        yt = np.asarray(yt)
+        yp = np.asarray(yp)
+        out["dir_acc"] = float((yt == yp).mean())
+        out["frac_right"] = float(yt.mean())
+        out["mae"] = float(1.0 - out["dir_acc"])
+    if y_all:
+        y = np.concatenate(y_all)
+        p = np.concatenate(p_all)
+        out["n_bins"] = int(y.size)
+        out["bin_acc"] = float(((p >= 0.5) == (y >= 0.5)).mean())
+        out["brier"] = float(np.mean((p - y) ** 2))
+        out["rmse"] = float(np.sqrt(out["brier"]))
+    return out
+
+
 def run_epoch_cluster(
     model,
     loader,
@@ -731,6 +982,10 @@ def run_epoch_cluster(
             loss = onset_bce(pred, label, mask_on)
             mse = loss
             on = pk = pred.new_zeros(())
+        elif head == "direction":
+            loss = onset_bce(pred, y[..., 0], mask_loss)
+            mse = loss
+            on = pk = pred.new_zeros(())
         else:
             loss, mse, on, pk = cluster_objective(
                 pred, y, mask_loss, y_mean, y_std, thr, lengths, use_aux, lam_on, lam_pk
@@ -749,12 +1004,31 @@ def run_epoch_cluster(
     return total / d, mse_tot / d, on_tot / d, pk_tot / d
 
 
-def cache_dir_cluster(task, fold_id, loss, sampling, head="trace", horizon=""):
-    base = mv.cache_dir(task, POOL, use_anatomy=False, fold_id=fold_id, temporal="gru")
-    if head == "onset":
-        d = base / CACHE_VERSION / "onset" / str(horizon or "now") / sampling
+def cache_dir_cluster(
+    task,
+    fold_id,
+    loss,
+    sampling,
+    head="trace",
+    horizon="",
+    temporal="gru",
+    subset_kind="full",
+    subset_key="full",
+):
+    base = mv.cache_dir(task, POOL, use_anatomy=False, fold_id=fold_id, temporal=temporal or "gru")
+    parts = [base / CACHE_VERSION]
+    if subset_kind and subset_kind != "full":
+        safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in f"{subset_kind}_{subset_key}")
+        parts.append(parts[0] / safe)
+        d = parts[-1]
     else:
-        d = base / CACHE_VERSION / loss / sampling
+        d = parts[0]
+    if head == "onset":
+        d = d / "onset" / str(horizon or "now") / sampling
+    elif head == "direction":
+        d = d / "direction" / sampling
+    else:
+        d = d / loss / sampling
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -776,9 +1050,30 @@ def train_one_cluster(
     lam_pk=LAM_PEAK,
     head="trace",
     horizon="now",
+    temporal="gru",
+    subset_kind="full",
+    subset_key="full",
 ):
-    tag = f"attn_a1_{loss}_{sampling}" if head != "onset" else f"attn_a1_onset_{horizon}_{sampling}"
-    cdir = cache_dir_cluster(task, fold_id, loss, sampling, head=head, horizon=horizon)
+    temporal = temporal or "gru"
+    ttag = "" if temporal == "gru" else f"_{temporal}"
+    stag = "" if subset_kind in (None, "", "full") else f"_{subset_kind}-{subset_key}"
+    if head == "onset":
+        tag = f"attn_a1{ttag}_onset_{horizon}_{sampling}{stag}"
+    elif head == "direction":
+        tag = f"attn_a1{ttag}_direction_{sampling}{stag}"
+    else:
+        tag = f"attn_a1{ttag}_{loss}_{sampling}{stag}"
+    cdir = cache_dir_cluster(
+        task,
+        fold_id,
+        loss,
+        sampling,
+        head=head,
+        horizon=horizon,
+        temporal=temporal,
+        subset_kind=subset_kind,
+        subset_key=subset_key,
+    )
     ckpt = cdir / "model.pt"
     hist_path = cdir / "history.json"
     resume = False
@@ -796,21 +1091,11 @@ def train_one_cluster(
             resume = True
 
     dev = mv.device_of()
-    if head == "onset":
-        model = build_onset_model(stats["n_areas"], y_mean, y_std).to(dev)
-        log(f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn GRU onset-RT horizon={horizon}")
-    else:
-        model = mv.build_model(
-            stats["n_areas"],
-            pool=POOL,
-            use_anatomy=False,
-            temporal="gru",
-            double=False,
-            log1p=False,
-            y_mean=y_mean,
-            y_std=y_std,
-        ).to(dev)
-        log(f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn GRU")
+    model = build_head_model(stats["n_areas"], y_mean, y_std, head=head, temporal=temporal).to(dev)
+    log(
+        f"  {tag} params={mv.n_params(model)}  device={dev}  A1 attn {temporal} "
+        f"head={head} horizon={horizon} subset={subset_kind}:{subset_key}"
+    )
     opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
     tr_ds = mv.TrialDS(trials, train_idx, y_mean, y_std, stats, bin_key=bin_key)
     va_ds = mv.TrialDS(trials, val_idx, y_mean, y_std, stats, bin_key=bin_key)
@@ -844,7 +1129,9 @@ def train_one_cluster(
         "sampling": sampling,
         "head": head,
         "horizon": horizon,
-        "temporal": "gru",
+        "temporal": temporal,
+        "subset_kind": subset_kind,
+        "subset_key": subset_key,
         "cache_version": CACHE_VERSION,
         "soft_peak_tau": SOFT_PEAK_TAU,
         "soft_onset_frac": SOFT_ONSET_FRAC,
@@ -876,13 +1163,15 @@ def train_one_cluster(
             "pool": POOL,
             "n_areas": stats["n_areas"],
             "use_anatomy": False,
-            "temporal": "gru",
+            "temporal": temporal,
             "double": False,
             "log1p": False,
             "loss": loss,
             "sampling": sampling,
             "head": head,
             "horizon": horizon,
+            "subset_kind": subset_kind,
+            "subset_key": subset_key,
             "cache_version": CACHE_VERSION,
             "best_val": best_val,
             "stats": {
@@ -916,10 +1205,10 @@ def train_one_cluster(
         hist["val_onset"].append(va_on)
         hist["train_peak"].append(tr_pk)
         hist["val_peak"].append(va_pk)
-        if head == "onset":
+        if head in ("onset", "direction"):
             log(
                 f"    {tag} epoch {epoch:02d}  train={tr_loss:.4f}  val={va_loss:.4f}  "
-                f"bce={tr_mse:.4f}/{va_mse:.4f}  horizon={horizon}"
+                f"bce={tr_mse:.4f}/{va_mse:.4f}  head={head} horizon={horizon}"
             )
         else:
             log(
@@ -1018,6 +1307,8 @@ def score_onset_pack(recs):
 
 
 def score_pack(recs, min_trial_bins=8, target="wheel_speed"):
+    if recs and "dir_pred" in recs[0]:
+        return score_direction_pack(recs)
     if recs and "onset_pred" in recs[0]:
         return score_onset_pack(recs)
     if not recs:
@@ -1044,6 +1335,7 @@ def slice_rows(recs, trials, test_idx, min_trial_bins=8, target="wheel_speed"):
         t = trials[i]
         groups[("contrast", t["contrast"])].append(rec)
         groups[("length", t["len_bin"])].append(rec)
+        groups[("shape", t.get("shape_bin", "unknown"))].append(rec)
         groups[("onset", t["onset_bin"])].append(rec)
         groups[("stratum", t["stratum"])].append(rec)
         cid = int(t["atlas_c"])
@@ -1079,12 +1371,20 @@ def summarize(rows, slice_rows_all):
     df = pd.DataFrame(rows)
     keys = ["task", "target", "loss", "sampling"]
     if not df.empty:
-        for extra in ("head", "horizon"):
+        for extra in ("head", "horizon", "temporal", "subset_kind", "subset_key"):
             if extra in df.columns:
                 keys.append(extra)
     metrics = ["r2", "mean_trial_r2", "median_trial_r2"]
     if not df.empty:
-        for extra in ("onset_mae", "onset_pearson", "frac_40ms", "frac_100ms", "bin_acc", "brier"):
+        for extra in (
+            "onset_mae",
+            "onset_pearson",
+            "frac_40ms",
+            "frac_100ms",
+            "bin_acc",
+            "brier",
+            "dir_acc",
+        ):
             if extra in df.columns:
                 metrics.append(extra)
     out = []
@@ -1175,7 +1475,7 @@ def plot_coarse_slices(slices, out_dir):
     combos = [(lo, sa) for lo in LOSSES for sa in SAMPLINGS]
     labels = [f"{lo}/{sa}" for lo, sa in combos]
     colors = ["#334155", "#1D4ED8", "#C47B3B", "#0F766E"]
-    for kind in ("contrast", "length", "onset"):
+    for kind in ("contrast", "length", "shape", "onset"):
         subk = df[df.slice_kind == kind]
         if subk.empty:
             continue
@@ -1314,20 +1614,29 @@ def process(
     max_fold=None,
     head="trace",
     horizon="now",
+    temporal="gru",
+    subset_kind="full",
+    subset_key="full",
 ):
     warnings.filterwarnings("ignore")
+    temporal = temporal or "gru"
     mv.set_seed(mv.SEED)
     mv.configure_out(target, "cv")
     mv.OUT.mkdir(parents=True, exist_ok=True)
     mv.CACHE.mkdir(parents=True, exist_ok=True)
     log(
         f"device={mv.device_of()}  target={target}  task={task}  "
-        f"loss={loss}  sampling={sampling}  head={head}  horizon={horizon}  A1 attn GRU"
+        f"loss={loss}  sampling={sampling}  head={head}  horizon={horizon}  "
+        f"A1 attn {temporal}  subset={subset_kind}:{subset_key}"
     )
     if trials is None or session_meta is None:
         trials, session_meta = mv.load_corpus()
     mv.set_target(trials, target, log1p=False)
     annotate_trials(trials, target)
+    if head == "direction":
+        n_skip = bind_direction_labels(trials)
+        if n_skip:
+            log(f"direction: skipped {n_skip} trials with unsigned/near-zero wheel")
     specs = cv_folds_clusters(trials, n_trial_repeats=n_trial_repeats)
     specs = [s for s in specs if s["task"] == task]
     if fold is not None:
@@ -1345,20 +1654,25 @@ def process(
     for spec in specs:
         fold_i = int(spec["fold"])
         fid = spec["fold_id"]
-        log(f"==== {task}  fold={fold_i} {fid}  {loss}/{sampling}  head={head} horizon={horizon} ====")
+        log(
+            f"==== {task}  fold={fold_i} {fid}  {loss}/{sampling}  head={head} "
+            f"horizon={horizon}  {temporal}  {subset_kind}:{subset_key} ===="
+        )
         mv.clear_bin_masks(trials)
         bin_mode = spec.get("bin_mode")
+        spec_train = restrict_idx(spec["train"], trials, subset_kind, subset_key, head)
+        spec_test = restrict_idx(spec["test"], trials, subset_kind, subset_key, head)
         if bin_mode:
             mv.apply_bin_masks(trials, spec)
             train_full = mv.usable_idx(
-                trials, spec["train"], min_bins=max(4, mv.MIN_BINS // 2), mask_key="train_bins"
+                trials, spec_train, min_bins=max(4, mv.MIN_BINS // 2), mask_key="train_bins"
             )
-            test_ok = mv.usable_idx(trials, spec["test"], min_bins=1, mask_key="test_bins")
+            test_ok = mv.usable_idx(trials, spec_test, min_bins=1, mask_key="test_bins")
             both = np.intersect1d(train_full, test_ok)
             train_full, test_idx = both, both
         else:
-            train_full = mv.usable_idx(trials, spec["train"])
-            test_idx = mv.usable_idx(trials, spec["test"])
+            train_full = mv.usable_idx(trials, spec_train)
+            test_idx = mv.usable_idx(trials, spec_test)
         if len(train_full) < 8 or len(test_idx) < 1:
             log(f"  skip {task}/{fid}: too few usable trials")
             continue
@@ -1373,12 +1687,20 @@ def process(
         if len(tr_idx) < 4:
             log(f"  skip {task}/{fid}: empty train after val split")
             continue
-        y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
-        stats = mv.fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
-        if head == "onset":
-            tag = f"{target}_{task}_{fid}_attn_a1_onset_{horizon}_{sampling}_{CACHE_VERSION}"
+        if head == "direction":
+            y_mean = np.zeros((1,), dtype=np.float32)
+            y_std = np.ones((1,), dtype=np.float32)
         else:
-            tag = f"{target}_{task}_{fid}_attn_a1_{loss}_{sampling}_{CACHE_VERSION}"
+            y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
+        stats = mv.fit_unit_stats(trials, tr_idx, np.concatenate([tr_idx, va_idx, test_idx]))
+        ttag = "" if temporal == "gru" else f"_{temporal}"
+        stag = "" if subset_kind in (None, "", "full") else f"_{subset_kind}-{subset_key}"
+        if head == "onset":
+            tag = f"{target}_{task}_{fid}_attn_a1{ttag}_onset_{horizon}_{sampling}{stag}_{CACHE_VERSION}"
+        elif head == "direction":
+            tag = f"{target}_{task}_{fid}_attn_a1{ttag}_direction_{sampling}{stag}_{CACHE_VERSION}"
+        else:
+            tag = f"{target}_{task}_{fid}_attn_a1{ttag}_{loss}_{sampling}{stag}_{CACHE_VERSION}"
         idx = job_index if job_index is not None else n_job
         jdir = slurm_utils.begin_job(
             mv.OUT,
@@ -1395,6 +1717,9 @@ def process(
             sampling=sampling,
             head=head,
             horizon=horizon,
+            temporal=temporal,
+            subset_kind=subset_kind,
+            subset_key=subset_key,
         )
         blob, hist = train_one_cluster(
             trials,
@@ -1413,6 +1738,9 @@ def process(
             lam_pk=lam_pk,
             head=head,
             horizon=horizon,
+            temporal=temporal,
+            subset_kind=subset_kind,
+            subset_key=subset_key,
         )
         if head == "onset":
             recs = predict_onset(
@@ -1424,6 +1752,9 @@ def process(
                 thr=WHEEL_ON if target == "wheel_speed" else PAW_ON,
             )
             min_bins = 8
+        elif head == "direction":
+            recs = predict_direction(blob, trials, test_idx, blob.get("stats", stats))
+            min_bins = 1
         else:
             recs = mv.predict(blob, trials, test_idx, blob.get("stats", stats))
             if bin_mode:
@@ -1436,10 +1767,13 @@ def process(
             "pool": POOL,
             "target": target,
             "ablation": ABLATION,
+            "temporal": temporal,
             "loss": loss,
             "sampling": sampling,
             "head": head,
             "horizon": horizon,
+            "subset_kind": subset_kind,
+            "subset_key": subset_key,
             "cache_version": CACHE_VERSION,
             "fold": fold_i,
             "fold_id": fid,
@@ -1457,6 +1791,11 @@ def process(
             log(
                 f"   {target:12s} horizon={horizon:4s}  onset_mae={sc.get('onset_mae', float('nan'))*1000:.0f}ms  "
                 f"acc={sc.get('bin_acc', float('nan')):.3f}  n={sc['n_trials']}"
+            )
+        elif head == "direction":
+            log(
+                f"   {target:12s} dir_acc={sc.get('dir_acc', float('nan')):.3f}  "
+                f"bin_acc={sc.get('bin_acc', float('nan')):.3f}  n={sc['n_trials']}"
             )
         else:
             log(
@@ -1571,10 +1910,29 @@ def run_self_test():
     bce.backward()
     if float(logit.grad.abs().sum()) <= 0:
         raise SystemExit("self-test failed: onset BCE has no gradient")
+    m = mv.CausalTransformer()
+    h = torch.randn(2, 12, mv.D_MODEL)
+    mask_t = torch.ones(2, 12, dtype=torch.bool)
+    out, attn = m(h, mask_t, return_attn=True)
+    if out.shape[:2] != (2, 12) or attn is None or attn.shape[-1] != 12:
+        raise SystemExit(f"self-test failed: transformer shapes out={tuple(out.shape)} attn={None if attn is None else tuple(attn.shape)}")
+    upper = torch.triu(torch.ones(12, 12, dtype=torch.bool), diagonal=1)
+    leak = float(attn[0, 0].mean(0).masked_select(upper).abs().max())
+    if leak > 1e-5:
+        raise SystemExit(f"self-test failed: transformer attends to the future (max={leak})")
+    if shape_bin(np.r_[np.linspace(0, 1, 8), np.linspace(1, 0.02, 12)], 0.15) != "peak":
+        raise SystemExit("self-test failed: peak shape")
+    if shape_bin(np.linspace(0, 1, 20), 0.15) != "hill":
+        raise SystemExit("self-test failed: hill shape")
+    if (length_bin(13), length_bin(21), length_bin(33)) != ("13-20", "21-32", "33+"):
+        raise SystemExit("self-test failed: length bins")
+    if wheel_direction(np.array([0.0, 0.4, 0.5])) != "right" or wheel_direction(np.array([0.0, -0.4, -0.5])) != "left":
+        raise SystemExit("self-test failed: wheel direction")
     log(
         f"self-test ok  timing_grad={g:.4g}  "
         f"Δloss={abs((l_aux - l_mse).detach().item()):.4g}  inv_ratio={ratio:.2f}  "
-        f"onset_bce_grad={float(logit.grad.abs().sum()):.4g}"
+        f"onset_bce_grad={float(logit.grad.abs().sum()):.4g}  "
+        f"tf_leak={leak:.2g}"
     )
     return True
 
@@ -1756,19 +2114,62 @@ if __name__ == "__main__":
     p.add_argument(
         "--onset-rt",
         action="store_true",
-        help="Decode movement onset (per-bin ‘has begun?’) instead of the speed trace; adds horizon now vs next",
+        help="Decode movement onset (per-bin ‘has begun?’) instead of the speed trace; default horizons now vs next unless --heads is set",
+    )
+    p.add_argument(
+        "--heads",
+        nargs="*",
+        default=None,
+        choices=list(HEADS),
+        help="trace = speed curve; onset = reaction-time begun?; direction = wheel left vs right",
+    )
+    p.add_argument(
+        "--subsets",
+        nargs="*",
+        default=["full"],
+        choices=list(SUBSET_KINDS),
+        help="Train/test only trials in these groups: full corpus, length (13–20/21–32/33+), shape (peak/hill)",
+    )
+    p.add_argument(
+        "--temporal",
+        default="gru",
+        choices=("gru", "transformer"),
+        help="Causal temporal backbone. transformer returns per-head attention over time.",
+    )
+    p.add_argument(
+        "--paw-only",
+        action="store_true",
+        help="Keep the kinematic target at paw_speed (direction still uses signed wheel velocity)",
     )
     p.add_argument(
         "--horizons",
         nargs="*",
-        default=list(HORIZONS),
+        default=None,
         choices=list(HORIZONS),
-        help="Onset-RT only: now = label_t from bins ≤ t; next = label_{t+1} from bins ≤ t",
+        help="Onset head only: now = label_t from bins ≤ t; next = label_{t+1} from bins ≤ t",
     )
     slurm_utils.add_common_args(p)
     args = p.parse_args()
+
+    def _split_csv(vals):
+        out = []
+        for v in vals or []:
+            out.extend([p.strip() for p in str(v).split(",") if p.strip()])
+        return out
+
+    args.targets = _split_csv(args.targets) or list(TARGETS)
+    args.subsets = _split_csv(args.subsets) or ["full"]
+    args.heads = _split_csv(args.heads) or None
+    args.horizons = _split_csv(args.horizons) or None
     n_repeats = max(1, int(args.trial_repeats))
     smoke_folds = max(1, int(args.smoke_folds))
+    if args.paw_only:
+        args.targets = ["paw_speed"]
+    heads = list(args.heads) if args.heads else (["onset"] if args.onset_rt else ["trace"])
+    if args.horizons is None:
+        horizons = list(HORIZONS) if (args.onset_rt and not args.heads) else ["now"]
+    else:
+        horizons = list(args.horizons)
     grid_kw = dict(
         n_trial_repeats=n_repeats,
         targets=args.targets,
@@ -1783,7 +2184,10 @@ if __name__ == "__main__":
         interp_folds=args.interp_folds,
         fold_seed=args.fold_seed,
         onset_rt=args.onset_rt,
-        horizons=args.horizons,
+        horizons=horizons,
+        heads=heads,
+        subsets=args.subsets,
+        temporal=args.temporal,
     )
     if args.list_jobs:
         slurm_utils.print_jobs(job_grid(**grid_kw))
@@ -1791,7 +2195,7 @@ if __name__ == "__main__":
     if args.self_test:
         run_self_test()
         raise SystemExit(0)
-    slurm_utils.set_device(args.device, probe="gru")
+    slurm_utils.set_device(args.device, probe=args.temporal)
     if args.aggregate:
         aggregate_all()
         raise SystemExit(0)
@@ -1804,6 +2208,10 @@ if __name__ == "__main__":
         args.smoke
         or args.pilot
         or args.onset_rt
+        or args.heads
+        or args.paw_only
+        or args.temporal != "gru"
+        or list(args.subsets) != ["full"]
         or args.loso_folds is not None
         or args.lomo_folds is not None
         or args.interp_folds is not None
@@ -1829,6 +2237,9 @@ if __name__ == "__main__":
                     job_index=i,
                     head=cfg.get("head", "trace"),
                     horizon=cfg.get("horizon", "now"),
+                    temporal=cfg.get("temporal", "gru"),
+                    subset_kind=cfg.get("subset_kind", "full"),
+                    subset_key=cfg.get("subset_key", "full"),
                 )
             if args.smoke:
                 write_smoke_report(n_folds=smoke_folds)
@@ -1870,4 +2281,7 @@ if __name__ == "__main__":
             lam_pk=args.lam_peak,
             head=cfg.get("head", "trace"),
             horizon=cfg.get("horizon", "now"),
+            temporal=cfg.get("temporal", "gru"),
+            subset_kind=cfg.get("subset_kind", "full"),
+            subset_key=cfg.get("subset_key", "full"),
         )

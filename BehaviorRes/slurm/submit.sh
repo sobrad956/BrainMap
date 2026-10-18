@@ -11,6 +11,8 @@
 #   bash slurm/submit.sh modelv1clusters.py --pilot
 #   bash slurm/submit.sh modelv1clusters.py --pilot --onset-rt
 #   bash slurm/submit.sh modelv1clusters.py --pilot --loso-folds 5 --lomo-folds 5
+#   bash slurm/submit.sh modelv1clusters.py --pilot --temporal transformer --paw-only \
+#       --heads trace,onset,direction --subsets full,length,shape
 #   bash slurm/submit.sh modelv1clusters.py --cpu
 #
 # Extra arguments after the flags above are passed to sbatch.
@@ -32,7 +34,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ $# -lt 1 ]]; then
-  echo "usage: bash slurm/submit.sh Modelv1.py|modelv1clusters.py [--cpu] [--protocol fixed|cv|all] [--temporal gru|lstm|transformer] [--double] [--log1p] [--pilot] [--loso-folds N] [--lomo-folds N] [--interp-folds N] [--fold-seed N] [sbatch args...]" >&2
+  echo "usage: bash slurm/submit.sh Modelv1.py|modelv1clusters.py [--cpu] [--protocol fixed|cv|all] [--temporal gru|lstm|transformer] [--double] [--log1p] [--pilot] [--paw-only] [--heads trace,onset,direction] [--subsets full,length,shape] [--loso-folds N] [--lomo-folds N] [--interp-folds N] [--fold-seed N] [sbatch args...]" >&2
   exit 1
 fi
 
@@ -51,6 +53,10 @@ INTERP_FOLDS=""
 FOLD_SEED=""
 CLUSTER_TARGETS=""
 ONSET_RT=0
+PAW_ONLY=0
+CLUSTER_HEADS=""
+CLUSTER_SUBSETS=""
+CLUSTER_HORIZONS=""
 SBATCH_GPU=(--gpus=1)
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -103,6 +109,22 @@ while [[ $# -gt 0 ]]; do
       ONSET_RT=1
       shift
       ;;
+    --paw-only)
+      PAW_ONLY=1
+      shift
+      ;;
+    --heads)
+      CLUSTER_HEADS="$2"
+      shift 2
+      ;;
+    --subsets)
+      CLUSTER_SUBSETS="$2"
+      shift 2
+      ;;
+    --horizons)
+      CLUSTER_HORIZONS="$2"
+      shift 2
+      ;;
     *)
       break
       ;;
@@ -128,10 +150,11 @@ if [[ "$SCRIPT" == "Modelv1.py" ]]; then
     LIST_ARGS+=(--log1p)
   fi
 elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
-  if [[ "$PROTOCOL" != "fixed" || "$TEMPORAL" != "gru" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
-    echo "modelv1clusters.py has a fixed GRU+attn A1 grid (loss × sampling × fold). do not pass --protocol/--temporal/--double/--log1p" >&2
+  if [[ "$PROTOCOL" != "fixed" || "$DOUBLE" != "0" || "$LOG1P" != "0" ]]; then
+    echo "modelv1clusters.py does not take --protocol/--double/--log1p (GRU or --temporal transformer, attn A1)" >&2
     exit 1
   fi
+  LIST_ARGS+=(--temporal "$TEMPORAL")
   if [[ "$PILOT" == "1" ]]; then
     LIST_ARGS+=(--pilot)
   fi
@@ -155,7 +178,25 @@ elif [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
   if [[ "$ONSET_RT" == "1" ]]; then
     LIST_ARGS+=(--onset-rt)
   fi
-  JOB_EXPORT="${JOB_EXPORT},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=${CLUSTER_TARGETS},BEH_ONSET_RT=${ONSET_RT}"
+  if [[ "$PAW_ONLY" == "1" ]]; then
+    LIST_ARGS+=(--paw-only)
+  fi
+  if [[ -n "$CLUSTER_HEADS" ]]; then
+    LIST_ARGS+=(--heads)
+    IFS=',' read -r -a _heads <<< "$CLUSTER_HEADS"
+    LIST_ARGS+=("${_heads[@]}")
+  fi
+  if [[ -n "$CLUSTER_SUBSETS" ]]; then
+    LIST_ARGS+=(--subsets)
+    IFS=',' read -r -a _subs <<< "$CLUSTER_SUBSETS"
+    LIST_ARGS+=("${_subs[@]}")
+  fi
+  if [[ -n "$CLUSTER_HORIZONS" ]]; then
+    LIST_ARGS+=(--horizons)
+    IFS=',' read -r -a _hz <<< "$CLUSTER_HORIZONS"
+    LIST_ARGS+=("${_hz[@]}")
+  fi
+  JOB_EXPORT="${JOB_EXPORT},BEH_TEMPORAL=${TEMPORAL},BEH_PILOT=${PILOT},BEH_LOSO_FOLDS=${LOSO_FOLDS},BEH_LOMO_FOLDS=${LOMO_FOLDS},BEH_INTERP_FOLDS=${INTERP_FOLDS},BEH_FOLD_SEED=${FOLD_SEED},BEH_CLUSTER_TARGETS=${CLUSTER_TARGETS},BEH_ONSET_RT=${ONSET_RT},BEH_PAW_ONLY=${PAW_ONLY},BEH_HEADS=${CLUSTER_HEADS},BEH_SUBSETS=${CLUSTER_SUBSETS},BEH_HORIZONS=${CLUSTER_HORIZONS}"
 elif [[ "$PILOT" == "1" || -n "$LOSO_FOLDS" || -n "$LOMO_FOLDS" || -n "$INTERP_FOLDS" ]]; then
   echo "$SCRIPT does not take --pilot / --loso-folds / --lomo-folds; those are for modelv1clusters.py" >&2
   exit 1
@@ -174,7 +215,7 @@ if [[ -z "$N" || ! "$N" =~ ^[0-9]+$ || "$N" -lt 1 ]]; then
 fi
 LAST="$((N - 1))"
 if [[ "$SCRIPT" == "modelv1clusters.py" ]]; then
-  echo "submitting $SCRIPT  array=0-${LAST}  device=${DEVICE}  pilot=${PILOT}  loso=${LOSO_FOLDS:-all}  lomo=${LOMO_FOLDS:-all}  ($N configs)"
+  echo "submitting $SCRIPT  array=0-${LAST}  device=${DEVICE}  temporal=${TEMPORAL}  pilot=${PILOT}  paw_only=${PAW_ONLY}  heads=${CLUSTER_HEADS:-trace}  subsets=${CLUSTER_SUBSETS:-full}  loso=${LOSO_FOLDS:-all}  lomo=${LOMO_FOLDS:-all}  ($N configs)"
 else
   echo "submitting $SCRIPT  protocol=${PROTOCOL}  temporal=${TEMPORAL}  double=${DOUBLE}  log1p=${LOG1P}  array=0-${LAST}  device=${DEVICE}  ($N configs)"
 fi
