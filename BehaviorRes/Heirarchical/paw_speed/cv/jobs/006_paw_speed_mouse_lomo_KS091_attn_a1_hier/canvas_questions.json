@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "purpose": "After each test fold is scored, write every trial\u2019s predicted curve and per-trial R\u00b2 so canvas analyses do not need to reload checkpoints.",
+  "files": {
+    "holdout_trials.csv": "One row per test-fold trial: identity, trial_r2, onset/peak, slices.",
+    "holdout_curves.npz": "Ragged y/pred (float32), concatenated with n_bins. Full predicted curve (not interpolation-masked). Align rows with holdout_trials.csv."
+  },
+  "questions": [
+    {
+      "id": "trial_r2_distribution",
+      "question": "What is the per-trial R\u00b2 distribution on each test fold (median, mean, % of trials > 0.4, left tail)?",
+      "file": "holdout_trials.csv",
+      "fields": [
+        "trial_r2",
+        "n_score_bins"
+      ]
+    },
+    {
+      "id": "predicted_vs_gt_curves",
+      "question": "What does the predicted kinematic curve look like versus ground truth on each held-out trial?",
+      "file": "holdout_curves.npz",
+      "fields": [
+        "y",
+        "pred",
+        "n_bins",
+        "trial_i"
+      ]
+    },
+    {
+      "id": "onset_from_curve_vs_head_vs_mode",
+      "question": "How does onset from the predicted curve compare to the onset-head readout and a constant mode predictor, on the now vs next clock?",
+      "file": "holdout_trials.csv",
+      "fields": [
+        "onset_true_s",
+        "onset_pred_s",
+        "head",
+        "horizon",
+        "trial_r2"
+      ]
+    },
+    {
+      "id": "peak_and_shape",
+      "question": "Does the model miss peak time, peak amplitude, or return-to-zero shape?",
+      "file": "holdout_trials.csv",
+      "fields": [
+        "peak_true_s",
+        "peak_pred_s",
+        "peak_true",
+        "peak_pred",
+        "shape_bin"
+      ]
+    },
+    {
+      "id": "cluster_and_length_failure",
+      "question": "Where do individual trials fail \u2014 atlas cluster, length, delayed onset, contrast, mouse/session?",
+      "file": "holdout_trials.csv",
+      "fields": [
+        "trial_r2",
+        "atlas_c",
+        "atlas_name",
+        "len_bin",
+        "onset_bin",
+        "contrast",
+        "mouse_id",
+        "eid"
+      ]
+    },
+    {
+      "id": "fold_holdout",
+      "question": "How do interp / LOSO / LOMO test folds differ trial by trial?",
+      "file": "holdout_trials.csv",
+      "fields": [
+        "task",
+        "fold",
+        "fold_id",
+        "trial_r2"
+      ]
+    }
+  ]
+}

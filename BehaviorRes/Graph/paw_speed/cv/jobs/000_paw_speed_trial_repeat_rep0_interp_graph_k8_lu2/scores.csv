@@ -1,0 +1,2 @@
+protocol,task,target,formulation,region_gnn,func_window,k,unit_layers,fold,fold_id,bin_mode,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials,n_holdout_trials,frac_r2_gt_04,p10_trial_r2,p90_trial_r2
+cv,trial_repeat,paw_speed,D,0,0,8,2,0,rep0_interp,interp,0.29743590720236224,529.540771484375,319.14044189453125,0.551323172159293,14312,-177471.68898063016,-0.6705873055244265,4624,6015,0.2588667820069204,-384.5386538607843,0.8748847165557859

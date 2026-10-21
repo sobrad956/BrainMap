@@ -11,11 +11,9 @@
   "fold": 34,
   "fold_id": "b69b86be",
   "formulation": "C",
-  "state": "stage_1",
-  "epoch": 16,
-  "train": 0.6885387763559105,
-  "val": 0.68247848226313,
-  "best_val": 0.6823455715737148,
+  "state": "done",
+  "n_rows": 3,
+  "best_epoch": 15,
   "device": "cuda",
-  "updated_at": "2026-10-21T13:15:42.477473+00:00"
+  "updated_at": "2026-10-21T13:38:59.224385+00:00"
 }

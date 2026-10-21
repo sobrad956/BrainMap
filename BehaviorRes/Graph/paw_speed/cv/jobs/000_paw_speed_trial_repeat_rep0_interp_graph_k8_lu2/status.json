@@ -1,7 +1,7 @@
 {
   "job": 0,
   "tag": "paw_speed_trial_repeat_rep0_interp_graph_k8_lu2",
-  "slurm_job_id": "669356",
+  "slurm_job_id": "669859",
   "slurm_array_task_id": "0",
   "task": "trial_repeat",
   "target": "paw_speed",
@@ -11,7 +11,9 @@
   "formulation": "D",
   "region_gnn": 0,
   "func_window": 0,
-  "state": "starting",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 18,
   "device": "cuda",
-  "updated_at": "2026-10-21T12:50:21.234595+00:00"
+  "updated_at": "2026-10-21T14:07:22.351609+00:00"
 }
