@@ -1,7 +1,7 @@
 {
   "job": 10,
   "tag": "paw_speed_mouse_lomo_ZFM-01576_graph_k8_lu2_region",
-  "slurm_job_id": "661285",
+  "slurm_job_id": "669858",
   "slurm_array_task_id": "10",
   "task": "mouse_lomo",
   "target": "paw_speed",
@@ -11,7 +11,9 @@
   "formulation": "D",
   "region_gnn": 1,
   "func_window": 0,
-  "state": "starting",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 16,
   "device": "cuda",
-  "updated_at": "2026-10-21T12:57:16.379387+00:00"
+  "updated_at": "2026-10-21T18:34:43.259614+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 3,
   "tag": "paw_speed_session_loso_9e9c6fc0_graph_k8_lu2_region",
-  "slurm_job_id": "669497",
+  "slurm_job_id": "674493",
   "slurm_array_task_id": "3",
   "task": "session_loso",
   "target": "paw_speed",
@@ -11,7 +11,9 @@
   "formulation": "D",
   "region_gnn": 1,
   "func_window": 0,
-  "state": "starting",
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 32,
   "device": "cuda",
-  "updated_at": "2026-10-21T12:56:20.297269+00:00"
+  "updated_at": "2026-10-21T18:09:02.223276+00:00"
 }

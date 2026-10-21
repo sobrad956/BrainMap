@@ -11,12 +11,9 @@
   "formulation": "D",
   "region_gnn": 0,
   "func_window": 0,
-  "state": "training",
-  "epoch": 12,
-  "train": 0.6967170903069407,
-  "val": 0.6820560484221487,
-  "best_val": 0.6820560484221487,
-  "best_epoch": 12,
+  "state": "done",
+  "n_rows": 1,
+  "best_epoch": 33,
   "device": "cuda",
-  "updated_at": "2026-10-21T16:46:38.905724+00:00"
+  "updated_at": "2026-10-21T20:53:48.464888+00:00"
 }
