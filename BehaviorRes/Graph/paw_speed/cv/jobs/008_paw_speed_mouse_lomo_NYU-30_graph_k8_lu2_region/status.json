@@ -1,0 +1,17 @@
+{
+  "job": 8,
+  "tag": "paw_speed_mouse_lomo_NYU-30_graph_k8_lu2_region",
+  "slurm_job_id": "669504",
+  "slurm_array_task_id": "8",
+  "task": "mouse_lomo",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 14,
+  "fold_id": "NYU-30",
+  "formulation": "D",
+  "region_gnn": 1,
+  "func_window": 0,
+  "state": "starting",
+  "device": "cuda",
+  "updated_at": "2026-10-21T12:57:20.858340+00:00"
+}

@@ -1,0 +1,21 @@
+{
+  "job": 1,
+  "tag": "paw_speed_session_loso_113c5b6c_attn_a1_hier",
+  "slurm_job_id": "669508",
+  "slurm_array_task_id": "1",
+  "task": "session_loso",
+  "pool": "attn",
+  "ablation": "a1",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 2,
+  "fold_id": "113c5b6c",
+  "formulation": "C",
+  "state": "stage_2",
+  "epoch": 7,
+  "train": 0.6808467892795463,
+  "val": 0.6736446101185879,
+  "best_val": 0.6736446101185879,
+  "device": "cuda",
+  "updated_at": "2026-10-21T13:16:10.486559+00:00"
+}

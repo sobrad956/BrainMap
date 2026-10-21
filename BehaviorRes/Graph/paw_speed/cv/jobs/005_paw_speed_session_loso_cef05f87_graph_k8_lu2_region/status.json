@@ -1,0 +1,17 @@
+{
+  "job": 5,
+  "tag": "paw_speed_session_loso_cef05f87_graph_k8_lu2_region",
+  "slurm_job_id": "669499",
+  "slurm_array_task_id": "5",
+  "task": "session_loso",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 37,
+  "fold_id": "cef05f87",
+  "formulation": "D",
+  "region_gnn": 1,
+  "func_window": 0,
+  "state": "starting",
+  "device": "cuda",
+  "updated_at": "2026-10-21T12:56:48.729950+00:00"
+}

@@ -1,0 +1,17 @@
+{
+  "job": 6,
+  "tag": "paw_speed_mouse_lomo_KS091_graph_k8_lu2_region",
+  "slurm_job_id": "669500",
+  "slurm_array_task_id": "6",
+  "task": "mouse_lomo",
+  "target": "paw_speed",
+  "protocol": "cv",
+  "fold": 11,
+  "fold_id": "KS091",
+  "formulation": "D",
+  "region_gnn": 1,
+  "func_window": 0,
+  "state": "starting",
+  "device": "cuda",
+  "updated_at": "2026-10-21T12:56:49.152685+00:00"
+}
