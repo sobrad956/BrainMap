@@ -388,10 +388,10 @@ def window_corr(x, mask_n, mask_t, width=FUNC_WINDOW):
     xw = torch.cat([pad, x], dim=-1).unfold(-1, w, 1)
     # xw: B, N, T, W
     xc = xw - xw.mean(dim=-1, keepdim=True)
-    num = torch.einsum("bntw,bqtw->bntq", xc, xc)
+    num = torch.einsum("bntw,bqtw->bnqt", xc, xc)
     nrm = xc.norm(dim=-1).clamp(min=1e-6)
-    den = nrm.unsqueeze(3) * nrm.unsqueeze(2)
-    rho = (num / den).permute(0, 1, 3, 2)
+    den = (nrm.unsqueeze(2) * nrm.unsqueeze(1)).clamp(min=1e-6)
+    rho = num / den
     valid = (mask_n.unsqueeze(2) & mask_n.unsqueeze(1)).unsqueeze(-1)
     rho = rho.masked_fill(~valid, 0.0)
     rho = rho * mask_t.view(bsz, 1, 1, n_t).to(rho.dtype)
