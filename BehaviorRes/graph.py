@@ -876,11 +876,32 @@ def process(
             lam_u=lam_u,
             lam_r=lam_r,
         )
-        recs = predict(blob, trials, test_idx, blob.get("stats", stats))
+        recs_full = predict(blob, trials, test_idx, blob.get("stats", stats))
         min_bins = 2 if bin_mode else 8
+        recs = recs_full
         if bin_mode:
-            recs = mv.restrict_recs(recs, trials, test_idx, "test_bins")
+            recs = mv.restrict_recs(recs_full, trials, test_idx, "test_bins")
         sc = mv.score_recs(recs, target=target, min_trial_bins=min_bins)[target]
+        hold = mv.save_holdout_pack(
+            jdir,
+            recs_full,
+            trials,
+            test_idx,
+            target=target,
+            min_trial_bins=min_bins,
+            head="trace",
+            recs_score=recs,
+            job_meta={
+                "protocol": "cv",
+                "task": task,
+                "fold": fold_i,
+                "fold_id": fid,
+                "target": target,
+                "formulation": "D",
+                "region_gnn": int(region_gnn),
+                "bin_mode": bin_mode or "",
+            },
+        )
         row = {
             "protocol": "cv",
             "task": task,
@@ -894,6 +915,7 @@ def process(
             "fold_id": fid,
             "bin_mode": bin_mode or "",
             **sc,
+            **hold,
         }
         rows.append(row)
         log(

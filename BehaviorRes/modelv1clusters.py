@@ -42,6 +42,11 @@ Reports per fold, then mean / median across folds with delete-1 jackknife SE:
   the same three sliced by coarse-axis level and by Trajectory Atlas Removed
   cluster (wheel clusters for wheel_speed, paw clusters for paw_speed)
 
+Each job dir also writes the canvas holdout dump (see Modelv1.CANVAS_QUESTIONS):
+  holdout_trials.csv   one row per test trial: trial_r2, onset/peak, identity
+  holdout_curves.npz   full predicted vs GT curve (ragged y/pred)
+  canvas_questions.json  the analyses those files are meant to answer
+
 Slurm (iLab; results under Modelv1ClustersV2):
   python modelv1clusters.py --pilot --list-jobs
   bash slurm/submit.sh modelv1clusters.py --pilot
@@ -1393,6 +1398,10 @@ def summarize(rows, slice_rows_all):
             "bin_acc",
             "brier",
             "dir_acc",
+            "frac_r2_gt_04",
+            "p10_trial_r2",
+            "p90_trial_r2",
+            "n_holdout_trials",
         ):
             if extra in df.columns:
                 metrics.append(extra)
@@ -1752,7 +1761,7 @@ def process(
             subset_key=subset_key,
         )
         if head == "onset":
-            recs = predict_onset(
+            recs_full = predict_onset(
                 blob,
                 trials,
                 test_idx,
@@ -1760,16 +1769,46 @@ def process(
                 horizon=horizon,
                 thr=WHEEL_ON if target == "wheel_speed" else PAW_ON,
             )
+            recs = recs_full
             min_bins = 8
         elif head == "direction":
-            recs = predict_direction(blob, trials, test_idx, blob.get("stats", stats))
+            recs_full = predict_direction(blob, trials, test_idx, blob.get("stats", stats))
+            recs = recs_full
             min_bins = 1
         else:
-            recs = mv.predict(blob, trials, test_idx, blob.get("stats", stats))
+            recs_full = mv.predict(blob, trials, test_idx, blob.get("stats", stats))
+            recs = recs_full
             if bin_mode:
-                recs = mv.restrict_recs(recs, trials, test_idx, "test_bins")
+                recs = mv.restrict_recs(recs_full, trials, test_idx, "test_bins")
             min_bins = 2 if bin_mode else 8
         sc = score_pack(recs, min_trial_bins=min_bins, target=target)
+        hold = mv.save_holdout_pack(
+            jdir,
+            recs_full,
+            trials,
+            test_idx,
+            target=target,
+            min_trial_bins=min_bins,
+            head=head,
+            horizon=horizon if head == "onset" else "",
+            recs_score=recs,
+            onset_thr=WHEEL_ON if target == "wheel_speed" else PAW_ON,
+            job_meta={
+                "protocol": "cv",
+                "task": task,
+                "fold": fold_i,
+                "fold_id": fid,
+                "target": target,
+                "head": head,
+                "horizon": horizon if head == "onset" else "",
+                "loss": loss,
+                "sampling": sampling,
+                "temporal": temporal,
+                "subset_kind": subset_kind,
+                "subset_key": subset_key,
+                "bin_mode": bin_mode or "",
+            },
+        )
         row = {
             "protocol": "cv",
             "task": task,
@@ -1788,6 +1827,7 @@ def process(
             "fold_id": fid,
             "bin_mode": bin_mode or "",
             **sc,
+            **hold,
         }
         rows.append(row)
         slices = slice_rows(recs, trials, test_idx, min_trial_bins=min_bins, target=target)
@@ -1937,6 +1977,43 @@ def run_self_test():
         raise SystemExit("self-test failed: length bins")
     if wheel_direction(np.array([0.0, 0.4, 0.5])) != "right" or wheel_direction(np.array([0.0, -0.4, -0.5])) != "left":
         raise SystemExit("self-test failed: wheel direction")
+    import tempfile
+
+    tmp = Path(tempfile.mkdtemp(prefix="holdout_dump_"))
+    y = np.linspace(0, 200, 16, dtype=np.float32)
+    recs = [{"pred": (0.9 * y + 10).astype(np.float32), "y": y}]
+    trials = [
+        {
+            "eid": "e0",
+            "mouse_id": "m0",
+            "session_date": "2020-01-01",
+            "trial_index": 3,
+            "contrast": "100%",
+            "len_bin": "13-20",
+            "shape_bin": "peak",
+            "onset_bin": "early",
+            "atlas_c": 1,
+            "atlas_name": "c1",
+        }
+    ]
+    dumped = mv.save_holdout_pack(
+        tmp,
+        recs,
+        trials,
+        [0],
+        target="paw_speed",
+        min_trial_bins=4,
+        head="trace",
+        onset_thr=PAW_ON,
+        job_meta={"task": "session_loso", "fold": 0, "fold_id": "aa", "head": "trace"},
+    )
+    df, curves = mv.load_holdout_pack(tmp)
+    if len(df) != 1 or not np.isfinite(df.trial_r2.iloc[0]):
+        raise SystemExit("self-test failed: holdout_trials.csv")
+    if curves[0]["y"].shape[0] != 16 or dumped["n_holdout_trials"] != 1:
+        raise SystemExit("self-test failed: holdout_curves.npz")
+    if "trial_r2_distribution" not in {q["id"] for q in json.loads((tmp / "canvas_questions.json").read_text())["questions"]}:
+        raise SystemExit("self-test failed: canvas_questions.json")
     log(
         f"self-test ok  timing_grad={g:.4g}  "
         f"Δloss={abs((l_aux - l_mse).detach().item()):.4g}  inv_ratio={ratio:.2f}  "

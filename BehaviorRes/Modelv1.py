@@ -19,6 +19,11 @@ Protocols:
          extrapolation (last 10% of every trial).
 
 Loss is trial-balanced MSE on a z-scored 1-d behavior (PDF eq. 7).
+
+After each test fold, the job directory writes holdout_trials.csv (per-trial
+R², onset, peak, identity), holdout_curves.npz (full predicted vs GT curve),
+and canvas_questions.json (the analyses those files answer). Interpolation
+R² is scored on held-out bins; the dumped curve is the unmasked prediction.
 """
 
 from __future__ import annotations
@@ -1415,6 +1420,278 @@ def score_recs(recs, target=None, min_trial_bins=8):
     return out
 
 
+def trial_r2_value(y, pred, min_bins=8):
+    """R² for one trial. NaN if fewer than min_bins finite paired samples."""
+    yt, yp = _series(y, 0).astype(float), _series(pred, 0).astype(float)
+    n = min(int(yt.size), int(yp.size))
+    yt, yp = yt[:n], yp[:n]
+    m = np.isfinite(yt) & np.isfinite(yp)
+    if int(m.sum()) < int(min_bins):
+        return float("nan")
+    return float(r2_score(yt[m], yp[m]))
+
+
+def sticky_onset_s(y, thr, sticky=2, binsize=BINSIZE):
+    """First time |y| stays ≥ thr for `sticky` bins, in seconds. NaN if never."""
+    if thr is None or not np.isfinite(thr):
+        return float("nan")
+    arr = _series(y, 0)
+    above = np.isfinite(arr) & (np.abs(arr) >= float(thr))
+    run = 0
+    for i, hit in enumerate(above):
+        run = run + 1 if hit else 0
+        if run >= int(sticky):
+            return float(i - int(sticky) + 1) * float(binsize)
+    return float("nan")
+
+
+def peak_time_amp(y, binsize=BINSIZE):
+    arr = _series(y, 0)
+    m = np.isfinite(arr)
+    if not m.any():
+        return float("nan"), float("nan")
+    i = int(np.nanargmax(np.where(m, np.abs(arr), -np.inf)))
+    return float(i) * float(binsize), float(arr[i])
+
+
+def onset_threshold(target):
+    if target == "wheel_speed":
+        return 0.15
+    if target == "paw_speed":
+        return 150.0
+    return None
+
+
+# Canvas analyses this dump is built to answer. Written next to each fold's
+# holdout_trials.csv / holdout_curves.npz so later jobs keep the same fields.
+CANVAS_QUESTIONS = [
+    {
+        "id": "trial_r2_distribution",
+        "question": "What is the per-trial R² distribution on each test fold (median, mean, % of trials > 0.4, left tail)?",
+        "file": "holdout_trials.csv",
+        "fields": ["trial_r2", "n_score_bins"],
+    },
+    {
+        "id": "predicted_vs_gt_curves",
+        "question": "What does the predicted kinematic curve look like versus ground truth on each held-out trial?",
+        "file": "holdout_curves.npz",
+        "fields": ["y", "pred", "n_bins", "trial_i"],
+    },
+    {
+        "id": "onset_from_curve_vs_head_vs_mode",
+        "question": "How does onset from the predicted curve compare to the onset-head readout and a constant mode predictor, on the now vs next clock?",
+        "file": "holdout_trials.csv",
+        "fields": ["onset_true_s", "onset_pred_s", "head", "horizon", "trial_r2"],
+    },
+    {
+        "id": "peak_and_shape",
+        "question": "Does the model miss peak time, peak amplitude, or return-to-zero shape?",
+        "file": "holdout_trials.csv",
+        "fields": ["peak_true_s", "peak_pred_s", "peak_true", "peak_pred", "shape_bin"],
+    },
+    {
+        "id": "cluster_and_length_failure",
+        "question": "Where do individual trials fail — atlas cluster, length, delayed onset, contrast, mouse/session?",
+        "file": "holdout_trials.csv",
+        "fields": [
+            "trial_r2",
+            "atlas_c",
+            "atlas_name",
+            "len_bin",
+            "onset_bin",
+            "contrast",
+            "mouse_id",
+            "eid",
+        ],
+    },
+    {
+        "id": "fold_holdout",
+        "question": "How do interp / LOSO / LOMO test folds differ trial by trial?",
+        "file": "holdout_trials.csv",
+        "fields": ["task", "fold", "fold_id", "trial_r2"],
+    },
+]
+
+
+def write_canvas_questions(path):
+    payload = {
+        "version": 1,
+        "purpose": (
+            "After each test fold is scored, write every trial’s predicted curve "
+            "and per-trial R² so canvas analyses do not need to reload checkpoints."
+        ),
+        "files": {
+            "holdout_trials.csv": "One row per test-fold trial: identity, trial_r2, onset/peak, slices.",
+            "holdout_curves.npz": (
+                "Ragged y/pred (float32), concatenated with n_bins. Full predicted "
+                "curve (not interpolation-masked). Align rows with holdout_trials.csv."
+            ),
+        },
+        "questions": CANVAS_QUESTIONS,
+    }
+    save_json(path, payload)
+    return payload
+
+
+def _flat1d(arr):
+    return np.asarray(_series(arr, 0), dtype=np.float32).reshape(-1)
+
+
+def split_holdout_curves(y_cat, pred_cat, n_bins):
+    """Yield (y, pred) views for each trial from a holdout_curves.npz payload."""
+    n_bins = np.asarray(n_bins, dtype=np.int32).reshape(-1)
+    off = np.concatenate([[0], np.cumsum(n_bins)])
+    out = []
+    for i in range(int(n_bins.size)):
+        a, b = int(off[i]), int(off[i + 1])
+        out.append({"y": y_cat[a:b], "pred": pred_cat[a:b]})
+    return out
+
+
+def load_holdout_pack(jdir, stage=None):
+    jdir = Path(jdir)
+    tag = f"_stage{stage}" if stage is not None else ""
+    df = pd.read_csv(jdir / f"holdout_trials{tag}.csv")
+    z = np.load(jdir / f"holdout_curves{tag}.npz")
+    curves = split_holdout_curves(z["y"], z["pred"], z["n_bins"])
+    return df, curves
+
+
+def save_holdout_pack(
+    jdir,
+    recs,
+    trials,
+    test_idx,
+    *,
+    target,
+    min_trial_bins=8,
+    head="trace",
+    horizon="",
+    job_meta=None,
+    recs_score=None,
+    stage=None,
+    onset_thr=None,
+):
+    """Write per-trial predicted curves + R² for one test fold.
+
+    `recs` is the full predicted curve (used for plots and sticky onset).
+    `recs_score` if set is interpolation-masked and is what trial_r2 uses.
+    """
+    jdir = Path(jdir)
+    jdir.mkdir(parents=True, exist_ok=True)
+    write_canvas_questions(jdir / "canvas_questions.json")
+    recs = list(recs)
+    scored = list(recs_score) if recs_score is not None else recs
+    idx = [int(i) for i in np.asarray(test_idx).reshape(-1)]
+    n = min(len(recs), len(scored), len(idx))
+    recs, scored, idx = recs[:n], scored[:n], idx[:n]
+    if onset_thr is None and head == "trace":
+        onset_thr = onset_threshold(target)
+    meta = dict(job_meta or {})
+    meta.setdefault("task", "")
+    meta.setdefault("fold", "")
+    meta.setdefault("fold_id", "")
+    meta.setdefault("target", target)
+    meta.setdefault("head", head)
+    meta.setdefault("horizon", horizon or "")
+    if stage is not None:
+        meta["stage"] = int(stage)
+
+    rows = []
+    y_parts, p_parts, n_bins = [], [], []
+    r2s = []
+    for rec, rec_sc, i in zip(recs, scored, idx):
+        t = trials[int(i)] if trials is not None else {}
+        y = _flat1d(rec.get("y"))
+        p = _flat1d(rec.get("pred", rec.get("prob")))
+        n_t = int(min(y.size, p.size))
+        y, p = y[:n_t], p[:n_t]
+        y_parts.append(y)
+        p_parts.append(p)
+        n_bins.append(n_t)
+        if head in ("onset", "direction"):
+            r2 = float("nan")
+        else:
+            r2 = trial_r2_value(
+                rec_sc.get("y"), rec_sc.get("pred", rec_sc.get("prob")), min_bins=min_trial_bins
+            )
+        r2s.append(r2)
+        yt_sc = _flat1d(rec_sc.get("y"))
+        yp_sc = _flat1d(rec_sc.get("pred", rec_sc.get("prob")))
+        n_sc = int(min(yt_sc.size, yp_sc.size))
+        if n_sc:
+            n_score = int((np.isfinite(yt_sc[:n_sc]) & np.isfinite(yp_sc[:n_sc])).sum())
+        else:
+            n_score = 0
+        if rec.get("onset_true") is not None and np.isfinite(rec.get("onset_true", float("nan"))):
+            on_t = float(rec["onset_true"])
+        elif head == "trace":
+            on_t = sticky_onset_s(y, onset_thr)
+        else:
+            on_t = float("nan")
+        if rec.get("onset_pred") is not None and np.isfinite(rec.get("onset_pred", float("nan"))):
+            on_p = float(rec["onset_pred"])
+        elif head == "trace":
+            on_p = sticky_onset_s(p, onset_thr)
+        else:
+            on_p = float("nan")
+        pk_t_s, pk_t = peak_time_amp(y)
+        pk_p_s, pk_p = peak_time_amp(p)
+        tid = t.get("trial_index")
+        row = {
+            **meta,
+            "trial_i": int(i),
+            "eid": str(t.get("eid", "")),
+            "mouse_id": str(t.get("mouse_id", "")),
+            "session_date": str(t.get("session_date", "")),
+            "trial_index": -1 if tid is None else int(tid),
+            "n_bins": n_t,
+            "n_score_bins": n_score,
+            "trial_r2": r2,
+            "onset_true_s": on_t,
+            "onset_pred_s": on_p,
+            "peak_true_s": pk_t_s,
+            "peak_pred_s": pk_p_s,
+            "peak_true": pk_t,
+            "peak_pred": pk_p,
+            "dir_true": rec.get("dir_true", float("nan")),
+            "dir_pred": rec.get("dir_pred", float("nan")),
+            "contrast": t.get("contrast", ""),
+            "len_bin": t.get("len_bin", ""),
+            "shape_bin": t.get("shape_bin", ""),
+            "onset_bin": t.get("onset_bin", ""),
+            "atlas_c": t.get("atlas_c", -2),
+            "atlas_name": t.get("atlas_name", ""),
+        }
+        rows.append(row)
+
+    tag = f"_stage{stage}" if stage is not None else ""
+    csv_path = jdir / f"holdout_trials{tag}.csv"
+    npz_path = jdir / f"holdout_curves{tag}.npz"
+    pd.DataFrame(rows).to_csv(csv_path, index=False)
+    y_cat = np.concatenate(y_parts) if y_parts else np.zeros(0, dtype=np.float32)
+    p_cat = np.concatenate(p_parts) if p_parts else np.zeros(0, dtype=np.float32)
+    np.savez_compressed(
+        npz_path,
+        y=y_cat.astype(np.float32),
+        pred=p_cat.astype(np.float32),
+        n_bins=np.asarray(n_bins, dtype=np.int32),
+        trial_i=np.asarray(idx[: len(n_bins)], dtype=np.int32),
+        trial_r2=np.asarray(r2s, dtype=np.float32),
+        binsize=np.float32(BINSIZE),
+    )
+    arr = np.asarray(r2s, dtype=float)
+    finite = arr[np.isfinite(arr)]
+    summary = {
+        "n_holdout_trials": int(len(rows)),
+        "frac_r2_gt_04": float(np.mean(finite > 0.4)) if finite.size else float("nan"),
+        "p10_trial_r2": float(np.nanpercentile(finite, 10)) if finite.size else float("nan"),
+        "p90_trial_r2": float(np.nanpercentile(finite, 90)) if finite.size else float("nan"),
+    }
+    log(f"    holdout dump {csv_path.name} n={len(rows)}  %R²>0.4={summary['frac_r2_gt_04']}")
+    return summary
+
+
 def style_plots():
     plt.rcParams.update(
         {
@@ -2049,11 +2326,33 @@ def process(
                 log1p=log1p,
             )
             histories.setdefault(task, {})[pool] = hist
-            recs = predict(blob, trials, test_idx, blob.get("stats", stats))
+            recs_full = predict(blob, trials, test_idx, blob.get("stats", stats))
+            recs = recs_full
+            min_bins = 2 if bin_mode else 8
             if bin_mode:
-                recs = restrict_recs(recs, trials, test_idx, "test_bins")
+                recs = restrict_recs(recs_full, trials, test_idx, "test_bins")
             preds_by_pool[pool] = recs
-            scores = score_recs(recs, target=target, min_trial_bins=2 if bin_mode else 8)
+            scores = score_recs(recs, target=target, min_trial_bins=min_bins)
+            hold = save_holdout_pack(
+                jdir,
+                recs_full,
+                trials,
+                test_idx,
+                target=target,
+                min_trial_bins=min_bins,
+                head="trace",
+                recs_score=recs,
+                job_meta={
+                    "protocol": protocol,
+                    "task": task,
+                    "pool": pool,
+                    "fold": fold_i,
+                    "fold_id": fold_id,
+                    "bin_mode": bin_mode or "",
+                    "temporal": temporal,
+                    "ablation": "none" if use_anatomy else "a1",
+                },
+            )
             these = []
             for tname, sc in scores.items():
                 row = {
@@ -2069,6 +2368,7 @@ def process(
                     "double": double,
                     "log1p": log1p,
                     **sc,
+                    **hold,
                 }
                 rows.append(row)
                 these.append(row)

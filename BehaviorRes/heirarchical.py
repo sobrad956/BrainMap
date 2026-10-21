@@ -893,13 +893,35 @@ def process(
             betas=betas,
             calibrate_frac=calibrate_frac,
         )
-        recs = predict_stages(blob, trials, eval_idx, blob.get("stats", stats))
+        recs_full = predict_stages(blob, trials, eval_idx, blob.get("stats", stats))
         min_bins = 2 if bin_mode else 8
+        recs = recs_full
         if bin_mode:
-            recs = {k: mv.restrict_recs(v, trials, eval_idx, "test_bins") for k, v in recs.items()}
+            recs = {k: mv.restrict_recs(v, trials, eval_idx, "test_bins") for k, v in recs_full.items()}
         these = []
         for stage, rr in recs.items():
             sc = mv.score_recs(rr, target=target, min_trial_bins=min_bins)[target]
+            hold = mv.save_holdout_pack(
+                jdir,
+                recs_full[stage],
+                trials,
+                eval_idx,
+                target=target,
+                min_trial_bins=min_bins,
+                head="trace",
+                recs_score=rr,
+                stage=stage,
+                job_meta={
+                    "protocol": "cv",
+                    "task": task,
+                    "fold": fold_i,
+                    "fold_id": fid,
+                    "target": target,
+                    "formulation": "C",
+                    "stage": int(stage),
+                    "bin_mode": bin_mode or "",
+                },
+            )
             row = {
                 "protocol": "cv",
                 "task": task,
@@ -915,6 +937,7 @@ def process(
                 "calibrate_frac": float(calibrate_frac),
                 "n_eval": int(len(eval_idx)),
                 **sc,
+                **hold,
             }
             rows.append(row)
             these.append(row)

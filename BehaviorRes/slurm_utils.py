@@ -5,7 +5,7 @@ one after another on --device auto|cpu|cuda|mps.
 
 Cluster parallel: sbatch the matching slurm/*.sbatch, which sets
 SLURM_ARRAY_TASK_ID. Each array task trains one config into
-<OUT>/jobs/<index>_<tag>/{status.json,epochs.log,scores.csv}.
+<OUT>/jobs/<index>_<tag>/{status.json,epochs.log,scores.csv,holdout_trials.csv,holdout_curves.npz,canvas_questions.json}.
 """
 
 from __future__ import annotations
