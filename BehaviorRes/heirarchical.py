@@ -808,7 +808,7 @@ def process(
     if trials is None or session_meta is None:
         trials, session_meta = mv.load_corpus()
     mv.set_target(trials, target, log1p=False)
-        specs = mv.cv_folds(trials, n_trial_repeats=n_trial_repeats, tasks=TASKS)
+    specs = mv.cv_folds(trials, n_trial_repeats=n_trial_repeats, tasks=TASKS)
     specs = [s for s in specs if s["task"] == task]
     if fold_id is not None:
         specs = [s for s in specs if str(s["fold_id"]) == str(fold_id)]
