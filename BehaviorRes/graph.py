@@ -18,6 +18,12 @@ projection does not mean two regions should share a latent. Static spatial
 edges and train-only session correlations are precomputed; `--func-window`
 adds a causal rolling correlation on the current trial.
 
+Inner GNN messages are time-chunked (`UNIT_TIME_CHUNK`) and the default
+batch is `GRAPH_BATCH` (16, not Modelv1's 32). The unit graph expands
+neighbors as (B·T_chunk, N, K, D); a full-T flatten at batch 32 OOMs on
+16 GB iLab cards before epoch 1 (jobs die at status=starting). Smoothness
+is computed only when λ_U or λ_R is nonzero.
+
 Local:
   python graph.py --self-test
   python graph.py --pilot --list-jobs
@@ -36,6 +42,7 @@ import json
 import math
 import os
 import sys
+import traceback
 import warnings
 from pathlib import Path
 
@@ -68,6 +75,8 @@ REGION_LAYERS = 1
 EDGE_DIM = 3
 FUNC_WINDOW = 8
 EDGE_DROPOUT = 0.1
+GRAPH_BATCH = 16
+UNIT_TIME_CHUNK = 8
 
 
 def log(msg):
@@ -169,8 +178,10 @@ class UnitGNN(nn.Module):
             for _ in range(n_layers)
         )
 
-    def forward(self, h, dist, rho, same, mask_n, mask_t, area=None, train=False):
+    def forward(self, h, dist, rho, same, mask_n, mask_t, area=None, train=False, compute_smooth=False):
         # h: (B, N, T, D); dist/rho/same: (B, N, N)
+        # Edges are shared across time. Messages run in time chunks so a full
+        # (B·T, N, K, D) materialization does not OOM on 16 GB iLab cards.
         bsz, n_node, n_t, d = h.shape
         observed = mask_n.unsqueeze(2) & mask_n.unsqueeze(1)
         same_region = observed
@@ -185,27 +196,45 @@ class UnitGNN(nn.Module):
             dim=-1,
         )
         w = keep.to(h.dtype).unsqueeze(-1)
-        hp = h.permute(0, 2, 1, 3).reshape(bsz * n_t, n_node, d)
-        idx_t = idx.unsqueeze(1).expand(bsz, n_t, n_node, idx.size(-1)).reshape(bsz * n_t, n_node, idx.size(-1))
-        e_t = e.unsqueeze(1).expand(bsz, n_t, n_node, e.size(2), e.size(3))
-        e_t = e_t.reshape(bsz * n_t, n_node, e.size(2), e.size(3))
-        w_t = w.unsqueeze(1).expand(bsz, n_t, n_node, w.size(2), 1).reshape(bsz * n_t, n_node, w.size(2), 1)
+        k_edge = idx.size(-1)
+        outs = []
         smooth = h.new_zeros(())
-        n_smooth = 0
-        for layer in self.layers:
-            h_n = hp.unsqueeze(2).expand(-1, -1, idx_t.size(-1), -1)
-            h_q = gather_nodes(hp, idx_t)
-            msg = layer["psi"](h_n, h_q, e_t) * w_t
-            pooled = msg.sum(dim=2) / w_t.sum(dim=2).clamp(min=1.0)
-            hp = layer["phi"](hp, pooled)
-            dh = (h_n - h_q).pow(2).sum(dim=-1, keepdim=True)
-            smooth = smooth + (dh * w_t * e_t[..., 1:2].abs()).sum()
-            n_smooth += int(w_t.sum().item())
-        h_out = hp.reshape(bsz, n_t, n_node, d).permute(0, 2, 1, 3)
+        n_smooth = h.new_zeros(())
+        chunk = max(1, min(int(UNIT_TIME_CHUNK), n_t))
+        for t0 in range(0, n_t, chunk):
+            tc = min(chunk, n_t - t0)
+            hp = h[:, :, t0 : t0 + tc].permute(0, 2, 1, 3).contiguous().reshape(bsz * tc, n_node, d)
+            idx_t = (
+                idx.unsqueeze(1).expand(bsz, tc, n_node, k_edge).contiguous().view(bsz * tc, n_node, k_edge)
+            )
+            e_t = (
+                e.unsqueeze(1)
+                .expand(bsz, tc, n_node, k_edge, e.size(-1))
+                .contiguous()
+                .view(bsz * tc, n_node, k_edge, e.size(-1))
+            )
+            w_t = (
+                w.unsqueeze(1)
+                .expand(bsz, tc, n_node, k_edge, 1)
+                .contiguous()
+                .view(bsz * tc, n_node, k_edge, 1)
+            )
+            for layer in self.layers:
+                h_n = hp.unsqueeze(2).expand(-1, -1, k_edge, -1)
+                h_q = gather_nodes(hp, idx_t)
+                msg = layer["psi"](h_n, h_q, e_t) * w_t
+                pooled = msg.sum(dim=2) / w_t.sum(dim=2).clamp(min=1.0)
+                hp = layer["phi"](hp, pooled)
+                if compute_smooth:
+                    dh = (h_n - h_q).pow(2).sum(dim=-1, keepdim=True)
+                    smooth = smooth + (dh * w_t * e_t[..., 1:2].abs()).sum()
+                    n_smooth = n_smooth + w_t.sum()
+            outs.append(hp.reshape(bsz, tc, n_node, d).permute(0, 2, 1, 3))
+        h_out = torch.cat(outs, dim=2)
         h_out = h_out * mask_n.unsqueeze(-1).unsqueeze(-1).to(h_out.dtype)
         h_out = h_out * mask_t.unsqueeze(1).unsqueeze(-1).to(h_out.dtype)
-        if n_smooth:
-            smooth = smooth / n_smooth
+        if compute_smooth:
+            smooth = smooth / n_smooth.clamp(min=1.0)
         return h_out, smooth
 
 
@@ -263,14 +292,22 @@ class GraphSequence(nn.Module):
         amax = max(int(self.coarse_map.numel()) - 1, 0)
         return self.coarse_map[area.clamp(0, amax)]
 
-    def forward(self, x, xyz, area, rate, mask_n, mask_t, lengths, rho=None, unit_drop=0.0):
+    def forward(self, x, xyz, area, rate, mask_n, mask_t, lengths, rho=None, unit_drop=0.0, compute_smooth=False):
         if self.training and unit_drop > 0:
             mask_n = mv.apply_unit_dropout(mask_n, unit_drop)
         h = self.enc(x, xyz, area, rate, mask_n)
         dist, same, rho_e = unit_edge_features(xyz, mask_n, rho)
         area_c = self.coarse_area(area)
         h, smooth_u = self.unit_gnn(
-            h, dist, rho_e, same, mask_n, mask_t, area=area_c, train=self.training
+            h,
+            dist,
+            rho_e,
+            same,
+            mask_n,
+            mask_t,
+            area=area_c,
+            train=self.training,
+            compute_smooth=compute_smooth,
         )
         smooth_r = h.new_zeros(())
         if self.region_gnn_on:
@@ -278,7 +315,7 @@ class GraphSequence(nn.Module):
             edge = region_edges(xyz, area_c, mask_n, rids, names=self.coarse_names)
             g = self.region_gnn(g, edge, present)
             z = attn_over_regions(self.global_pool, g, present, mask_t)
-            if present.size(1) >= 2:
+            if compute_smooth and present.size(1) >= 2:
                 smooth_r = region_smooth(g, present, edge)
         else:
             z = self.unit_pool(h, mask_n) * mask_t.unsqueeze(-1)
@@ -462,6 +499,7 @@ def run_epoch(model, loader, opt, dev, train, lam_u, lam_r, func_window):
             rho = window_corr(x, mask_n, mask_t)
         if train:
             opt.zero_grad(set_to_none=True)
+        need_s = (lam_u > 0) or (lam_r > 0)
         pred, su, sr = model(
             x,
             xyz,
@@ -472,9 +510,14 @@ def run_epoch(model, loader, opt, dev, train, lam_u, lam_r, func_window):
             lengths,
             rho=rho,
             unit_drop=mv.UNIT_DROPOUT if train else 0.0,
+            compute_smooth=need_s,
         )
         beh = mv.trial_balanced_mse(pred, y, mask_loss)
-        loss = beh + lam_u * su + lam_r * sr
+        loss = beh
+        if lam_u:
+            loss = loss + lam_u * su
+        if lam_r:
+            loss = loss + lam_r * sr
         if train:
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -550,12 +593,15 @@ def train_one(
         region_gnn=region_gnn,
         vocab=stats.get("vocab"),
     ).to(dev)
-    log(f"  {tag} params={mv.n_params(model)}  device={dev}  region_gnn={int(region_gnn)}")
+    log(
+        f"  {tag} params={mv.n_params(model)}  device={dev}  region_gnn={int(region_gnn)}  "
+        f"batch={GRAPH_BATCH}  t_chunk={UNIT_TIME_CHUNK}"
+    )
     opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
     tr_ds = GraphDS(trials, tr_idx, y_mean, y_std, stats, bin_key=bin_key)
     va_ds = GraphDS(trials, va_idx, y_mean, y_std, stats, bin_key=bin_key)
-    tr_ld = DataLoader(tr_ds, batch_size=mv.BATCH, shuffle=True, collate_fn=collate)
-    va_ld = DataLoader(va_ds, batch_size=mv.BATCH, shuffle=False, collate_fn=collate)
+    tr_ld = DataLoader(tr_ds, batch_size=GRAPH_BATCH, shuffle=True, collate_fn=collate)
+    va_ld = DataLoader(va_ds, batch_size=GRAPH_BATCH, shuffle=False, collate_fn=collate)
     best_val, best_state, bad = math.inf, None, 0
     hist = {
         "train": [],
@@ -653,7 +699,7 @@ def predict(blob, trials, idx, stats):
     model.eval()
     rho_by_eid = blob.get("rho_by_eid") or {}
     ds = GraphDS(trials, idx, blob["y_mean"], blob["y_std"], stats)
-    ld = DataLoader(ds, batch_size=mv.BATCH, shuffle=False, collate_fn=make_collate(rho_by_eid))
+    ld = DataLoader(ds, batch_size=GRAPH_BATCH, shuffle=False, collate_fn=make_collate(rho_by_eid))
     recs = []
     with torch.no_grad():
         for batch in ld:
@@ -858,72 +904,85 @@ def process(
             region_gnn=int(region_gnn),
             func_window=int(func_window),
         )
-        blob, hist = train_one(
-            trials,
-            tr_idx,
-            va_idx,
-            y_mean,
-            y_std,
-            stats,
-            task,
-            fid,
-            target,
-            bin_key="train_bins" if bin_mode else None,
-            region_gnn=region_gnn,
-            func_window=func_window,
-            k=k,
-            unit_layers=unit_layers,
-            lam_u=lam_u,
-            lam_r=lam_r,
-        )
-        recs_full = predict(blob, trials, test_idx, blob.get("stats", stats))
-        min_bins = 2 if bin_mode else 8
-        recs = recs_full
-        if bin_mode:
-            recs = mv.restrict_recs(recs_full, trials, test_idx, "test_bins")
-        sc = mv.score_recs(recs, target=target, min_trial_bins=min_bins)[target]
-        hold = mv.save_holdout_pack(
-            jdir,
-            recs_full,
-            trials,
-            test_idx,
-            target=target,
-            min_trial_bins=min_bins,
-            head="trace",
-            recs_score=recs,
-            job_meta={
+        try:
+            blob, hist = train_one(
+                trials,
+                tr_idx,
+                va_idx,
+                y_mean,
+                y_std,
+                stats,
+                task,
+                fid,
+                target,
+                bin_key="train_bins" if bin_mode else None,
+                region_gnn=region_gnn,
+                func_window=func_window,
+                k=k,
+                unit_layers=unit_layers,
+                lam_u=lam_u,
+                lam_r=lam_r,
+            )
+            recs_full = predict(blob, trials, test_idx, blob.get("stats", stats))
+            min_bins = 2 if bin_mode else 8
+            recs = recs_full
+            if bin_mode:
+                recs = mv.restrict_recs(recs_full, trials, test_idx, "test_bins")
+            sc = mv.score_recs(recs, target=target, min_trial_bins=min_bins)[target]
+            hold = mv.save_holdout_pack(
+                jdir,
+                recs_full,
+                trials,
+                test_idx,
+                target=target,
+                min_trial_bins=min_bins,
+                head="trace",
+                recs_score=recs,
+                job_meta={
+                    "protocol": "cv",
+                    "task": task,
+                    "fold": fold_i,
+                    "fold_id": fid,
+                    "target": target,
+                    "formulation": "D",
+                    "region_gnn": int(region_gnn),
+                    "bin_mode": bin_mode or "",
+                },
+            )
+            row = {
                 "protocol": "cv",
                 "task": task,
-                "fold": fold_i,
-                "fold_id": fid,
                 "target": target,
                 "formulation": "D",
                 "region_gnn": int(region_gnn),
+                "func_window": int(func_window),
+                "k": int(k),
+                "unit_layers": int(unit_layers),
+                "fold": fold_i,
+                "fold_id": fid,
                 "bin_mode": bin_mode or "",
-            },
-        )
-        row = {
-            "protocol": "cv",
-            "task": task,
-            "target": target,
-            "formulation": "D",
-            "region_gnn": int(region_gnn),
-            "func_window": int(func_window),
-            "k": int(k),
-            "unit_layers": int(unit_layers),
-            "fold": fold_i,
-            "fold_id": fid,
-            "bin_mode": bin_mode or "",
-            **sc,
-            **hold,
-        }
-        rows.append(row)
-        log(
-            f"   R²={sc['r2']:+.3f}  mean_trial={sc['mean_trial_r2']:+.3f}  "
-            f"median_trial={sc['median_trial_r2']:+.3f}  n={sc['n_trials']}"
-        )
-        pd.DataFrame([row]).to_csv(jdir / "scores.csv", index=False)
-        slurm_utils.write_status(state="done", n_rows=1, best_epoch=hist.get("best_epoch"))
+                **sc,
+                **hold,
+            }
+            rows.append(row)
+            log(
+                f"   R²={sc['r2']:+.3f}  mean_trial={sc['mean_trial_r2']:+.3f}  "
+                f"median_trial={sc['median_trial_r2']:+.3f}  n={sc['n_trials']}"
+            )
+            pd.DataFrame([row]).to_csv(jdir / "scores.csv", index=False)
+            slurm_utils.write_status(state="done", n_rows=1, best_epoch=hist.get("best_epoch"))
+        except Exception as exc:
+            tb = traceback.format_exc()
+            log(tb)
+            try:
+                (jdir / "error.txt").write_text(tb)
+                slurm_utils.write_status(
+                    state="failed",
+                    error=f"{type(exc).__name__}: {exc}"[:800],
+                )
+            except Exception:
+                pass
+            raise
         n_job += 1
     if make_plots and rows:
         pd.DataFrame(rows).to_csv(mv.OUT / "scores.csv", index=False)
@@ -991,7 +1050,7 @@ def run_self_test():
     rho = torch.randn(bsz, n, n)
     for region_on in (False, True):
         model = GraphSequence(3, k=3, unit_layers=1, region_gnn=region_on)
-        pred, su, sr = model(x, xyz, area, rate, mask_n, mask_t, lengths, rho=rho)
+        pred, su, sr = model(x, xyz, area, rate, mask_n, mask_t, lengths, rho=rho, compute_smooth=True)
         if pred.shape != y.shape:
             raise SystemExit(f"self-test shape {tuple(pred.shape)}")
         loss = mv.trial_balanced_mse(pred, y, mask_t) + 0.01 * su + 0.01 * sr
@@ -999,6 +1058,22 @@ def run_self_test():
         g = sum(float(p.grad.abs().sum()) for p in model.parameters() if p.grad is not None)
         if g <= 0:
             raise SystemExit(f"self-test: no gradient region={region_on}")
+    b2, n2, t2 = 2, 24, 16
+    x2 = torch.randn(b2, n2, t2)
+    xyz2 = torch.randn(b2, n2, 3)
+    area2 = torch.randint(1, 3, (b2, n2))
+    rate2 = torch.zeros(b2, n2)
+    mask_n2 = torch.ones(b2, n2, dtype=torch.bool)
+    mask_t2 = torch.ones(b2, t2, dtype=torch.bool)
+    lengths2 = torch.full((b2,), t2)
+    rho2 = torch.randn(b2, n2, n2)
+    model2 = GraphSequence(3, k=8, unit_layers=2, region_gnn=False)
+    pred2, su2, sr2 = model2(
+        x2, xyz2, area2, rate2, mask_n2, mask_t2, lengths2, rho=rho2, compute_smooth=False
+    )
+    if pred2.shape != (b2, t2, 1):
+        raise SystemExit(f"self-test chunked shape {tuple(pred2.shape)}")
+    mv.trial_balanced_mse(pred2, torch.randn(b2, t2, 1), mask_t2).backward()
     wc = window_corr(x, mask_n, mask_t, width=4)
     if wc.shape != (bsz, n, n):
         raise SystemExit(f"self-test window corr {tuple(wc.shape)}")
