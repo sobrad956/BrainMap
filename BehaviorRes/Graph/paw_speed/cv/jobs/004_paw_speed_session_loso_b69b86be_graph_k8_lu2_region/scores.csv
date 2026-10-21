@@ -1,0 +1,2 @@
+protocol,task,target,formulation,region_gnn,func_window,k,unit_layers,fold,fold_id,bin_mode,r2,rmse,mae,pearson,n_bins,mean_trial_r2,median_trial_r2,n_trials,n_holdout_trials,frac_r2_gt_04,p10_trial_r2,p90_trial_r2
+cv,session_loso,paw_speed,D,1,0,8,2,34,b69b86be,,0.12158476365509441,535.8971557617188,333.04986572265625,0.4457887909590574,1691,-0.32197326799612064,-0.04829124488311032,80,80,0.2875,-1.55237219576915,0.6646393646748038
