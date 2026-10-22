@@ -1,0 +1,17 @@
+{
+  "job": 4,
+  "tag": "LTO_0_lto00_attn_anat_transformer_trace_mse",
+  "slurm_job_id": null,
+  "slurm_array_task_id": null,
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "attn_anat_transformer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": -0.07269900602859036,
+  "n_holdout_trials": 3,
+  "device": "cpu",
+  "updated_at": "2026-10-22T18:59:33.656848+00:00"
+}

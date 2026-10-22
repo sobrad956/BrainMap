@@ -1,0 +1,17 @@
+{
+  "job": 5,
+  "tag": "LTO_0_lto00_aniso_cnn_transformer_trace_mse",
+  "slurm_job_id": null,
+  "slurm_array_task_id": null,
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "aniso_cnn_transformer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.25918131282242207,
+  "n_holdout_trials": 3,
+  "device": "cpu",
+  "updated_at": "2026-10-22T18:59:35.173616+00:00"
+}

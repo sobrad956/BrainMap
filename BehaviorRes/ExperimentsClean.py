@@ -36,6 +36,7 @@ import argparse
 import json
 import math
 import os
+import shutil
 import sys
 import traceback
 import warnings
@@ -80,6 +81,8 @@ ONSET_DELAYED_S = 0.40
 MIN_SCORE_BINS = 8
 CNN_BATCH = 8
 RT_EDGES = (0.20, 0.40, 0.80)
+DUMMY = False
+MAX_EPOCHS_CAP = None
 
 EVALS = ("LTO", "LSO", "LMO")
 MODELS = (
@@ -113,7 +116,7 @@ def log(msg):
 
 def configure_out():
     global OUT, CACHE
-    OUT = MODEL_ROOT / TARGET
+    OUT = MODEL_ROOT / ("dummy" if DUMMY else TARGET)
     CACHE = OUT / "cache"
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
@@ -1082,6 +1085,8 @@ def train_neural(
     log(f"  {name} params={hist['n_params']} device={dev} obj={objective} loss={loss_name}")
     best, bad, best_state = math.inf, 0, None
     max_ep = hier.STAGE_EPOCHS + hier.JOINT_EPOCHS if name == "hierarchical" else mv.MAX_EPOCHS
+    if MAX_EPOCHS_CAP is not None:
+        max_ep = min(int(max_ep), int(MAX_EPOCHS_CAP))
     for epoch in range(1, max_ep + 1):
         tr = run_epoch(name, model, tr_ld, opt, dev, True, objective, loss_name, y_mean, y_std, speed)
         with torch.no_grad():
@@ -1293,6 +1298,8 @@ def ar_curve(trials, test_idx, objective):
 def write_pack(jdir, recs, rows, pooled, blob, hist, cfg):
     jdir = Path(jdir)
     jdir.mkdir(parents=True, exist_ok=True)
+    meta = {k: cfg.get(k) for k in ("eval", "fold", "fold_id", "model", "objective", "loss", "target")}
+    rows = [{**meta, **r} for r in rows]
     pd.DataFrame(rows).to_csv(jdir / "holdout_trials.csv", index=False)
     y_parts, p_parts, n_bins, ids = [], [], [], []
     for rec, row in zip(recs, rows):
@@ -1453,10 +1460,11 @@ def run_config(cfg, trials, specs):
     return row
 
 
-def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=None, single_fold=False):
+def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=None, single_fold=False, trials=None):
     configure_out()
     mv.set_seed(mv.SEED)
-    trials, session_meta = mv.load_corpus()
+    if trials is None:
+        trials, _session_meta = mv.load_corpus()
     annotate_trials(trials)
     bind_objective(trials, "trace")
     configs, specs = job_grid(trials, evals=evals, models=models, objectives=objectives, fold=fold, single_fold=single_fold)
@@ -1500,6 +1508,10 @@ def _mean_median(series, prefix, key):
     }
 
 
+def _job_group_key(row):
+    return tuple(str(row.get(k, "")) for k in ("eval", "model", "objective", "loss"))
+
+
 def aggregate_all():
     configure_out()
     df = slurm_utils.aggregate_scores(OUT, dest_name="scores.csv")
@@ -1508,18 +1520,43 @@ def aggregate_all():
         return df
     all_trials = pd.concat([pd.read_csv(p) for p in packs], ignore_index=True)
     all_trials.to_csv(OUT / "holdout_trials_all.csv", index=False)
-    curves = []
-    for p in sorted((OUT / "jobs").glob("*/holdout_curves.npz")):
-        z = np.load(p)
-        curves.append(z)
+    grouped_recs = defaultdict(list)
+    for csv_path in packs:
+        jdir = csv_path.parent
+        sc_path = jdir / "scores.csv"
+        npz = jdir / "holdout_curves.npz"
+        if not sc_path.exists() or not npz.exists():
+            continue
+        sc = pd.read_csv(sc_path)
+        if sc.empty:
+            continue
+        key = _job_group_key(sc.iloc[0])
+        z = np.load(npz)
+        n_bins = np.asarray(z["n_bins"], dtype=int).reshape(-1)
+        y = np.asarray(z["y"]).reshape(-1)
+        p = np.asarray(z["pred"]).reshape(-1)
+        off = 0
+        for n in n_bins:
+            n = int(n)
+            grouped_recs[key].append({"y": y[off : off + n], "pred": p[off : off + n]})
+            off += n
     summary = []
     keys = ["eval", "model", "objective", "loss"]
-    for gvals, sub in df.groupby([c for c in keys if c in df.columns], dropna=False):
-        rec = dict(zip([c for c in keys if c in df.columns], gvals if isinstance(gvals, tuple) else (gvals,)))
+    present = [c for c in keys if c in df.columns]
+    for gvals, sub in df.groupby(present, dropna=False):
+        rec = dict(zip(present, gvals if isinstance(gvals, tuple) else (gvals,)))
         rec["n_folds"] = int(len(sub))
         for col in sub.columns:
             if col.startswith("fold_mean_") or col.startswith("fold_median_") or col.startswith("fold_concat_"):
-                rec.update(_mean_median(sub[col], "across", col))
+                rec.update(_mean_median(sub[col], "across_folds", col))
+        trial_sub = all_trials
+        for k in present:
+            if k in trial_sub.columns:
+                trial_sub = trial_sub.loc[trial_sub[k].astype(str) == str(rec[k])]
+        rec.update(pool_rows(trial_sub.to_dict(orient="records"), "across_trials"))
+        cat = concat_metrics(grouped_recs.get(_job_group_key(rec), []))
+        rec.update({f"across_concat_{k}": cat.get(k, float("nan")) for k in ("pearson", "r2", "rmse", "mape", "mae")})
+        rec["across_concat_n_bins"] = int(cat.get("n_bins", 0) or 0)
         summary.append(rec)
     pd.DataFrame(summary).to_csv(OUT / "scores_across_folds.csv", index=False)
     log(f"wrote {OUT / 'scores_across_folds.csv'}  ({len(summary)} groups, {len(all_trials)} trials)")
@@ -1540,10 +1577,13 @@ def _fake_trials(n_mice=3, n_sess=2, n_per=25):
         for s in range(ns):
             eid = f"e{m}{s}aaaaaaaa"
             n_u = 8
-            xyz = rng.randn(n_u, 3).astype(np.float32) * 0.001
+            xyz = np.zeros((n_u, 3), dtype=np.float32)
+            xyz[:, 0] = rng.uniform(-0.0006, 0.0006, n_u)
+            xyz[:, 1] = rng.uniform(-0.0006, 0.0006, n_u)
+            xyz[:, 2] = np.linspace(0.0, 0.0012, n_u)
             areas = np.array(["MOp"] * 4 + ["MOs"] * 4)
             for k in range(n_per):
-                T = 20
+                T = 16
                 spk = rng.randn(T, n_u).astype(np.float32)
                 paw = np.zeros(T, dtype=np.float32)
                 on = 4 + (k % 8)
@@ -1567,6 +1607,89 @@ def _fake_trials(n_mice=3, n_sess=2, n_per=25):
                 )
                 i += 1
     return trials
+
+
+def dummy_smoke_jobs(specs):
+    """Every architecture once, plus onset/direction/mixed/huber and LSO/LMO."""
+    by_eval = {s["eval"]: s for s in specs}
+    jobs = []
+    lto = by_eval["LTO"]
+    for model_name in MODELS:
+        jobs.append(
+            {
+                "eval": "LTO",
+                "fold": int(lto["fold"]),
+                "fold_id": lto["fold_id"],
+                "model": model_name,
+                "objective": "trace",
+                "loss": "none" if model_name in ("mean", "ar") else "mse",
+            }
+        )
+    extras = (
+        ("onset", "event_nll"),
+        ("direction", "bce"),
+        ("mixed", "mse"),
+        ("trace", "huber_move"),
+    )
+    for objective, loss_name in extras:
+        jobs.append(
+            {
+                "eval": "LTO",
+                "fold": int(lto["fold"]),
+                "fold_id": lto["fold_id"],
+                "model": "attn_a1_gru",
+                "objective": objective,
+                "loss": loss_name,
+            }
+        )
+    for ev in ("LSO", "LMO"):
+        spec = by_eval[ev]
+        jobs.append(
+            {
+                "eval": ev,
+                "fold": int(spec["fold"]),
+                "fold_id": spec["fold_id"],
+                "model": "mean",
+                "objective": "trace",
+                "loss": "none",
+            }
+        )
+    return jobs
+
+
+def run_dummy(device="auto"):
+    global DUMMY, MAX_EPOCHS_CAP
+    DUMMY = True
+    MAX_EPOCHS_CAP = 2
+    configure_out()
+    if OUT.exists():
+        shutil.rmtree(OUT)
+    configure_out()
+    slurm_utils.set_device(device, probe="gru")
+    mv.set_seed(mv.SEED)
+    trials = _fake_trials(n_mice=2, n_sess=2, n_per=20)
+    annotate_trials(trials)
+    bind_objective(trials, "trace")
+    specs = keep_fold(all_folds(trials), single_fold=True)
+    jobs = dummy_smoke_jobs(specs)
+    log(f"dummy smoke  n_trials={len(trials)}  jobs={len(jobs)}  out={OUT}  device={slurm_utils.device_of()}")
+    rows = []
+    for i, cfg in enumerate(jobs):
+        slurm_utils.set_device(device, probe=device_probe(cfg["model"]))
+        slurm_utils.begin_job(OUT, i, slurm_utils.tag_of(cfg), **cfg)
+        log(f"==== dummy {i}/{len(jobs)}  {cfg} ====")
+        row = run_config(cfg, trials, specs)
+        if row:
+            rows.append(row)
+    if not rows:
+        raise SystemExit("dummy smoke produced no scores")
+    pd.DataFrame(rows).to_csv(OUT / "scores.csv", index=False)
+    aggregate_all()
+    missing = [r for r in rows if not np.isfinite(r.get("n_holdout_trials", np.nan))]
+    if missing:
+        raise SystemExit(f"dummy jobs missing n_holdout_trials: {missing}")
+    log(f"dummy smoke ok  {len(rows)} jobs  scores={OUT / 'scores.csv'}")
+    return rows
 
 
 def run_self_test():
@@ -1624,6 +1747,11 @@ def main():
     p = argparse.ArgumentParser(description="Unified LTO/LSO/LMO pipeline")
     slurm_utils.add_common_args(p)
     p.add_argument("--self-test", action="store_true")
+    p.add_argument(
+        "--dummy",
+        action="store_true",
+        help="Train/score a tiny synthetic corpus (all models, 2 epochs) into ExperimentsClean/dummy/",
+    )
     p.add_argument("--single-fold", action="store_true", help="Fold 0 of each evaluation approach")
     p.add_argument("--fold", type=int, default=None, help="Only this fold index within each eval")
     p.add_argument("--eval", nargs="*", default=list(EVALS), choices=list(EVALS))
@@ -1632,6 +1760,9 @@ def main():
     args = p.parse_args()
     if args.self_test:
         run_self_test()
+        return
+    if args.dummy:
+        run_dummy(device=args.device)
         return
     configure_out()
     if args.list_jobs:

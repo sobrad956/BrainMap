@@ -1,0 +1,17 @@
+{
+  "job": 6,
+  "tag": "LTO_0_lto00_hierarchical_trace_mse",
+  "slurm_job_id": null,
+  "slurm_array_task_id": null,
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": -0.27076418950995507,
+  "n_holdout_trials": 3,
+  "device": "cpu",
+  "updated_at": "2026-10-22T18:59:35.447459+00:00"
+}

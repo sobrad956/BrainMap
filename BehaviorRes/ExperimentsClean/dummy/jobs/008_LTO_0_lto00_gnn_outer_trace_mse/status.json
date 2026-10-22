@@ -1,0 +1,17 @@
+{
+  "job": 8,
+  "tag": "LTO_0_lto00_gnn_outer_trace_mse",
+  "slurm_job_id": null,
+  "slurm_array_task_id": null,
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "gnn_outer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": -0.09410085682417146,
+  "n_holdout_trials": 3,
+  "device": "cpu",
+  "updated_at": "2026-10-22T18:59:36.626699+00:00"
+}

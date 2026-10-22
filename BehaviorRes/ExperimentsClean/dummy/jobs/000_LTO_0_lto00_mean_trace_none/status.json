@@ -1,0 +1,17 @@
+{
+  "job": 0,
+  "tag": "LTO_0_lto00_mean_trace_none",
+  "slurm_job_id": null,
+  "slurm_array_task_id": null,
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "mean",
+  "objective": "trace",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.39997020798028415,
+  "n_holdout_trials": 3,
+  "device": "cpu",
+  "updated_at": "2026-10-22T18:59:21.557750+00:00"
+}
