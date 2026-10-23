@@ -1,0 +1,8 @@
+{
+  "files": {
+    "holdout_trials.csv": "Per-trial pearson/R\u00b2/RMSE/MAPE/MAE, onset and peak errors.",
+    "holdout_curves.npz": "Full predicted vs GT curves (mixed: NaN before true onset in the scored copy).",
+    "scores.csv": "Fold mean, median, and concatenated metrics.",
+    "model.pt": "Trained checkpoint (baselines store the prediction recipe)."
+  }
+}

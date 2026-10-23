@@ -1,0 +1,17 @@
+{
+  "job": 21,
+  "tag": "LTO_5_lto05_attn_anat_transformer_trace_huber_move",
+  "slurm_job_id": "739052",
+  "slurm_array_task_id": "21",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "attn_anat_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.2345519055250157,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T19:55:21.737110+00:00"
+}

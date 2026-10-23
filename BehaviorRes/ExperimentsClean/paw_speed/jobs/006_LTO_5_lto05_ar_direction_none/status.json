@@ -1,0 +1,17 @@
+{
+  "job": 6,
+  "tag": "LTO_5_lto05_ar_direction_none",
+  "slurm_job_id": "736915",
+  "slurm_array_task_id": "6",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "ar",
+  "objective": "direction",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.9230091569847128,
+  "n_holdout_trials": 286,
+  "device": "cuda",
+  "updated_at": "2026-10-23T19:11:48.309842+00:00"
+}

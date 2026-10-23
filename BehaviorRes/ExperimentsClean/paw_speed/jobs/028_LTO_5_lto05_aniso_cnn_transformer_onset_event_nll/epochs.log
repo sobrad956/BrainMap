@@ -1,0 +1,8 @@
+2026-10-23T19:54:25.434693+00:00  epoch=0  train=  val=  best_epoch=  state=training
+2026-10-23T19:54:29.571653+00:00  epoch=0  train=  val=  best_epoch=  state=training
+2026-10-23T20:15:22.136430+00:00  epoch=1  train=3.798988413516386  val=3.084560850267137  best_epoch=0  state=training
+2026-10-23T20:29:51.332690+00:00  epoch=2  train=3.597032777566478  val=3.262800071394102  best_epoch=1  state=training
+2026-10-23T20:38:31.226089+00:00  epoch=3  train=3.4371426193802446  val=3.114482564624079  best_epoch=1  state=training
+2026-10-23T20:45:15.216421+00:00  epoch=4  train=3.246163781876427  val=3.126968606025385  best_epoch=1  state=training
+2026-10-23T20:51:49.139026+00:00  epoch=5  train=3.1346865210513517  val=3.1715955863710983  best_epoch=1  state=training
+2026-10-23T20:58:06.001412+00:00  epoch=6  train=3.0237879927756857  val=3.1476602352942096  best_epoch=1  state=training

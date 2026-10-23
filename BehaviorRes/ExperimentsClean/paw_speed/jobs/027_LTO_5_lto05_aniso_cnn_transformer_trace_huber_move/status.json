@@ -1,0 +1,20 @@
+{
+  "job": 27,
+  "tag": "LTO_5_lto05_aniso_cnn_transformer_trace_huber_move",
+  "slurm_job_id": "739284",
+  "slurm_array_task_id": "27",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "aniso_cnn_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "training",
+  "epoch": 8,
+  "train": 0.2853178014112598,
+  "val": 0.3647514329506801,
+  "best_epoch": 4,
+  "batch": 8,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:08:43.517423+00:00"
+}

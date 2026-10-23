@@ -1,0 +1,17 @@
+{
+  "job": 147,
+  "tag": "LMO_17_PL033_gnn_outer_direction_bce",
+  "slurm_job_id": "735870",
+  "slurm_array_task_id": "147",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "gnn_outer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.35116484357856326,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-23T18:58:32.168923+00:00"
+}

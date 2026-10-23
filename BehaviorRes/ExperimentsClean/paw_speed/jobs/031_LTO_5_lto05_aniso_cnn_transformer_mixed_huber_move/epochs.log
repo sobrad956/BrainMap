@@ -1,0 +1,4 @@
+2026-10-23T20:58:57.683637+00:00  epoch=0  train=  val=  best_epoch=  state=training
+2026-10-23T20:59:01.703187+00:00  epoch=0  train=  val=  best_epoch=  state=training
+2026-10-23T21:05:23.976215+00:00  epoch=1  train=4.216839722645136  val=3.5379300441137804  best_epoch=0  state=training
+2026-10-23T21:10:20.931831+00:00  epoch=2  train=3.9664565447426625  val=3.767528415265666  best_epoch=1  state=training

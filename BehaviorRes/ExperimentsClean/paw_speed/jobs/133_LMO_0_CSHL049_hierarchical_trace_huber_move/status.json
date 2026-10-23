@@ -1,0 +1,17 @@
+{
+  "job": 133,
+  "tag": "LMO_0_CSHL049_hierarchical_trace_huber_move",
+  "slurm_job_id": "733898",
+  "slurm_array_task_id": "133",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.167377879076669,
+  "n_holdout_trials": 187,
+  "device": "cuda",
+  "updated_at": "2026-10-23T16:57:01.522992+00:00"
+}

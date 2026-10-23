@@ -1,0 +1,17 @@
+{
+  "job": 139,
+  "tag": "LMO_17_PL033_gnn_inner_trace_huber_move",
+  "slurm_job_id": "734678",
+  "slurm_array_task_id": "139",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "gnn_inner",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.048201056187292424,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-23T18:12:09.842450+00:00"
+}

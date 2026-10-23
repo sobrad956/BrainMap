@@ -1,0 +1,17 @@
+{
+  "job": 140,
+  "tag": "LMO_17_PL033_gnn_inner_onset_event_nll",
+  "slurm_job_id": "734922",
+  "slurm_array_task_id": "140",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "gnn_inner",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.9426645402763592,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-23T18:09:19.915523+00:00"
+}

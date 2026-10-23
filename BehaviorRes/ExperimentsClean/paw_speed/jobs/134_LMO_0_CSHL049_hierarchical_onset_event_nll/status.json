@@ -1,0 +1,17 @@
+{
+  "job": 134,
+  "tag": "LMO_0_CSHL049_hierarchical_onset_event_nll",
+  "slurm_job_id": "734134",
+  "slurm_array_task_id": "134",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "hierarchical",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.4020440173860178,
+  "n_holdout_trials": 191,
+  "device": "cuda",
+  "updated_at": "2026-10-23T17:07:17.699902+00:00"
+}

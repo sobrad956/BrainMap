@@ -1,0 +1,17 @@
+{
+  "job": 17,
+  "tag": "LTO_5_lto05_attn_a1_transformer_direction_bce",
+  "slurm_job_id": "738302",
+  "slurm_array_task_id": "17",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "attn_a1_transformer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": 0.0028937372163789776,
+  "n_holdout_trials": 286,
+  "device": "cuda",
+  "updated_at": "2026-10-23T19:41:32.777710+00:00"
+}

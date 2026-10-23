@@ -1,0 +1,20 @@
+{
+  "job": 32,
+  "tag": "LTO_5_lto05_hierarchical_trace_mse",
+  "slurm_job_id": "741969",
+  "slurm_array_task_id": "32",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "training",
+  "epoch": 1,
+  "train": 0.747871376408471,
+  "val": 0.8836480542725208,
+  "best_epoch": 0,
+  "batch": 32,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:09:59.408957+00:00"
+}

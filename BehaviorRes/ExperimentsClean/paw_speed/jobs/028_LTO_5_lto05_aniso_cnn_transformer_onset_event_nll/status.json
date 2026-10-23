@@ -1,0 +1,17 @@
+{
+  "job": 28,
+  "tag": "LTO_5_lto05_aniso_cnn_transformer_onset_event_nll",
+  "slurm_job_id": "739292",
+  "slurm_array_task_id": "28",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "aniso_cnn_transformer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.4888613774758199,
+  "n_holdout_trials": 284,
+  "device": "cuda",
+  "updated_at": "2026-10-23T20:58:17.424349+00:00"
+}

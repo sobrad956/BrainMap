@@ -1,0 +1,17 @@
+{
+  "job": 144,
+  "tag": "LMO_17_PL033_gnn_outer_trace_mse",
+  "slurm_job_id": "735487",
+  "slurm_array_task_id": "144",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "gnn_outer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.06866277723254066,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-23T19:04:56.871610+00:00"
+}
