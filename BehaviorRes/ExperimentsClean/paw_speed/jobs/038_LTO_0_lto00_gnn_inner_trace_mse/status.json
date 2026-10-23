@@ -1,0 +1,17 @@
+{
+  "job": 38,
+  "tag": "LTO_0_lto00_gnn_inner_trace_mse",
+  "slurm_job_id": "720044",
+  "slurm_array_task_id": "38",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "gnn_inner",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.1759859717135438,
+  "n_holdout_trials": 257,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:51:51.884147+00:00"
+}

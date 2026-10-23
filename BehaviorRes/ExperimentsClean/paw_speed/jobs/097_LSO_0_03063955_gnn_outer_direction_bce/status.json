@@ -1,0 +1,15 @@
+{
+  "job": 97,
+  "tag": "LSO_0_03063955_gnn_outer_direction_bce",
+  "slurm_job_id": "723608",
+  "slurm_array_task_id": "97",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "gnn_outer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T05:03:44.456492+00:00"
+}

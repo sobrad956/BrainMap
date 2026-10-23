@@ -1,0 +1,17 @@
+{
+  "job": 80,
+  "tag": "LSO_0_03063955_aniso_cnn_transformer_mixed_mse",
+  "slurm_job_id": "721350",
+  "slurm_array_task_id": "80",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "aniso_cnn_transformer",
+  "objective": "mixed",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": -0.11288526905732876,
+  "n_holdout_trials": 73,
+  "device": "cuda",
+  "updated_at": "2026-10-23T02:44:10.432696+00:00"
+}

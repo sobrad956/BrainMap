@@ -1,0 +1,15 @@
+{
+  "job": 66,
+  "tag": "LSO_0_03063955_attn_a1_transformer_onset_event_nll",
+  "slurm_job_id": "721293",
+  "slurm_array_task_id": "66",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_a1_transformer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:15:29.245015+00:00"
+}

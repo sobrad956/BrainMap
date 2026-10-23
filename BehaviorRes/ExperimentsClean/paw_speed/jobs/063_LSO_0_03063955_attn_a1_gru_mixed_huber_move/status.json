@@ -1,0 +1,15 @@
+{
+  "job": 63,
+  "tag": "LSO_0_03063955_attn_a1_gru_mixed_huber_move",
+  "slurm_job_id": "721266",
+  "slurm_array_task_id": "63",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_a1_gru",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:14:23.175099+00:00"
+}

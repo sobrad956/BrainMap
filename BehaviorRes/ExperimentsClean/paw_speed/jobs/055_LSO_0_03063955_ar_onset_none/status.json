@@ -1,0 +1,17 @@
+{
+  "job": 55,
+  "tag": "LSO_0_03063955_ar_onset_none",
+  "slurm_job_id": "721229",
+  "slurm_array_task_id": "55",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "ar",
+  "objective": "onset",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.7148760476860039,
+  "n_holdout_trials": 75,
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:01:29.832164+00:00"
+}

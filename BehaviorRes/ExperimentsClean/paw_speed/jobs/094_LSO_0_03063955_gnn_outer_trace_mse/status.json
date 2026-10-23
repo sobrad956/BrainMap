@@ -1,0 +1,15 @@
+{
+  "job": 94,
+  "tag": "LSO_0_03063955_gnn_outer_trace_mse",
+  "slurm_job_id": "723358",
+  "slurm_array_task_id": "94",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "gnn_outer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T05:12:06.989924+00:00"
+}

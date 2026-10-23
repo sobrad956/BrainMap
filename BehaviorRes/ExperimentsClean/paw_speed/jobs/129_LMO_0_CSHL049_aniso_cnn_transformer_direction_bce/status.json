@@ -1,0 +1,19 @@
+{
+  "job": 129,
+  "tag": "LMO_0_CSHL049_aniso_cnn_transformer_direction_bce",
+  "slurm_job_id": "724763",
+  "slurm_array_task_id": "129",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "aniso_cnn_transformer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "training",
+  "epoch": 2,
+  "train": 0.5881667030508685,
+  "val": 0.6633945403836708,
+  "best_epoch": 1,
+  "device": "cuda",
+  "updated_at": "2026-10-23T06:04:10.213442+00:00"
+}

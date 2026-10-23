@@ -1,0 +1,15 @@
+{
+  "job": 65,
+  "tag": "LSO_0_03063955_attn_a1_transformer_trace_huber_move",
+  "slurm_job_id": "721289",
+  "slurm_array_task_id": "65",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_a1_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:15:48.094281+00:00"
+}

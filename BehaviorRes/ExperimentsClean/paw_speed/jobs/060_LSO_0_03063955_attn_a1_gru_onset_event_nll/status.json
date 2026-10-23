@@ -1,0 +1,15 @@
+{
+  "job": 60,
+  "tag": "LSO_0_03063955_attn_a1_gru_onset_event_nll",
+  "slurm_job_id": "721246",
+  "slurm_array_task_id": "60",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_a1_gru",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:09:47.307267+00:00"
+}

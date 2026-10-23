@@ -1,0 +1,17 @@
+{
+  "job": 8,
+  "tag": "LTO_0_lto00_attn_a1_gru_trace_mse",
+  "slurm_job_id": "718701",
+  "slurm_array_task_id": "8",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "attn_a1_gru",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.1378416563597058,
+  "n_holdout_trials": 257,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:16:57.769891+00:00"
+}

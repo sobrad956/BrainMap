@@ -1,0 +1,17 @@
+{
+  "job": 16,
+  "tag": "LTO_0_lto00_attn_a1_transformer_onset_event_nll",
+  "slurm_job_id": "719937",
+  "slurm_array_task_id": "16",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "attn_a1_transformer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.8703100442168992,
+  "n_holdout_trials": 285,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:21:04.688463+00:00"
+}

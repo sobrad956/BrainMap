@@ -1,0 +1,17 @@
+{
+  "job": 36,
+  "tag": "LTO_0_lto00_hierarchical_mixed_mse",
+  "slurm_job_id": "720005",
+  "slurm_array_task_id": "36",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "hierarchical",
+  "objective": "mixed",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.05617289586867047,
+  "n_holdout_trials": 257,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:38:36.670092+00:00"
+}

@@ -1,0 +1,17 @@
+{
+  "job": 101,
+  "tag": "LMO_0_CSHL049_mean_onset_none",
+  "slurm_job_id": "724008",
+  "slurm_array_task_id": "101",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "mean",
+  "objective": "onset",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.2441504771252916,
+  "n_holdout_trials": 191,
+  "device": "cuda",
+  "updated_at": "2026-10-23T05:04:33.416450+00:00"
+}

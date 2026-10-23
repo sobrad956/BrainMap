@@ -1,0 +1,17 @@
+{
+  "job": 29,
+  "tag": "LTO_0_lto00_aniso_cnn_transformer_direction_bce",
+  "slurm_job_id": "718347",
+  "slurm_array_task_id": "29",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "aniso_cnn_transformer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": 0.012716391829625029,
+  "n_holdout_trials": 286,
+  "device": "cuda",
+  "updated_at": "2026-10-23T00:48:01.579830+00:00"
+}

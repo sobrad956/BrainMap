@@ -1,0 +1,17 @@
+{
+  "job": 13,
+  "tag": "LTO_0_lto00_attn_a1_gru_mixed_huber_move",
+  "slurm_job_id": "718715",
+  "slurm_array_task_id": "13",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "attn_a1_gru",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.025131092401927013,
+  "n_holdout_trials": 257,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:19:26.018558+00:00"
+}

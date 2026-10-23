@@ -1,0 +1,15 @@
+{
+  "job": 90,
+  "tag": "LSO_0_03063955_gnn_inner_onset_event_nll",
+  "slurm_job_id": "722966",
+  "slurm_array_task_id": "90",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "gnn_inner",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T04:09:29.986430+00:00"
+}

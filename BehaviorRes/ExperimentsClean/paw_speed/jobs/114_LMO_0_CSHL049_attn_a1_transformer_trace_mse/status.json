@@ -1,0 +1,15 @@
+{
+  "job": 114,
+  "tag": "LMO_0_CSHL049_attn_a1_transformer_trace_mse",
+  "slurm_job_id": "724462",
+  "slurm_array_task_id": "114",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "attn_a1_transformer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T05:21:11.255854+00:00"
+}

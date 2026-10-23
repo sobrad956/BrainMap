@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/ExperimentsClean.py", line 1477, in process
+    run_config(cfg, trials, specs)
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/ExperimentsClean.py", line 1434, in run_config
+    recs = predict_neural(blob, trials, test_idx, stats, vox)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/ExperimentsClean.py", line 1159, in predict_neural
+    for batch_d in ld:
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 733, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 789, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/.venv/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/heirarchical.py", line 258, in __getitem__
+    item = super().__getitem__(j)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/common/users/so504/Desktop/BrainMap/BehaviorRes/Modelv1.py", line 792, in __getitem__
+    rate = self.stats["rates"][t["eid"]]
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: '03063955-2523-47bd-ae57-f7489dd40f15'

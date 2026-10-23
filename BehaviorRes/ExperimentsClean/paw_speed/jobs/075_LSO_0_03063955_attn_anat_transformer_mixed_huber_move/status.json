@@ -1,0 +1,15 @@
+{
+  "job": 75,
+  "tag": "LSO_0_03063955_attn_anat_transformer_mixed_huber_move",
+  "slurm_job_id": "721334",
+  "slurm_array_task_id": "75",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_anat_transformer",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:22:05.631576+00:00"
+}

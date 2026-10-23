@@ -1,0 +1,15 @@
+{
+  "job": 89,
+  "tag": "LSO_0_03063955_gnn_inner_trace_huber_move",
+  "slurm_job_id": "722891",
+  "slurm_array_task_id": "89",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "gnn_inner",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T04:15:50.166626+00:00"
+}

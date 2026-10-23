@@ -1,0 +1,17 @@
+{
+  "job": 3,
+  "tag": "LTO_0_lto00_mean_mixed_none",
+  "slurm_job_id": "718622",
+  "slurm_array_task_id": "3",
+  "eval": "LTO",
+  "fold": 0,
+  "fold_id": "lto00",
+  "model": "mean",
+  "objective": "mixed",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.00021011424255068523,
+  "n_holdout_trials": 257,
+  "device": "cuda",
+  "updated_at": "2026-10-22T23:14:26.302098+00:00"
+}

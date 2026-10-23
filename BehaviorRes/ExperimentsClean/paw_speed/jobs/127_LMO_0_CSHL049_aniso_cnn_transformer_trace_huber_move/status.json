@@ -1,0 +1,19 @@
+{
+  "job": 127,
+  "tag": "LMO_0_CSHL049_aniso_cnn_transformer_trace_huber_move",
+  "slurm_job_id": "724715",
+  "slurm_array_task_id": "127",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "aniso_cnn_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "training",
+  "epoch": 6,
+  "train": 0.29267110423993337,
+  "val": 0.3505969802361159,
+  "best_epoch": 3,
+  "device": "cuda",
+  "updated_at": "2026-10-23T06:04:37.311849+00:00"
+}

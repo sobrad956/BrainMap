@@ -1,0 +1,15 @@
+{
+  "job": 61,
+  "tag": "LSO_0_03063955_attn_a1_gru_direction_bce",
+  "slurm_job_id": "721257",
+  "slurm_array_task_id": "61",
+  "eval": "LSO",
+  "fold": 0,
+  "fold_id": "03063955",
+  "model": "attn_a1_gru",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "failed",
+  "device": "cuda",
+  "updated_at": "2026-10-23T01:13:14.778889+00:00"
+}
