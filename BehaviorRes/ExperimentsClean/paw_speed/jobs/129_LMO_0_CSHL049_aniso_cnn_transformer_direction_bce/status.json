@@ -9,11 +9,9 @@
   "model": "aniso_cnn_transformer",
   "objective": "direction",
   "loss": "bce",
-  "state": "training",
-  "epoch": 9,
-  "train": 0.515424015046064,
-  "val": 0.647579754584402,
-  "best_epoch": 7,
+  "state": "done",
+  "fold_concat_r2": -0.20881756750420855,
+  "n_holdout_trials": 191,
   "device": "cuda",
-  "updated_at": "2026-10-23T07:57:31.991026+00:00"
+  "updated_at": "2026-10-23T11:10:16.577212+00:00"
 }
