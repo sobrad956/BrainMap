@@ -1,8 +1,11 @@
 #!/bin/bash
 # Submit ExperimentsClean.py as a Slurm array (one config per task).
 #
-# Entire pipeline, one fold of LTO / LSO / LMO:
+# Representative fold of each eval (LTO 25–30%, typical LSO session, typical LMO mouse):
 #   bash slurm/submit_clean.sh --single-fold
+#
+# Full CV, every LTO / LSO / LMO fold:
+#   bash slurm/submit_clean.sh
 #
 # Same, CPU:
 #   bash slurm/submit_clean.sh --single-fold --cpu

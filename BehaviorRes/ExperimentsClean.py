@@ -26,8 +26,11 @@ Local:
   python ExperimentsClean.py --single-fold --list-jobs
   python ExperimentsClean.py --single-fold --job 0 --device auto
 
-Cluster (entire pipeline, one fold of each eval):
+Cluster (representative fold of each eval: LTO 25–30%, typical LSO session, typical LMO mouse):
   bash slurm/submit_clean.sh --single-fold
+
+Full CV (every LTO / LSO / LMO fold):
+  bash slurm/submit_clean.sh
 """
 
 from __future__ import annotations
@@ -87,6 +90,12 @@ DUMMY = False
 MAX_EPOCHS_CAP = None
 
 EVALS = ("LTO", "LSO", "LMO")
+# --single-fold picks these identities. Full mode (no --single-fold) still
+# iterates every fold. LTO 5 = the 25–30% sequential block. LSO/LMO are the
+# Modelv1 CV A1 concat-R² folds just above the LOSO / LOMO median.
+SINGLE_LTO_FOLD = 5
+SINGLE_LSO_FOLD_ID = "cef05f87"
+SINGLE_LMO_FOLD_ID = "PL033"
 MODELS = (
     "mean",
     "ar",
@@ -242,7 +251,7 @@ def lto_folds(trials):
                 "train": train,
                 "test": test,
                 "note": (
-                    f"block {f}: first-to-last 5% of each session "
+                    f"block {f}: {f * LTO_FRAC:.0%}–{(f + 1) * LTO_FRAC:.0%} of each session "
                     f"(n_test={int(test.size)})"
                 ),
             }
@@ -315,16 +324,68 @@ def all_folds(trials, evals=EVALS):
     return out
 
 
+def _sorted_folds(rows):
+    return sorted(rows, key=lambda s: (int(s["fold"]), str(s["fold_id"])))
+
+
+def _match_fold_id(rows, want):
+    want = str(want)
+    for r in rows:
+        fid = str(r["fold_id"])
+        if fid == want or fid.startswith(want) or want.startswith(fid):
+            return r
+    return None
+
+
+def pick_single_fold(ev, rows):
+    """Representative fold for --single-fold. Dummy corpora fall back to a middle fold."""
+    rows = _sorted_folds(rows)
+    if not rows:
+        return None
+    if ev == "LTO":
+        for r in rows:
+            if int(r["fold"]) == SINGLE_LTO_FOLD:
+                return r
+        return rows[min(SINGLE_LTO_FOLD, len(rows) - 1)]
+    if ev == "LSO":
+        hit = _match_fold_id(rows, SINGLE_LSO_FOLD_ID)
+        if hit is not None:
+            return hit
+        log(f"  LSO: {SINGLE_LSO_FOLD_ID} not in this corpus; using middle session")
+        return rows[len(rows) // 2]
+    if ev == "LMO":
+        hit = _match_fold_id(rows, SINGLE_LMO_FOLD_ID)
+        if hit is not None:
+            return hit
+        log(f"  LMO: {SINGLE_LMO_FOLD_ID} not in this corpus; using middle mouse")
+        return rows[len(rows) // 2]
+    return rows[0]
+
+
 def keep_fold(specs, fold=None, single_fold=False):
     if fold is None and not single_fold:
         return specs
-    want = 0 if single_fold and fold is None else int(fold)
-    kept = []
     by_eval = defaultdict(list)
     for s in specs:
         by_eval[s["eval"]].append(s)
+    kept = []
+    if single_fold and fold is None:
+        for ev in EVALS:
+            rows = by_eval.get(ev) or []
+            if not rows:
+                continue
+            picked = pick_single_fold(ev, rows)
+            if picked is None:
+                continue
+            kept.append(picked)
+            log(
+                f"  --single-fold {ev}: fold={picked['fold']} id={picked['fold_id']}  "
+                f"{picked.get('note', '')}"
+            )
+        return kept
+    want = int(fold)
     for ev, rows in by_eval.items():
-        rows = sorted(rows, key=lambda s: (int(s["fold"]), str(s["fold_id"])))
+        rows = _sorted_folds(rows)
         if want < len(rows):
             kept.append(rows[want])
         elif rows:
@@ -1846,7 +1907,10 @@ def run_self_test():
     assert {s["fold_id"] for s in lmo} == {"M0", "M1", "M2"}
     one = keep_fold(lto + lso + lmo, single_fold=True)
     assert {s["eval"] for s in one} == {"LTO", "LSO", "LMO"}
-    assert all(int(s["fold"]) == 0 for s in one)
+    lto_one = next(s for s in one if s["eval"] == "LTO")
+    assert int(lto_one["fold"]) == SINGLE_LTO_FOLD, lto_one
+    all_kept = keep_fold(lto + lso + lmo)
+    assert len(all_kept) == len(lto) + len(lso) + len(lmo)
     y = torch.zeros(2, 5, 1)
     p = torch.zeros(2, 5, 1)
     mask = torch.ones(2, 5, dtype=torch.bool)
@@ -1901,7 +1965,15 @@ def main():
         action="store_true",
         help="Train/score a tiny synthetic corpus (all models, 2 epochs) into ExperimentsClean/dummy/",
     )
-    p.add_argument("--single-fold", action="store_true", help="Fold 0 of each evaluation approach")
+    p.add_argument(
+        "--single-fold",
+        action="store_true",
+        help=(
+            "One representative fold per eval: LTO 25–30% block, LSO session "
+            f"{SINGLE_LSO_FOLD_ID}, LMO mouse {SINGLE_LMO_FOLD_ID}. "
+            "Omit this flag to iterate every fold."
+        ),
+    )
     p.add_argument("--fold", type=int, default=None, help="Only this fold index within each eval")
     p.add_argument("--eval", nargs="*", default=list(EVALS), choices=list(EVALS))
     p.add_argument("--models", nargs="*", default=list(MODELS), choices=list(MODELS))
