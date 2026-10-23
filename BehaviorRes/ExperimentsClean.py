@@ -37,6 +37,7 @@ import json
 import math
 import os
 import shutil
+import signal
 import sys
 import traceback
 import warnings
@@ -80,6 +81,7 @@ WHEEL_ON = 0.15
 ONSET_DELAYED_S = 0.40
 MIN_SCORE_BINS = 8
 CNN_BATCH = 8
+CNN_BATCH_MIXED = 4
 RT_EDGES = (0.20, 0.40, 0.80)
 DUMMY = False
 MAX_EPOCHS_CAP = None
@@ -1042,6 +1044,28 @@ def forward_model(name, model, batch, dev, train):
     )
 
 
+def _is_oom(err):
+    if isinstance(err, MemoryError):
+        return True
+    name = type(err).__name__
+    if name in ("OutOfMemoryError", "CUDAOutOfMemoryError"):
+        return True
+    return "out of memory" in str(err).lower()
+
+
+def _empty_cuda():
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+def train_batch_size(name, objective):
+    if name == "aniso_cnn_transformer":
+        return CNN_BATCH_MIXED if objective == "mixed" else CNN_BATCH
+    if name.startswith("gnn"):
+        return gnn.GRAPH_BATCH
+    return mv.BATCH
+
+
 def run_epoch(name, model, loader, opt, dev, train, objective, loss_name, y_mean, y_std, speed_scale):
     model.train(train)
     total, n = 0.0, 0
@@ -1097,47 +1121,71 @@ def train_neural(
             log(f"  cache hit {eval_name}/{fold_id}/{name}/{objective}/{loss_name}")
             return torch.load(ckpt, map_location="cpu", weights_only=False), hist
     dev = slurm_utils.device_of()
-    if name == "aniso_cnn_transformer":
-        model = RegionCNNTransformer(
-            vox.shape, dual=objective == "mixed", classify=objective in ("onset", "direction")
-        ).to(dev)
-    else:
-        model = build_neural(name, stats, trials, tr_idx, objective).to(dev)
-    batch = gnn.GRAPH_BATCH if name.startswith("gnn") else (CNN_BATCH if name == "aniso_cnn_transformer" else mv.BATCH)
-    tr_ld = make_loader(name, trials, tr_idx, y_mean, y_std, stats, rho_by_eid, vox, True, seed, batch)
-    va_ld = make_loader(name, trials, va_idx, y_mean, y_std, stats, rho_by_eid, vox, False, seed, batch)
-    opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
+    batch = train_batch_size(name, objective)
     speed = speed_scale_from(trials, tr_idx)
-    hist = {
-        "train": [],
-        "val": [],
-        "n_params": mv.n_params(model),
-        "finished": False,
-        "best_epoch": 0,
-        "speed_scale": speed,
-    }
-    log(f"  {name} params={hist['n_params']} device={dev} obj={objective} loss={loss_name}")
-    best, bad, best_state = math.inf, 0, None
     max_ep = hier.STAGE_EPOCHS + hier.JOINT_EPOCHS if name == "hierarchical" else mv.MAX_EPOCHS
     if MAX_EPOCHS_CAP is not None:
         max_ep = min(int(max_ep), int(MAX_EPOCHS_CAP))
-    for epoch in range(1, max_ep + 1):
-        tr = run_epoch(name, model, tr_ld, opt, dev, True, objective, loss_name, y_mean, y_std, speed)
-        with torch.no_grad():
-            va = run_epoch(name, model, va_ld, None, dev, False, objective, loss_name, y_mean, y_std, speed)
-        hist["train"].append(tr)
-        hist["val"].append(va)
-        log(f"    {name} {epoch:02d}  train={tr:.4f}  val={va:.4f}")
-        slurm_utils.write_status(state="training", epoch=epoch, train=tr, val=va, best_epoch=hist["best_epoch"])
-        if va + 1e-5 < best:
-            best, bad = va, 0
-            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
-            hist["best_epoch"] = epoch
-        else:
-            bad += 1
-        if bad >= mv.PATIENCE:
-            log(f"    early stop at epoch {epoch}")
+    hist = None
+    model = None
+    best_state = None
+    while True:
+        try:
+            _empty_cuda()
+            if name == "aniso_cnn_transformer":
+                model = RegionCNNTransformer(
+                    vox.shape, dual=objective == "mixed", classify=objective in ("onset", "direction")
+                ).to(dev)
+            else:
+                model = build_neural(name, stats, trials, tr_idx, objective).to(dev)
+            tr_ld = make_loader(name, trials, tr_idx, y_mean, y_std, stats, rho_by_eid, vox, True, seed, batch)
+            va_ld = make_loader(name, trials, va_idx, y_mean, y_std, stats, rho_by_eid, vox, False, seed, batch)
+            opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
+            hist = {
+                "train": [],
+                "val": [],
+                "n_params": mv.n_params(model),
+                "finished": False,
+                "best_epoch": 0,
+                "speed_scale": speed,
+                "batch": int(batch),
+            }
+            log(
+                f"  {name} params={hist['n_params']} device={dev} obj={objective} "
+                f"loss={loss_name} batch={batch}"
+            )
+            slurm_utils.write_status(state="training", epoch=0, batch=int(batch), n_params=hist["n_params"])
+            best, bad, best_state = math.inf, 0, None
+            for epoch in range(1, max_ep + 1):
+                tr = run_epoch(name, model, tr_ld, opt, dev, True, objective, loss_name, y_mean, y_std, speed)
+                with torch.no_grad():
+                    va = run_epoch(name, model, va_ld, None, dev, False, objective, loss_name, y_mean, y_std, speed)
+                hist["train"].append(tr)
+                hist["val"].append(va)
+                log(f"    {name} {epoch:02d}  train={tr:.4f}  val={va:.4f}")
+                slurm_utils.write_status(
+                    state="training", epoch=epoch, train=tr, val=va, best_epoch=hist["best_epoch"], batch=int(batch)
+                )
+                if va + 1e-5 < best:
+                    best, bad = va, 0
+                    best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+                    hist["best_epoch"] = epoch
+                else:
+                    bad += 1
+                if bad >= mv.PATIENCE:
+                    log(f"    early stop at epoch {epoch}")
+                    break
             break
+        except (RuntimeError, MemoryError) as err:
+            if not _is_oom(err) or batch <= 1:
+                raise
+            log(f"  OOM at batch={batch}; retrying at {max(1, batch // 2)}")
+            batch = max(1, batch // 2)
+            model = None
+            tr_ld = None
+            va_ld = None
+            opt = None
+            _empty_cuda()
     if best_state is not None:
         model.load_state_dict(best_state)
     hist["finished"] = True
@@ -1184,56 +1232,64 @@ def predict_neural(blob, trials, idx, stats, vox):
     model.load_state_dict(blob["state_dict"], strict=False)
     model.to(dev)
     model.eval()
-    batch = gnn.GRAPH_BATCH if name.startswith("gnn") else (CNN_BATCH if name == "aniso_cnn_transformer" else mv.BATCH)
-    ld = make_loader(
-        name, trials, idx, blob["y_mean"], blob["y_std"], st, blob.get("rho_by_eid"), vox, False, 0, batch
-    )
-    recs = []
-    with torch.no_grad():
-        for batch_d in ld:
-            out = forward_model(name, model, batch_d, dev, False)
-            trace, onset_logit, dir_logit = unpack_pred(name, out, objective)
-            y_z = batch_d["y"].numpy()
-            mt = batch_d["mask_t"].numpy()
-            lengths = batch_d["lengths"].numpy()
-            tr = trace.cpu().numpy()
-            onp = None if onset_logit is None else torch.sigmoid(onset_logit[..., 0]).cpu().numpy()
-            dip = None if dir_logit is None else torch.sigmoid(dir_logit[..., 0]).cpu().numpy()
-            for b in range(tr.shape[0]):
-                T = int(lengths[b])
-                valid = mt[b, :T]
-                rec = {}
-                y_raw = y_z[b, :T] * blob["y_std"] + blob["y_mean"]
-                if objective in ("trace", "mixed"):
-                    p = tr[b, :T] * blob["y_std"] + blob["y_mean"]
-                    y = y_raw
-                elif objective == "onset":
-                    p = onp[b, :T] if onp is not None else tr[b, :T]
-                    y = y_raw
-                    rec["onset_pred"] = _onset_from_prob(np.asarray(p).reshape(-1), valid)
-                    rec["onset_true"] = mv.sticky_onset_s(y, ONSET_THR)
-                    begun = np.zeros((T, 1), dtype=np.float32)
-                    if np.isfinite(rec["onset_true"]):
-                        k = int(round(float(rec["onset_true"]) / mv.BINSIZE))
-                        begun[max(k, 0) :] = 1.0
-                    y = begun
-                    p = np.asarray(p, dtype=np.float32).reshape(T, 1)
-                else:
-                    p = dip[b, :T] if dip is not None else tr[b, :T]
-                    y = y_raw
-                    rec["dir_pred"] = float(np.nanmean(p[valid])) if valid.any() else float("nan")
-                    rec["dir_true"] = float(np.nanmean(y[valid])) if valid.any() else float("nan")
-                p = np.asarray(p, dtype=np.float32).reshape(T, -1)
-                y = np.asarray(y, dtype=np.float32).reshape(T, -1)
-                p[~valid] = np.nan
-                y[~valid] = np.nan
-                rec["pred"] = p
-                rec["y"] = y
-                if objective == "mixed" and onp is not None:
-                    rec["onset_pred"] = _onset_from_prob(onp[b, :T], valid)
-                    rec["onset_true"] = mv.sticky_onset_s(y, ONSET_THR)
-                recs.append(rec)
-    return recs
+    batch = train_batch_size(name, objective)
+    while True:
+        ld = make_loader(
+            name, trials, idx, blob["y_mean"], blob["y_std"], st, blob.get("rho_by_eid"), vox, False, 0, batch
+        )
+        try:
+            recs = []
+            with torch.no_grad():
+                for batch_d in ld:
+                    out = forward_model(name, model, batch_d, dev, False)
+                    trace, onset_logit, dir_logit = unpack_pred(name, out, objective)
+                    y_z = batch_d["y"].numpy()
+                    mt = batch_d["mask_t"].numpy()
+                    lengths = batch_d["lengths"].numpy()
+                    tr = trace.cpu().numpy()
+                    onp = None if onset_logit is None else torch.sigmoid(onset_logit[..., 0]).cpu().numpy()
+                    dip = None if dir_logit is None else torch.sigmoid(dir_logit[..., 0]).cpu().numpy()
+                    for b in range(tr.shape[0]):
+                        T = int(lengths[b])
+                        valid = mt[b, :T]
+                        rec = {}
+                        y_raw = y_z[b, :T] * blob["y_std"] + blob["y_mean"]
+                        if objective in ("trace", "mixed"):
+                            p = tr[b, :T] * blob["y_std"] + blob["y_mean"]
+                            y = y_raw
+                        elif objective == "onset":
+                            p = onp[b, :T] if onp is not None else tr[b, :T]
+                            y = y_raw
+                            rec["onset_pred"] = _onset_from_prob(np.asarray(p).reshape(-1), valid)
+                            rec["onset_true"] = mv.sticky_onset_s(y, ONSET_THR)
+                            begun = np.zeros((T, 1), dtype=np.float32)
+                            if np.isfinite(rec["onset_true"]):
+                                k = int(round(float(rec["onset_true"]) / mv.BINSIZE))
+                                begun[max(k, 0) :] = 1.0
+                            y = begun
+                            p = np.asarray(p, dtype=np.float32).reshape(T, 1)
+                        else:
+                            p = dip[b, :T] if dip is not None else tr[b, :T]
+                            y = y_raw
+                            rec["dir_pred"] = float(np.nanmean(p[valid])) if valid.any() else float("nan")
+                            rec["dir_true"] = float(np.nanmean(y[valid])) if valid.any() else float("nan")
+                        p = np.asarray(p, dtype=np.float32).reshape(T, -1)
+                        y = np.asarray(y, dtype=np.float32).reshape(T, -1)
+                        p[~valid] = np.nan
+                        y[~valid] = np.nan
+                        rec["pred"] = p
+                        rec["y"] = y
+                        if objective == "mixed" and onp is not None:
+                            rec["onset_pred"] = _onset_from_prob(onp[b, :T], valid)
+                            rec["onset_true"] = mv.sticky_onset_s(y, ONSET_THR)
+                        recs.append(rec)
+            return recs
+        except (RuntimeError, MemoryError) as err:
+            if not _is_oom(err) or batch <= 1:
+                raise
+            log(f"  OOM at predict batch={batch}; retrying at {max(1, batch // 2)}")
+            batch = max(1, batch // 2)
+            _empty_cuda()
 
 
 def _onset_from_prob(prob, valid, sticky=2):
@@ -1445,7 +1501,16 @@ def run_config(cfg, trials, specs):
     if name == "aniso_cnn_transformer":
         xyz = np.concatenate([trials[int(i)]["xyz"] for i in tr_idx], axis=0)
         vox = mv2.AnisoGrid(xyz)
+        slurm_utils.write_status(
+            state="training",
+            epoch=0,
+            stage="grid",
+            n_train=int(len(tr_idx)),
+            n_test=int(len(test_idx)),
+            grid=f"{vox.nx}x{vox.ny}x{vox.nz}",
+        )
     if name.startswith("gnn"):
+        slurm_utils.write_status(state="training", epoch=0, stage="graph_corr", n_train=int(len(tr_idx)))
         rho = gnn.session_train_corr(trials, tr_idx)
     if name in ("mean", "ar"):
         recs = mean_curve(trials, tr_idx, test_idx, objective) if name == "mean" else ar_curve(trials, test_idx, objective)
@@ -1496,6 +1561,20 @@ def run_config(cfg, trials, specs):
     return row
 
 
+def _install_term_handler():
+    def _h(signum, _frame):
+        try:
+            slurm_utils.write_status(state="failed", signal=int(signum))
+            err = slurm_utils.job_dir() / "error.txt"
+            err.write_text(f"terminated by signal {signum}\n")
+        except Exception:
+            pass
+        raise SystemExit(128 + int(signum))
+
+    signal.signal(signal.SIGTERM, _h)
+    signal.signal(signal.SIGINT, _h)
+
+
 def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=None, single_fold=False, trials=None):
     configure_out()
     mv.set_seed(mv.SEED)
@@ -1508,6 +1587,7 @@ def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=No
         cfg = slurm_utils.pick_config(configs, job)
         slurm_utils.set_device("auto", probe=device_probe(cfg["model"]))
         slurm_utils.begin_job(OUT, job, slurm_utils.tag_of(cfg), **cfg)
+        _install_term_handler()
         log(f"job {job}  {cfg}")
         try:
             run_config(cfg, trials, specs)
