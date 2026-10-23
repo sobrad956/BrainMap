@@ -885,6 +885,40 @@ def grid_meta(vox):
 # ---------------------------------------------------------------------------
 
 
+def ensure_session_rates(stats, trials, idx):
+    """Fill per-unit mean rates for eids missing from train (LSO / LMO).
+
+    Units are session-specific, so a held-out recording has no train rate
+    vector. Modelv1.fit_unit_stats already does this when fallback_idx
+    includes the test fold; cached checkpoints from the failed run do not.
+    """
+    stats = dict(stats or {})
+    rates = dict(stats.get("rates") or {})
+    buckets = {}
+    for i in np.asarray(idx, dtype=int).reshape(-1):
+        t = trials[int(i)]
+        eid = t["eid"]
+        if eid in rates:
+            continue
+        buckets.setdefault(eid, []).append(np.asarray(t["spikes"], dtype=np.float32).mean(axis=0))
+    for eid, vs in buckets.items():
+        rates[eid] = np.mean(vs, axis=0).astype(np.float32)
+        log(f"  filled session rate for held-out {str(eid)[:8]}  n_units={int(rates[eid].size)}")
+    stats["rates"] = rates
+    return stats
+
+
+def merge_eval_stats(blob_stats, live_stats, trials, idx):
+    """Keep train vocab / CCF scale from the checkpoint; add eval-session rates."""
+    st = dict(live_stats or {})
+    blob_stats = dict(blob_stats or {})
+    st.update(blob_stats)
+    rates = dict((live_stats or {}).get("rates") or {})
+    rates.update(dict(blob_stats.get("rates") or {}))
+    st["rates"] = rates
+    return ensure_session_rates(st, trials, idx)
+
+
 def model_kind(name):
     if name in ("attn_a1_gru", "attn_a1_transformer", "attn_anat_transformer"):
         return "set"
@@ -1139,7 +1173,7 @@ def predict_neural(blob, trials, idx, stats, vox):
     name = blob["model"]
     objective = blob["objective"]
     dev = slurm_utils.device_of()
-    st = blob.get("stats", stats)
+    st = merge_eval_stats(blob.get("stats"), stats, trials, idx)
     if name == "aniso_cnn_transformer":
         vox = reconstruct_grid(blob["grid"]) if blob.get("grid") else vox
         model = RegionCNNTransformer(
@@ -1399,7 +1433,9 @@ def run_config(cfg, trials, specs):
         log(f"  skip {cfg}: empty train after val split")
         return None
     y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
-    stats = mv.fit_unit_stats(trials, tr_idx, train_full)
+    fallback = np.unique(np.concatenate([tr_idx, va_idx, test_idx]))
+    stats = mv.fit_unit_stats(trials, tr_idx, fallback)
+    stats = ensure_session_rates(stats, trials, test_idx)
     tag = slurm_utils.tag_of(cfg)
     jdir = slurm_utils.job_dir()
     name = cfg["model"]
@@ -1480,6 +1516,9 @@ def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=No
             err = slurm_utils.job_dir() / "error.txt"
             err.write_text(traceback.format_exc())
             raise
+        err = slurm_utils.job_dir() / "error.txt"
+        if err.exists():
+            err.unlink()
         return
     rows = []
     for i, cfg in enumerate(configs):
@@ -1490,6 +1529,9 @@ def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=No
             row = run_config(cfg, trials, specs)
             if row:
                 rows.append(row)
+            err = slurm_utils.job_dir() / "error.txt"
+            if err.exists():
+                err.unlink()
         except Exception:
             slurm_utils.write_status(state="failed")
             err = slurm_utils.job_dir() / "error.txt"
@@ -1654,6 +1696,16 @@ def dummy_smoke_jobs(specs):
                 "loss": "none",
             }
         )
+        jobs.append(
+            {
+                "eval": ev,
+                "fold": int(spec["fold"]),
+                "fold_id": spec["fold_id"],
+                "model": "attn_a1_gru",
+                "objective": "trace",
+                "loss": "mse",
+            }
+        )
     return jobs
 
 
@@ -1737,6 +1789,23 @@ def run_self_test():
     dual = DualSetSequence(4, pool="attn", use_anatomy=False, temporal="gru", dual=True)
     pids = [id(p) for p in dual.parameters()]
     assert len(pids) == len(set(pids)), "duplicate parameters in DualSetSequence"
+    bind_objective(trials, "trace")
+    lso0 = lso[0]
+    te = np.asarray(lso0["test"], dtype=int)
+    tr = np.asarray(lso0["train"], dtype=int)
+    held = trials[int(te[0])]["eid"]
+    stats_train = mv.fit_unit_stats(trials, tr, tr)
+    assert held not in stats_train["rates"]
+    filled = ensure_session_rates(stats_train, trials, te)
+    assert held in filled["rates"]
+    ds = mv.TrialDS(trials, te[:2], np.zeros(1, np.float32), np.ones(1, np.float32), filled)
+    _ = ds[0]
+    live = mv.fit_unit_stats(trials, tr, np.concatenate([tr, te]))
+    cached = merge_eval_stats(stats_train, live, trials, te)
+    assert held in cached["rates"]
+    stale = merge_eval_stats(stats_train, stats_train, trials, te)
+    assert held in stale["rates"]
+    _ = mv.TrialDS(trials, te[:2], np.zeros(1, np.float32), np.ones(1, np.float32), stale)[0]
     cfgs, specs = job_grid(trials, single_fold=True)
     assert any(c["model"] == "attn_a1_gru" and c["objective"] == "mixed" for c in cfgs)
     assert all(c["fold"] == specs[0]["fold"] or c["eval"] != specs[0]["eval"] for c in cfgs[:3])
