@@ -1,7 +1,7 @@
 {
   "job": 116,
   "tag": "LMO_0_CSHL049_attn_a1_transformer_onset_event_nll",
-  "slurm_job_id": "724565",
+  "slurm_job_id": "726118",
   "slurm_array_task_id": "116",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_transformer",
   "objective": "onset",
   "loss": "event_nll",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.5047456738943865,
+  "n_holdout_trials": 191,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:22:59.218855+00:00"
+  "updated_at": "2026-10-23T07:51:51.879492+00:00"
 }

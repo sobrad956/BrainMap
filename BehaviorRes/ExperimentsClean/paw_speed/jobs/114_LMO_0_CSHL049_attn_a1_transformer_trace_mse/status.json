@@ -1,7 +1,7 @@
 {
   "job": 114,
   "tag": "LMO_0_CSHL049_attn_a1_transformer_trace_mse",
-  "slurm_job_id": "724462",
+  "slurm_job_id": "726052",
   "slurm_array_task_id": "114",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_transformer",
   "objective": "trace",
   "loss": "mse",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": 0.34624009924061483,
+  "n_holdout_trials": 187,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:21:11.255854+00:00"
+  "updated_at": "2026-10-23T07:51:22.226860+00:00"
 }

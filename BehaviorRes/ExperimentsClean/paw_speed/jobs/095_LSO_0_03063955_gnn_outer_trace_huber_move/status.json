@@ -1,7 +1,7 @@
 {
   "job": 95,
   "tag": "LSO_0_03063955_gnn_outer_trace_huber_move",
-  "slurm_job_id": "723384",
+  "slurm_job_id": "726023",
   "slurm_array_task_id": "95",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "gnn_outer",
   "objective": "trace",
   "loss": "huber_move",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.0828742317957154,
+  "n_holdout_trials": 73,
   "device": "cuda",
-  "updated_at": "2026-10-23T04:51:43.202461+00:00"
+  "updated_at": "2026-10-23T07:49:20.666209+00:00"
 }

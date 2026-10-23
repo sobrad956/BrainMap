@@ -1,7 +1,7 @@
 {
   "job": 99,
   "tag": "LSO_0_03063955_gnn_outer_mixed_huber_move",
-  "slurm_job_id": "723867",
+  "slurm_job_id": "726031",
   "slurm_array_task_id": "99",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "gnn_outer",
   "objective": "mixed",
   "loss": "huber_move",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.17923946245485411,
+  "n_holdout_trials": 73,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:35:56.993315+00:00"
+  "updated_at": "2026-10-23T07:49:56.506323+00:00"
 }

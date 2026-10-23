@@ -1,7 +1,7 @@
 {
   "job": 112,
   "tag": "LMO_0_CSHL049_attn_a1_gru_mixed_mse",
-  "slurm_job_id": "724409",
+  "slurm_job_id": "726047",
   "slurm_array_task_id": "112",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_gru",
   "objective": "mixed",
   "loss": "mse",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": 0.04254111743176592,
+  "n_holdout_trials": 187,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:20:26.154213+00:00"
+  "updated_at": "2026-10-23T07:50:55.516888+00:00"
 }

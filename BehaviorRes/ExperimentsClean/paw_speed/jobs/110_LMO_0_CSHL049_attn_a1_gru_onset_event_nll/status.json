@@ -1,7 +1,7 @@
 {
   "job": 110,
   "tag": "LMO_0_CSHL049_attn_a1_gru_onset_event_nll",
-  "slurm_job_id": "724286",
+  "slurm_job_id": "726037",
   "slurm_array_task_id": "110",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_gru",
   "objective": "onset",
   "loss": "event_nll",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.3931126188090093,
+  "n_holdout_trials": 191,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:16:54.286338+00:00"
+  "updated_at": "2026-10-23T07:50:29.172525+00:00"
 }

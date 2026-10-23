@@ -1,7 +1,7 @@
 {
   "job": 69,
   "tag": "LSO_0_03063955_attn_a1_transformer_mixed_huber_move",
-  "slurm_job_id": "725736",
+  "slurm_job_id": "725981",
   "slurm_array_task_id": "69",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_transformer",
   "objective": "mixed",
   "loss": "huber_move",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.04681333055205128,
+  "n_holdout_trials": 73,
   "device": "cuda",
-  "updated_at": "2026-10-23T07:17:56.197135+00:00"
+  "updated_at": "2026-10-23T07:46:00.780793+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 118,
   "tag": "LMO_0_CSHL049_attn_a1_transformer_mixed_mse",
-  "slurm_job_id": "724583",
+  "slurm_job_id": "726120",
   "slurm_array_task_id": "118",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_transformer",
   "objective": "mixed",
   "loss": "mse",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": 0.0072838374477254275,
+  "n_holdout_trials": 187,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:24:28.660002+00:00"
+  "updated_at": "2026-10-23T07:52:01.106469+00:00"
 }

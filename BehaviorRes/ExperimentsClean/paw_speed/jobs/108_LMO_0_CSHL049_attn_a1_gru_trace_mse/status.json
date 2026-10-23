@@ -1,7 +1,7 @@
 {
   "job": 108,
   "tag": "LMO_0_CSHL049_attn_a1_gru_trace_mse",
-  "slurm_job_id": "724230",
+  "slurm_job_id": "726035",
   "slurm_array_task_id": "108",
   "eval": "LMO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "attn_a1_gru",
   "objective": "trace",
   "loss": "mse",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": 0.3047610974503826,
+  "n_holdout_trials": 187,
   "device": "cuda",
-  "updated_at": "2026-10-23T05:10:04.415505+00:00"
+  "updated_at": "2026-10-23T07:50:19.987095+00:00"
 }

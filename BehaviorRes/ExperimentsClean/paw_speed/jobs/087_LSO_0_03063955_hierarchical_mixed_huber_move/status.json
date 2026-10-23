@@ -1,7 +1,7 @@
 {
   "job": 87,
   "tag": "LSO_0_03063955_hierarchical_mixed_huber_move",
-  "slurm_job_id": "725773",
+  "slurm_job_id": "726001",
   "slurm_array_task_id": "87",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "hierarchical",
   "objective": "mixed",
   "loss": "huber_move",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.06661741619090589,
+  "n_holdout_trials": 73,
   "device": "cuda",
-  "updated_at": "2026-10-23T07:20:55.179644+00:00"
+  "updated_at": "2026-10-23T07:47:56.923587+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 88,
   "tag": "LSO_0_03063955_gnn_inner_trace_mse",
-  "slurm_job_id": "725782",
+  "slurm_job_id": "726004",
   "slurm_array_task_id": "88",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "gnn_inner",
   "objective": "trace",
   "loss": "mse",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.01447804842927769,
+  "n_holdout_trials": 73,
   "device": "cuda",
-  "updated_at": "2026-10-23T07:21:16.621967+00:00"
+  "updated_at": "2026-10-23T07:48:19.240930+00:00"
 }

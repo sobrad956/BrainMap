@@ -1,7 +1,7 @@
 {
   "job": 90,
   "tag": "LSO_0_03063955_gnn_inner_onset_event_nll",
-  "slurm_job_id": "725786",
+  "slurm_job_id": "726006",
   "slurm_array_task_id": "90",
   "eval": "LSO",
   "fold": 0,
@@ -9,7 +9,9 @@
   "model": "gnn_inner",
   "objective": "onset",
   "loss": "event_nll",
-  "state": "failed",
+  "state": "done",
+  "fold_concat_r2": -0.37826351090979915,
+  "n_holdout_trials": 75,
   "device": "cuda",
-  "updated_at": "2026-10-23T07:21:47.948490+00:00"
+  "updated_at": "2026-10-23T07:48:28.019841+00:00"
 }
