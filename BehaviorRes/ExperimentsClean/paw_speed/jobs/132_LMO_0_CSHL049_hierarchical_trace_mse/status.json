@@ -1,0 +1,15 @@
+{
+  "job": 132,
+  "tag": "LMO_0_CSHL049_hierarchical_trace_mse",
+  "slurm_job_id": "725663",
+  "slurm_array_task_id": "132",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "starting",
+  "device": "cuda",
+  "updated_at": "2026-10-23T07:14:16.600816+00:00"
+}

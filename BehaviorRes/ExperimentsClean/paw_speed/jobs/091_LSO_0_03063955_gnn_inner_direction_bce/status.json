@@ -1,7 +1,7 @@
 {
   "job": 91,
   "tag": "LSO_0_03063955_gnn_inner_direction_bce",
-  "slurm_job_id": "723024",
+  "slurm_job_id": "725787",
   "slurm_array_task_id": "91",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "bce",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T04:14:53.734368+00:00"
+  "updated_at": "2026-10-23T07:21:55.473663+00:00"
 }

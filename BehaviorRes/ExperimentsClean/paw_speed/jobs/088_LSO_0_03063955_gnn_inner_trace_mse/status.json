@@ -1,7 +1,7 @@
 {
   "job": 88,
   "tag": "LSO_0_03063955_gnn_inner_trace_mse",
-  "slurm_job_id": "722743",
+  "slurm_job_id": "725782",
   "slurm_array_task_id": "88",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "mse",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T03:41:02.606903+00:00"
+  "updated_at": "2026-10-23T07:21:16.621967+00:00"
 }

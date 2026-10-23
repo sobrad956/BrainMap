@@ -1,7 +1,7 @@
 {
   "job": 68,
   "tag": "LSO_0_03063955_attn_a1_transformer_mixed_mse",
-  "slurm_job_id": "721302",
+  "slurm_job_id": "725735",
   "slurm_array_task_id": "68",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "mse",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T01:16:17.882549+00:00"
+  "updated_at": "2026-10-23T07:17:46.393555+00:00"
 }

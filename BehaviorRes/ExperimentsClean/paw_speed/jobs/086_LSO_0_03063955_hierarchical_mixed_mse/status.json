@@ -1,7 +1,7 @@
 {
   "job": 86,
   "tag": "LSO_0_03063955_hierarchical_mixed_mse",
-  "slurm_job_id": "722575",
+  "slurm_job_id": "725772",
   "slurm_array_task_id": "86",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "mse",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T03:20:28.982186+00:00"
+  "updated_at": "2026-10-23T07:20:46.629938+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 58,
   "tag": "LSO_0_03063955_attn_a1_gru_trace_mse",
-  "slurm_job_id": "721232",
+  "slurm_job_id": "725683",
   "slurm_array_task_id": "58",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "mse",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T01:12:25.547416+00:00"
+  "updated_at": "2026-10-23T07:15:16.381939+00:00"
 }

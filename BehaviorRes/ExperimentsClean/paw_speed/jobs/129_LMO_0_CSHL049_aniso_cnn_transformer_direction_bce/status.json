@@ -10,10 +10,10 @@
   "objective": "direction",
   "loss": "bce",
   "state": "training",
-  "epoch": 2,
-  "train": 0.5881667030508685,
-  "val": 0.6633945403836708,
-  "best_epoch": 1,
+  "epoch": 6,
+  "train": 0.5284768948896232,
+  "val": 0.6467714851403105,
+  "best_epoch": 4,
   "device": "cuda",
-  "updated_at": "2026-10-23T06:04:10.213442+00:00"
+  "updated_at": "2026-10-23T07:16:43.906442+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "job": 84,
   "tag": "LSO_0_03063955_hierarchical_onset_event_nll",
-  "slurm_job_id": "722113",
+  "slurm_job_id": "725769",
   "slurm_array_task_id": "84",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "event_nll",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T02:59:34.583099+00:00"
+  "updated_at": "2026-10-23T07:20:16.343500+00:00"
 }

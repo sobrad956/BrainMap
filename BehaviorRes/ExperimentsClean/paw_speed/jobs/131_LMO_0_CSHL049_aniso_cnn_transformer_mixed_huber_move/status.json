@@ -1,0 +1,15 @@
+{
+  "job": 131,
+  "tag": "LMO_0_CSHL049_aniso_cnn_transformer_mixed_huber_move",
+  "slurm_job_id": "725616",
+  "slurm_array_task_id": "131",
+  "eval": "LMO",
+  "fold": 0,
+  "fold_id": "CSHL049",
+  "model": "aniso_cnn_transformer",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "starting",
+  "device": "cuda",
+  "updated_at": "2026-10-23T07:10:25.385472+00:00"
+}

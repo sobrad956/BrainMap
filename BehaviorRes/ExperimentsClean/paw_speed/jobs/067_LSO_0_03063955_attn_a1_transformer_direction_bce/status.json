@@ -1,7 +1,7 @@
 {
   "job": 67,
   "tag": "LSO_0_03063955_attn_a1_transformer_direction_bce",
-  "slurm_job_id": "721295",
+  "slurm_job_id": "725724",
   "slurm_array_task_id": "67",
   "eval": "LSO",
   "fold": 0,
@@ -11,5 +11,5 @@
   "loss": "bce",
   "state": "failed",
   "device": "cuda",
-  "updated_at": "2026-10-23T01:15:45.898586+00:00"
+  "updated_at": "2026-10-23T07:17:25.596945+00:00"
 }
