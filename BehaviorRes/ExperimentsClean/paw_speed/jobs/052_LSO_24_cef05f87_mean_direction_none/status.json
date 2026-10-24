@@ -1,0 +1,17 @@
+{
+  "job": 52,
+  "tag": "LSO_24_cef05f87_mean_direction_none",
+  "slurm_job_id": "745158",
+  "slurm_array_task_id": "52",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "mean",
+  "objective": "direction",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": -0.23222329156090304,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:39:55.497865+00:00"
+}

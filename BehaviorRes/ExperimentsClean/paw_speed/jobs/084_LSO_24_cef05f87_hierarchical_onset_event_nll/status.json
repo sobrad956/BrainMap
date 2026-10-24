@@ -1,0 +1,17 @@
+{
+  "job": 84,
+  "tag": "LSO_24_cef05f87_hierarchical_onset_event_nll",
+  "slurm_job_id": "748672",
+  "slurm_array_task_id": "84",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "hierarchical",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.0677225361056748,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-24T00:34:37.439376+00:00"
+}

@@ -1,0 +1,17 @@
+{
+  "job": 111,
+  "tag": "LMO_17_PL033_attn_a1_gru_direction_bce",
+  "slurm_job_id": "750548",
+  "slurm_array_task_id": "111",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "attn_a1_gru",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.7853879854536121,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:22:01.471868+00:00"
+}

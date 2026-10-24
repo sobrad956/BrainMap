@@ -1,7 +1,7 @@
 {
   "job": 136,
   "tag": "LMO_17_PL033_hierarchical_mixed_mse",
-  "slurm_job_id": "734267",
+  "slurm_job_id": "753231",
   "slurm_array_task_id": "136",
   "eval": "LMO",
   "fold": 17,
@@ -13,5 +13,5 @@
   "fold_concat_r2": -0.05547862339027221,
   "n_holdout_trials": 146,
   "device": "cuda",
-  "updated_at": "2026-10-23T17:18:05.613160+00:00"
+  "updated_at": "2026-10-24T02:44:54.413793+00:00"
 }

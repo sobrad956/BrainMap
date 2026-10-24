@@ -1,0 +1,17 @@
+{
+  "job": 91,
+  "tag": "LSO_24_cef05f87_gnn_inner_direction_bce",
+  "slurm_job_id": "749406",
+  "slurm_array_task_id": "91",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "gnn_inner",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.09316575714835684,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-24T00:57:00.988114+00:00"
+}

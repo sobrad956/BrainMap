@@ -1,0 +1,17 @@
+{
+  "job": 42,
+  "tag": "LTO_5_lto05_gnn_inner_mixed_mse",
+  "slurm_job_id": "743721",
+  "slurm_array_task_id": "42",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_inner",
+  "objective": "mixed",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.06969099107799293,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:12:35.970704+00:00"
+}

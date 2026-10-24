@@ -1,0 +1,17 @@
+{
+  "job": 85,
+  "tag": "LSO_24_cef05f87_hierarchical_direction_bce",
+  "slurm_job_id": "748704",
+  "slurm_array_task_id": "85",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "hierarchical",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.0928152213437381,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-24T00:41:35.137008+00:00"
+}

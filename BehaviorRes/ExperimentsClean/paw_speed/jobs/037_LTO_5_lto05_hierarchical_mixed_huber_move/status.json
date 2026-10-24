@@ -1,0 +1,17 @@
+{
+  "job": 37,
+  "tag": "LTO_5_lto05_hierarchical_mixed_huber_move",
+  "slurm_job_id": "742691",
+  "slurm_array_task_id": "37",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "hierarchical",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.059208923186243045,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:39:39.347260+00:00"
+}

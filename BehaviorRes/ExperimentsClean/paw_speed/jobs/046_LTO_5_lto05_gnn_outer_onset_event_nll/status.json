@@ -1,0 +1,17 @@
+{
+  "job": 46,
+  "tag": "LTO_5_lto05_gnn_outer_onset_event_nll",
+  "slurm_job_id": "744572",
+  "slurm_array_task_id": "46",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_outer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.5802079522638091,
+  "n_holdout_trials": 284,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:39:11.883337+00:00"
+}

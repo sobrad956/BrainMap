@@ -1,0 +1,17 @@
+{
+  "job": 49,
+  "tag": "LTO_5_lto05_gnn_outer_mixed_huber_move",
+  "slurm_job_id": "745080",
+  "slurm_array_task_id": "49",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_outer",
+  "objective": "mixed",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.03326311158279349,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T23:06:50.792007+00:00"
+}

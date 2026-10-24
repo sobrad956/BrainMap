@@ -1,0 +1,17 @@
+{
+  "job": 129,
+  "tag": "LMO_17_PL033_aniso_cnn_transformer_direction_bce",
+  "slurm_job_id": "750909",
+  "slurm_array_task_id": "129",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "aniso_cnn_transformer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.4223292973864341,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-24T02:39:27.766474+00:00"
+}

@@ -1,7 +1,7 @@
 {
   "job": 148,
   "tag": "LMO_17_PL033_gnn_outer_mixed_mse",
-  "slurm_job_id": "736116",
+  "slurm_job_id": "753292",
   "slurm_array_task_id": "148",
   "eval": "LMO",
   "fold": 17,
@@ -10,8 +10,8 @@
   "objective": "mixed",
   "loss": "mse",
   "state": "done",
-  "fold_concat_r2": -0.07158088507098292,
+  "fold_concat_r2": -0.0715808853619424,
   "n_holdout_trials": 146,
   "device": "cuda",
-  "updated_at": "2026-10-23T19:30:53.708477+00:00"
+  "updated_at": "2026-10-24T02:49:24.828153+00:00"
 }

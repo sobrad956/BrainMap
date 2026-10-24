@@ -1,0 +1,17 @@
+{
+  "job": 72,
+  "tag": "LSO_24_cef05f87_attn_anat_transformer_onset_event_nll",
+  "slurm_job_id": "745642",
+  "slurm_array_task_id": "72",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "attn_anat_transformer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.4467497040531914,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:56:48.105912+00:00"
+}

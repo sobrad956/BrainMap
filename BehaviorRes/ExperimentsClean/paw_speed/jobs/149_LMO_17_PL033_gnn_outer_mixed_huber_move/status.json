@@ -1,7 +1,7 @@
 {
   "job": 149,
   "tag": "LMO_17_PL033_gnn_outer_mixed_huber_move",
-  "slurm_job_id": "733130",
+  "slurm_job_id": "734230",
   "slurm_array_task_id": "149",
   "eval": "LMO",
   "fold": 17,
@@ -9,12 +9,9 @@
   "model": "gnn_outer",
   "objective": "mixed",
   "loss": "huber_move",
-  "state": "training",
-  "epoch": 2,
-  "train": 3.965911162858335,
-  "val": 3.5661064004264165,
-  "best_epoch": 1,
-  "batch": 16,
-  "device": "cpu",
-  "updated_at": "2026-10-23T20:50:06.117596+00:00"
+  "state": "done",
+  "fold_concat_r2": -0.032208206663000505,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T03:06:52.852944+00:00"
 }

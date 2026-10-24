@@ -1,0 +1,17 @@
+{
+  "job": 100,
+  "tag": "LMO_17_PL033_mean_trace_none",
+  "slurm_job_id": "750395",
+  "slurm_array_task_id": "100",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "mean",
+  "objective": "trace",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": 0.14540424467448554,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:10:53.263413+00:00"
+}

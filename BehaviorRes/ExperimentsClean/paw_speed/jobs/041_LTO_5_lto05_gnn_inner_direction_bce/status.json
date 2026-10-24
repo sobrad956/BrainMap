@@ -1,0 +1,17 @@
+{
+  "job": 41,
+  "tag": "LTO_5_lto05_gnn_inner_direction_bce",
+  "slurm_job_id": "743720",
+  "slurm_array_task_id": "41",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_inner",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": 0.10809747751171306,
+  "n_holdout_trials": 286,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:16:58.857068+00:00"
+}

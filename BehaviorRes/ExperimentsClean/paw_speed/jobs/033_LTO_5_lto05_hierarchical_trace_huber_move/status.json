@@ -1,0 +1,17 @@
+{
+  "job": 33,
+  "tag": "LTO_5_lto05_hierarchical_trace_huber_move",
+  "slurm_job_id": "742076",
+  "slurm_array_task_id": "33",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.30261160361490835,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:30:53.331030+00:00"
+}

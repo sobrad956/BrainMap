@@ -1,0 +1,17 @@
+{
+  "job": 115,
+  "tag": "LMO_17_PL033_attn_a1_transformer_trace_huber_move",
+  "slurm_job_id": "750671",
+  "slurm_array_task_id": "115",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "attn_a1_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.1541361686199476,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:22:37.286904+00:00"
+}

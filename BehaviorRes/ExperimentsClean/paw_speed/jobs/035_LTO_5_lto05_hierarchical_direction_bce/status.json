@@ -1,0 +1,17 @@
+{
+  "job": 35,
+  "tag": "LTO_5_lto05_hierarchical_direction_bce",
+  "slurm_job_id": "742311",
+  "slurm_array_task_id": "35",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "hierarchical",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": 0.17710877054473328,
+  "n_holdout_trials": 286,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:33:42.624126+00:00"
+}

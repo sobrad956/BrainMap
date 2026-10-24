@@ -1,0 +1,17 @@
+{
+  "job": 34,
+  "tag": "LTO_5_lto05_hierarchical_onset_event_nll",
+  "slurm_job_id": "742130",
+  "slurm_array_task_id": "34",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "hierarchical",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -0.3503269192384151,
+  "n_holdout_trials": 284,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:26:33.615136+00:00"
+}

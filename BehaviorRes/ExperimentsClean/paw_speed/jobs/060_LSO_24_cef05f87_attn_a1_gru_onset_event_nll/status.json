@@ -1,0 +1,17 @@
+{
+  "job": 60,
+  "tag": "LSO_24_cef05f87_attn_a1_gru_onset_event_nll",
+  "slurm_job_id": "745198",
+  "slurm_array_task_id": "60",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "attn_a1_gru",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.3589996271371318,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:45:29.523718+00:00"
+}

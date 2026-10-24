@@ -1,0 +1,17 @@
+{
+  "job": 122,
+  "tag": "LMO_17_PL033_attn_anat_transformer_onset_event_nll",
+  "slurm_job_id": "750795",
+  "slurm_array_task_id": "122",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "attn_anat_transformer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.1414787551201275,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:26:33.683239+00:00"
+}

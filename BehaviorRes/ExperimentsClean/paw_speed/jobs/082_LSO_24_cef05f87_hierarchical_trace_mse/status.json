@@ -1,0 +1,17 @@
+{
+  "job": 82,
+  "tag": "LSO_24_cef05f87_hierarchical_trace_mse",
+  "slurm_job_id": "748207",
+  "slurm_array_task_id": "82",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.11094038201104273,
+  "n_holdout_trials": 54,
+  "device": "cuda",
+  "updated_at": "2026-10-24T00:32:20.223694+00:00"
+}

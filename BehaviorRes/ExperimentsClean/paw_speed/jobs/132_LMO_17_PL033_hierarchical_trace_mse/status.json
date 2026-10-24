@@ -1,0 +1,17 @@
+{
+  "job": 132,
+  "tag": "LMO_17_PL033_hierarchical_trace_mse",
+  "slurm_job_id": "752778",
+  "slurm_array_task_id": "132",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "hierarchical",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.10498639258643294,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T02:47:21.013966+00:00"
+}

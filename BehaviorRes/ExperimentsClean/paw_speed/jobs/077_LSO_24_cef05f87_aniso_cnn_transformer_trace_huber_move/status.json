@@ -1,0 +1,17 @@
+{
+  "job": 77,
+  "tag": "LSO_24_cef05f87_aniso_cnn_transformer_trace_huber_move",
+  "slurm_job_id": "745758",
+  "slurm_array_task_id": "77",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "aniso_cnn_transformer",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.15120899141184208,
+  "n_holdout_trials": 54,
+  "device": "cuda",
+  "updated_at": "2026-10-24T00:32:01.779349+00:00"
+}

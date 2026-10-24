@@ -1,7 +1,7 @@
 {
   "job": 141,
   "tag": "LMO_17_PL033_gnn_inner_direction_bce",
-  "slurm_job_id": "735213",
+  "slurm_job_id": "753285",
   "slurm_array_task_id": "141",
   "eval": "LMO",
   "fold": 17,
@@ -13,5 +13,5 @@
   "fold_concat_r2": -1.5451030357031303,
   "n_holdout_trials": 148,
   "device": "cuda",
-  "updated_at": "2026-10-23T18:25:42.535263+00:00"
+  "updated_at": "2026-10-24T02:47:24.609158+00:00"
 }

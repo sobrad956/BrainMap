@@ -1,0 +1,17 @@
+{
+  "job": 126,
+  "tag": "LMO_17_PL033_aniso_cnn_transformer_trace_mse",
+  "slurm_job_id": "750799",
+  "slurm_array_task_id": "126",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "aniso_cnn_transformer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": -0.0261130339386475,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T02:49:06.349092+00:00"
+}

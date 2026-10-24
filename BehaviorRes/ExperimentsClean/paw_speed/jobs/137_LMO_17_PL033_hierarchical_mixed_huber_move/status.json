@@ -1,7 +1,7 @@
 {
   "job": 137,
   "tag": "LMO_17_PL033_hierarchical_mixed_huber_move",
-  "slurm_job_id": "734404",
+  "slurm_job_id": "753249",
   "slurm_array_task_id": "137",
   "eval": "LMO",
   "fold": 17,
@@ -13,5 +13,5 @@
   "fold_concat_r2": -0.06284339320317045,
   "n_holdout_trials": 146,
   "device": "cuda",
-  "updated_at": "2026-10-23T17:28:29.574736+00:00"
+  "updated_at": "2026-10-24T02:45:24.274183+00:00"
 }

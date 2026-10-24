@@ -1,0 +1,17 @@
+{
+  "job": 110,
+  "tag": "LMO_17_PL033_attn_a1_gru_onset_event_nll",
+  "slurm_job_id": "750547",
+  "slurm_array_task_id": "110",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "attn_a1_gru",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.3109561052311012,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:19:04.575370+00:00"
+}

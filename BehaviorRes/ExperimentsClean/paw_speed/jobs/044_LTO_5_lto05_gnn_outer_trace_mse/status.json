@@ -1,0 +1,17 @@
+{
+  "job": 44,
+  "tag": "LTO_5_lto05_gnn_outer_trace_mse",
+  "slurm_job_id": "744570",
+  "slurm_array_task_id": "44",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_outer",
+  "objective": "trace",
+  "loss": "mse",
+  "state": "done",
+  "fold_concat_r2": 0.25122052192356836,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T22:36:54.569118+00:00"
+}

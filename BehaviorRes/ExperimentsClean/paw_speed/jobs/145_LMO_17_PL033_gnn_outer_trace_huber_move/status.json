@@ -1,7 +1,7 @@
 {
   "job": 145,
   "tag": "LMO_17_PL033_gnn_outer_trace_huber_move",
-  "slurm_job_id": "735490",
+  "slurm_job_id": "753289",
   "slurm_array_task_id": "145",
   "eval": "LMO",
   "fold": 17,
@@ -13,5 +13,5 @@
   "fold_concat_r2": 0.04888225023763637,
   "n_holdout_trials": 146,
   "device": "cuda",
-  "updated_at": "2026-10-23T18:43:49.391664+00:00"
+  "updated_at": "2026-10-24T02:48:24.331613+00:00"
 }

@@ -1,0 +1,17 @@
+{
+  "job": 96,
+  "tag": "LSO_24_cef05f87_gnn_outer_onset_event_nll",
+  "slurm_job_id": "749918",
+  "slurm_array_task_id": "96",
+  "eval": "LSO",
+  "fold": 24,
+  "fold_id": "cef05f87",
+  "model": "gnn_outer",
+  "objective": "onset",
+  "loss": "event_nll",
+  "state": "done",
+  "fold_concat_r2": -1.61123848577797,
+  "n_holdout_trials": 56,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:10:14.325773+00:00"
+}

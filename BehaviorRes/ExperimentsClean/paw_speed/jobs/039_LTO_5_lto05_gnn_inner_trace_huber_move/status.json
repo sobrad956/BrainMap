@@ -1,0 +1,17 @@
+{
+  "job": 39,
+  "tag": "LTO_5_lto05_gnn_inner_trace_huber_move",
+  "slurm_job_id": "742992",
+  "slurm_array_task_id": "39",
+  "eval": "LTO",
+  "fold": 5,
+  "fold_id": "lto05",
+  "model": "gnn_inner",
+  "objective": "trace",
+  "loss": "huber_move",
+  "state": "done",
+  "fold_concat_r2": 0.22854793503110538,
+  "n_holdout_trials": 261,
+  "device": "cuda",
+  "updated_at": "2026-10-23T21:53:35.641768+00:00"
+}

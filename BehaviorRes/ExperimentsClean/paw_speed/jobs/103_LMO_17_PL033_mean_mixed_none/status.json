@@ -1,0 +1,17 @@
+{
+  "job": 103,
+  "tag": "LMO_17_PL033_mean_mixed_none",
+  "slurm_job_id": "750413",
+  "slurm_array_task_id": "103",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "mean",
+  "objective": "mixed",
+  "loss": "none",
+  "state": "done",
+  "fold_concat_r2": -0.1275589869774434,
+  "n_holdout_trials": 146,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:11:22.981057+00:00"
+}

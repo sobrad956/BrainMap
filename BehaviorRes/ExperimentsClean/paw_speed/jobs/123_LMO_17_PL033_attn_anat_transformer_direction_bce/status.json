@@ -1,0 +1,17 @@
+{
+  "job": 123,
+  "tag": "LMO_17_PL033_attn_anat_transformer_direction_bce",
+  "slurm_job_id": "750796",
+  "slurm_array_task_id": "123",
+  "eval": "LMO",
+  "fold": 17,
+  "fold_id": "PL033",
+  "model": "attn_anat_transformer",
+  "objective": "direction",
+  "loss": "bce",
+  "state": "done",
+  "fold_concat_r2": -0.18928894188834677,
+  "n_holdout_trials": 148,
+  "device": "cuda",
+  "updated_at": "2026-10-24T01:26:55.609407+00:00"
+}
