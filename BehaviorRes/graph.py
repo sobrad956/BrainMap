@@ -321,7 +321,8 @@ class GraphSequence(nn.Module):
             z = self.unit_pool(h, mask_n) * mask_t.unsqueeze(-1)
         packed = pack_padded_sequence(z, lengths.cpu(), batch_first=True, enforce_sorted=False)
         out, _ = self.rnn(packed)
-        out, _ = pad_packed_sequence(out, batch_first=True, total_length=x.shape[-1])
+        t_len = x.shape[2] if x.dim() == 4 else x.shape[-1]
+        out, _ = pad_packed_sequence(out, batch_first=True, total_length=t_len)
         pred = self.head(out)
         return pred, smooth_u, smooth_r
 

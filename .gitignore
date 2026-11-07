@@ -63,8 +63,41 @@ BehaviorRes/ModelDataRightContra/
 *.npz
 *.mat
 
-# Keep sklearn / ridge checkpoints stored as pickle inside result caches
-!**/cache/**/*.pkl
+# Checkpoints / weights (the usual repo bloat)
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.onnx
+
+# Run logs (Slurm scripts themselves stay tracked)
+*.log
+BehaviorRes/slurm/logs/
+
+# Per-run dumps: scores, curves, epochs, checkpoints
+**/jobs/
+**/cache/
+
+# Experiment result trees. Trainers are the sibling *.py files
+# (e.g. ExperimentsClean.py, not ExperimentsClean/).
+BehaviorRes/ExperimentsClean/
+BehaviorRes/Modelv1Clusters/
+BehaviorRes/Modelv1ClustersV2/
+BehaviorRes/Modelv1/
+BehaviorRes/Modelv1_old/
+BehaviorRes/Graph/
+BehaviorRes/Heirarchical/
+BehaviorRes/Hierarchical/
+BehaviorRes/Baselinev1/
+BehaviorRes/Modelv2/
+BehaviorRes/MLtestcontra/
+BehaviorRes/BWMtest/
+BehaviorRes/ModelDataRightContraLFP/
+BehaviorRes/BehaviorRes/
+
+# Bulky generated HTML traces
+*.html
 
 # Video and other bulky media (plots stay)
 *.mp4

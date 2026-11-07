@@ -35,9 +35,11 @@ from enrich_and_discretize import (  # noqa: E402
     interp_at_right_edges,
     log,
     paw_speed,
+    paw_supported_len,
     rebuild_indexes,
     tracker_kinematics,
     tracker_states,
+    truncate_discretized_trial,
     utc_now,
     write_session,
     f32,
@@ -189,6 +191,11 @@ def patch_trial(rec, dlc_pose, lp_pose, pose_pack, wheel_times, wheel_vel):
     )
     rec.pop("_wheel_t_native", None)
     rec.pop("_wheel_v_native", None)
+    rec["n_bins"] = n
+    n_keep = paw_supported_len(rec, n)
+    if n_keep < n:
+        truncate_discretized_trial(rec, n_keep)
+        n = n_keep
     if n:
         rec["n_dlc_samples"] = n
         rec["n_lp_samples"] = n

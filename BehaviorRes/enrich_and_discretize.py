@@ -16,6 +16,9 @@ Exact 20 ms bins covering [0, floor(T/0.02)*0.02) relative to stimulus
 onset. Leftover time shorter than one bin is dropped so the sampling
 interval is exactly 20 ms on every trial (the BWM wheel decoder used a
 fixed 1.2 s window that already divided evenly; our trialDuration varies).
+Bins whose right edge is after the last observed camera timestamp are also
+dropped (no extrapolation); otherwise paw speed would be NaN and plots
+would show a fake 0 px/s at the cutoff.
 """
 
 from __future__ import annotations
@@ -41,8 +44,9 @@ FILT_DISC_DIR = BEH / "DatasetFilteredDiscretized"
 
 BINSIZE = 0.02
 SMOOTH_SIGMA_S = 0.02
+INTERP_ATOL_S = 1e-6
 ENRICH_VERSION = 2
-DISC_VERSION = 1
+DISC_VERSION = 2
 
 STILL, COUPLED, DECOUPLED = "still", "coupled", "decoupled"
 STATE_TO_CODE = {STILL: 0, COUPLED: 1, DECOUPLED: 2}
@@ -139,9 +143,14 @@ def interpolate_to(times_src, values_src, times_dst, extrapolate=False):
         return np.full(np.shape(times_dst), np.nan)
     fill = "extrapolate" if extrapolate else np.nan
     interpolator = interp1d(t, v, kind="linear", bounds_error=False, fill_value=fill)
-    out = interpolator(times_dst)
-    if not extrapolate:
-        out[(times_dst < t[0]) | (times_dst > t[-1])] = np.nan
+    dst = np.asarray(times_dst, dtype=float)
+    if extrapolate:
+        return interpolator(dst)
+    # Clip dest times that are within INTERP_ATOL_S of the support so float32
+    # 20 ms edges are not treated as past the last camera frame.
+    use = np.clip(dst, t[0], t[-1])
+    out = interpolator(use)
+    out[(dst < t[0] - INTERP_ATOL_S) | (dst > t[-1] + INTERP_ATOL_S)] = np.nan
     return out
 
 
@@ -492,10 +501,138 @@ def bin_grid(trial_duration):
     return n_bins, leftover, f32(t_left), f32(t_right)
 
 
+def last_finite_time(times):
+    t = np.asarray(times, dtype=float).reshape(-1)
+    t = t[np.isfinite(t)]
+    if t.size == 0:
+        return None
+    return float(np.max(t))
+
+
+def pose_interp_source_times(rec):
+    """Native camera timestamps used for paw interpolation (LP, else DLC)."""
+    for key in ("lp_t", "dlc_t"):
+        t = np.asarray(rec.get(key, []), dtype=float).reshape(-1)
+        if np.isfinite(t).sum() >= 2:
+            return t
+    return np.array([], dtype=float)
+
+
+def crop_bin_grid_to_interp_support(t_left, t_right, leftover, source_times):
+    """Drop bins whose right edge is after the last observed source time.
+
+    Linear interpolation does not extrapolate, so those dest times would be
+    NaN (and look like 0 px/s on a trace). Dropped duration is folded into
+    leftover_s. Time origin stays stimulus onset; dt stays 20 ms.
+    """
+    t_left = np.asarray(t_left, dtype=np.float32)
+    t_right = np.asarray(t_right, dtype=np.float32)
+    n = int(t_right.size)
+    leftover = float(leftover) if leftover is not None and np.isfinite(leftover) else 0.0
+    t_end = last_finite_time(source_times)
+    if t_end is None or n == 0:
+        return n, leftover, t_left, t_right
+    n_keep = int(
+        np.count_nonzero(np.asarray(t_right, dtype=np.float64) <= t_end + INTERP_ATOL_S)
+    )
+    if n_keep >= n:
+        return n, leftover, t_left, t_right
+    leftover = leftover + (n - n_keep) * BINSIZE
+    return n_keep, leftover, t_left[:n_keep], t_right[:n_keep]
+
+
+def trailing_supported_len(values, n=None):
+    """Keep through the last finite sample; drop trailing NaNs."""
+    a = np.asarray(values, dtype=float).reshape(-1)
+    if n is None:
+        n = int(a.size)
+    a = a[: max(int(n), 0)]
+    ok = np.isfinite(a)
+    if not ok.any():
+        return 0
+    return int(np.max(np.flatnonzero(ok)) + 1)
+
+
+def paw_supported_len(rec, n=None):
+    """Last bin with finite paw speed (Lightning Pose, DLC fallback)."""
+    if n is None:
+        n = int(rec.get("n_bins") or 0)
+    lp = trailing_supported_len(rec.get("lp_speed", []), n)
+    if lp > 0:
+        return lp
+    return trailing_supported_len(rec.get("dlc_speed", []), n)
+
+
+def binned_array_keys():
+    keys = [
+        "t_bin_left",
+        "t_bin_right",
+        "wheel_velocity",
+        "wheel_t",
+        "spike_counts",
+        "speedNormalized",
+    ]
+    for prefix in ("dlc", "lp"):
+        for suffix in (
+            "x",
+            "y",
+            "z",
+            "vx",
+            "vy",
+            "vz",
+            "speed",
+            "t",
+            "speedNormalized",
+            "paw_state",
+            "paw_state_code",
+        ):
+            keys.append(f"{prefix}_{suffix}")
+    return keys
+
+
+def truncate_discretized_trial(rec, n_keep):
+    """Slice per-bin fields to n_keep and fold dropped time into leftover_s."""
+    old_n = int(rec.get("n_bins") or 0)
+    n_keep = int(n_keep)
+    if old_n <= 0:
+        rec["n_bins"] = 0
+        return rec
+    if n_keep >= old_n:
+        return rec
+    leftover = rec.get("leftover_s")
+    leftover = float(leftover) if leftover is not None and np.isfinite(leftover) else 0.0
+    rec["leftover_s"] = leftover + (old_n - n_keep) * BINSIZE
+    rec["n_bins"] = n_keep
+    rec["t_bin_left"] = np.asarray(rec.get("t_bin_left", []), dtype=np.float32)[:n_keep]
+    rec["t_bin_right"] = np.asarray(rec.get("t_bin_right", []), dtype=np.float32)[:n_keep]
+    for key in binned_array_keys():
+        val = rec.get(key)
+        if not isinstance(val, np.ndarray) or val.size == 0:
+            continue
+        if val.shape[0] != old_n:
+            continue
+        rec[key] = val[:n_keep]
+    rec["n_wheel_samples"] = n_keep
+    rec["n_dlc_samples"] = n_keep
+    rec["n_lp_samples"] = n_keep
+    code = rec.get("dlc_paw_state_code")
+    if isinstance(code, np.ndarray):
+        rec["n_dlc_state_bins"] = int(np.sum(code >= 0))
+    code = rec.get("lp_paw_state_code")
+    if isinstance(code, np.ndarray):
+        rec["n_lp_state_bins"] = int(np.sum(code >= 0))
+    spikes = rec.get("spike_counts")
+    if isinstance(spikes, np.ndarray):
+        rec["n_spikes"] = int(spikes.sum())
+    return rec
+
+
 def interp_at_right_edges(t, v, t_right):
     """BWM decoding: sample the continuous signal at the right edge of each bin.
 
     Unlike the paper we do not extrapolate outside the observed support.
+    Callers must drop dest times after the last source timestamp (see
+    crop_bin_grid_to_interp_support); otherwise those samples are NaN.
     """
     if t_right.size == 0:
         return empty_f32()
@@ -560,6 +697,9 @@ def bin_spikes(spike_times, spike_unit_idx, n_units, n_bins):
 
 def discretize_trial(rec):
     n_bins, leftover, t_left, t_right = bin_grid(rec["trialDuration"])
+    n_bins, leftover, t_left, t_right = crop_bin_grid_to_interp_support(
+        t_left, t_right, leftover, pose_interp_source_times(rec)
+    )
     n_units = int(rec.get("n_units") or 0)
     out = dict(rec)
     out["t_bin_left"] = t_left
@@ -589,6 +729,11 @@ def discretize_trial(rec):
         labels[good] = CODE_TO_STATE[code[good]]
         out[f"{prefix}_paw_state"] = labels
 
+    n_keep = paw_supported_len(out, n_bins)
+    if n_keep < n_bins:
+        truncate_discretized_trial(out, n_keep)
+        n_bins = int(out["n_bins"])
+
     out["spike_counts"] = bin_spikes(
         rec.get("spike_times", []),
         rec.get("spike_unit_idx", []),
@@ -599,8 +744,8 @@ def discretize_trial(rec):
     out["n_dlc_samples"] = int(n_bins)
     out["n_lp_samples"] = int(n_bins)
     out["n_spikes"] = int(out["spike_counts"].sum())
-    out["n_dlc_state_bins"] = int(np.sum(out["dlc_paw_state_code"] >= 0))
-    out["n_lp_state_bins"] = int(np.sum(out["lp_paw_state_code"] >= 0))
+    out["n_dlc_state_bins"] = int(np.sum(out["dlc_paw_state_code"] >= 0)) if n_bins else 0
+    out["n_lp_state_bins"] = int(np.sum(out["lp_paw_state_code"] >= 0)) if n_bins else 0
     return out
 
 
@@ -684,15 +829,19 @@ def alignment_notes():
     return {
         "binsize_s": BINSIZE,
         "time_origin": "stimulus onset",
-        "window": "[0, floor(trialDuration/0.02)*0.02)",
-        "leftover": "time after the last full 20 ms bin is dropped",
+        "window": "[0, floor(trialDuration/0.02)*0.02), then cropped to last camera frame",
+        "leftover": (
+            "time after the last kept 20 ms bin, including a partial bin at reward "
+            "and any right-edge samples past the last camera timestamp"
+        ),
         "t_bin_left": "left edge of each bin; spike-count interval is [left, right)",
         "t_bin_right": (
             "right edge of each bin. Continuous wheel and paw series are linearly "
             "interpolated here so spikes in a bin fully precede the behavior sample, "
             "matching brainwidemap.decoding.functions.process_targets "
             "(interval_begs + binsize). Unlike the paper we do not extrapolate "
-            "outside the observed timestamps (NaN instead)."
+            "outside the observed timestamps. Dest times after the last camera "
+            "sample are dropped from the grid instead of stored as NaN."
         ),
         "wheel_velocity": (
             "SessionLoader signed angular velocity (rad/s) interpolated linearly "

@@ -243,6 +243,15 @@ def motor_mask(units):
     return area.str.startswith("MOp") | area.str.startswith("MOs")
 
 
+def _trailing_finite_len(arr, n):
+    """Drop trailing bins with no paw sample (right-edge past last camera frame)."""
+    a = np.asarray(arr if arr is not None else [], dtype=np.float32).reshape(-1)[: max(int(n), 0)]
+    ok = np.isfinite(a)
+    if not ok.any():
+        return 0
+    return int(np.max(np.flatnonzero(ok)) + 1)
+
+
 def _trace(rec, lp_key, dlc_key, absval=False):
     y = np.asarray(rec.get(lp_key, []), dtype=np.float32)
     if y.size == 0 or not np.isfinite(y).any():
@@ -378,6 +387,13 @@ def load_corpus():
                 if mlen:
                     arr[:mlen] = src[:mlen]
                 packed[name] = arr
+            n_keep = _trailing_finite_len(packed.get("paw_speed"), n)
+            if n_keep < MIN_BINS:
+                continue
+            if n_keep < n:
+                n = n_keep
+                spikes = spikes[:n]
+                packed = {name: np.asarray(arr)[:n] for name, arr in packed.items()}
             finite_spk = np.isfinite(spikes).all(axis=1)
             if finite_spk.sum() < MIN_BINS:
                 continue
@@ -853,29 +869,39 @@ class UnitEncoder(nn.Module):
     `--double` adds one extra Linear+GELU block after the original MLP.
     """
 
-    def __init__(self, n_areas, d=D_MODEL, area_dim=AREA_DIM, use_anatomy=True, extra_layer=False):
+    def __init__(
+        self,
+        n_areas,
+        d=D_MODEL,
+        area_dim=AREA_DIM,
+        use_anatomy=True,
+        extra_layer=False,
+        feat_dim=1,
+    ):
         super().__init__()
         self.use_anatomy = use_anatomy
+        self.feat_dim = int(feat_dim)
         if use_anatomy:
             self.area_emb = nn.Embedding(n_areas, area_dim, padding_idx=0)
-            in_dim = 1 + 3 + area_dim + 1
+            in_dim = self.feat_dim + 3 + area_dim + 1
         else:
             self.area_emb = None
-            in_dim = 1 + 1
+            in_dim = self.feat_dim + 1
         layers = [nn.Linear(in_dim, d), nn.GELU(), nn.Linear(d, d)]
         if extra_layer:
             layers.extend([nn.GELU(), nn.Linear(d, d)])
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x, xyz, area, rate, mask_n):
-        # x: (B, N, T)
-        xt = x.unsqueeze(-1)
+        # x: (B, N, T) or (B, N, T, F)
+        xt = x.unsqueeze(-1) if x.dim() == 3 else x
         if self.use_anatomy:
             area_e = self.area_emb(area)
             static = torch.cat([xyz, area_e, rate.unsqueeze(-1)], dim=-1)
         else:
             static = rate.unsqueeze(-1)
-        static = static.unsqueeze(2).expand(-1, -1, x.shape[-1], -1)
+        t_len = xt.shape[2]
+        static = static.unsqueeze(2).expand(-1, -1, t_len, -1)
         h = self.mlp(torch.cat([xt, static], dim=-1))
         h = h.masked_fill(~mask_n[:, :, None, None], 0.0)
         return h
@@ -1030,6 +1056,7 @@ class SetSequence(nn.Module):
         temporal="gru",
         double=False,
         log1p=False,
+        feat_dim=1,
     ):
         super().__init__()
         self.pool_name = pool
@@ -1040,7 +1067,9 @@ class SetSequence(nn.Module):
         self.double = bool(double)
         self.log1p = bool(log1p)
         n_layers = 2 if self.double else 1
-        self.enc = UnitEncoder(n_areas, use_anatomy=use_anatomy, extra_layer=self.double)
+        self.enc = UnitEncoder(
+            n_areas, use_anatomy=use_anatomy, extra_layer=self.double, feat_dim=feat_dim
+        )
         self.pool = MeanPool(D_MODEL) if pool == "mean" else AttnPool(D_MODEL)
         rnn_drop = DROPOUT if n_layers > 1 else 0.0
         if self.temporal == "lstm":
@@ -1072,7 +1101,8 @@ class SetSequence(nn.Module):
                 h, lengths.cpu(), batch_first=True, enforce_sorted=False
             )
             out, _ = self.rnn(packed)
-            out, _ = pad_packed_sequence(out, batch_first=True, total_length=x.shape[-1])
+            T = x.shape[2] if x.dim() == 4 else x.shape[-1]
+            out, _ = pad_packed_sequence(out, batch_first=True, total_length=T)
         elif return_attn:
             out, attn = self.rnn(h, mask_t, return_attn=True)
         else:

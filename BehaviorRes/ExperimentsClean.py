@@ -21,6 +21,14 @@ Losses (neural models)
   event_nll    discrete-time onset likelihood (onset / mixed)
   bce          Bernoulli BCE (direction)
 
+Inputs (neural models)
+  spikes      motor units, log1p spike counts (default, existing jobs)
+  lfp         motor electrode channels, 6 canonical LFP band powers
+  spike_lfp   each motor unit stacked with that electrode's 6 LFP bands
+  electrode   per-electrode encoder: pooled spikes + LFP bands → latent, then the model
+
+LFP extras are MSE / trace only (no mean, no AR persist, no Huber / onset / direction).
+
 Local:
   python ExperimentsClean.py --self-test
   python ExperimentsClean.py --single-fold --list-jobs
@@ -28,6 +36,9 @@ Local:
 
 Cluster (representative fold of each eval: LTO 25–30%, typical LSO session, typical LMO mouse):
   bash slurm/submit_clean.sh --single-fold
+
+LFP prelim (A1 GRU / A1 Transformer / anatomical Transformer, MSE):
+  bash slurm/submit_clean.sh --single-fold --models attn_a1_gru attn_a1_transformer attn_anat_transformer --objectives trace --inputs lfp spike_lfp electrode
 
 Full CV (every LTO / LSO / LMO fold):
   bash slurm/submit_clean.sh
@@ -39,6 +50,7 @@ import argparse
 import json
 import math
 import os
+import pickle
 import shutil
 import signal
 import sys
@@ -119,6 +131,20 @@ NEURAL = (
 OBJECTIVES = ("trace", "onset", "direction", "mixed")
 LOSSES = ("mse", "huber_move", "event_nll", "bce")
 REGIONS = ("MOp", "MOs")
+INPUTS = ("spikes", "lfp", "spike_lfp", "electrode")
+LFP_INPUTS = ("lfp", "spike_lfp", "electrode")
+LFP_MODELS = (
+    "attn_a1_gru",
+    "attn_a1_transformer",
+    "attn_anat_transformer",
+    "hierarchical",
+    "gnn_inner",
+    "gnn_outer",
+)
+LFP_DIR = ROOT / "ModelDataRightContraLFP" / "sessions"
+LFP_BANDS = ("delta", "theta", "alpha", "beta", "low_gamma", "high_gamma")
+N_LFP_BANDS = len(LFP_BANDS)
+LFP_EPS = 1.0
 
 
 def log(msg):
@@ -203,6 +229,231 @@ def bind_objective(trials, objective):
         else:
             t["y"] = np.full((n, 1), 1.0 if lab == "right" else 0.0, dtype=np.float32)
             t["y_valid"] = np.ones(n, dtype=bool)
+
+
+# ---------------------------------------------------------------------------
+# LFP tokens (motor electrode channels, canonical bands)
+# ---------------------------------------------------------------------------
+
+
+def _log_lfp(power):
+    x = np.asarray(power, dtype=np.float32)
+    if x.ndim == 2:
+        x = x[:, :, None]
+    return np.log10(np.clip(x, 0.0, None) + LFP_EPS).astype(np.float32)
+
+
+def _probe_offsets(probe_arr):
+    probe_arr = np.asarray(probe_arr).astype(str)
+    offsets, seen, n = {}, [], 0
+    for i, p in enumerate(probe_arr):
+        if p not in offsets:
+            offsets[p] = i
+            seen.append(p)
+        n = i + 1
+    return offsets
+
+
+def attach_lfp(trials):
+    """Join ModelDataRightContraLFP onto spike trials; keep original unit arrays."""
+    by_eid = defaultdict(list)
+    for i, t in enumerate(trials):
+        t.setdefault("unit_spikes", t["spikes"])
+        t.setdefault("unit_xyz", t["xyz"])
+        t.setdefault("unit_areas", t["areas"])
+        t["lfp"] = None
+        t["lfp_xyz"] = None
+        t["lfp_areas"] = None
+        t["unit_to_ch"] = None
+        by_eid[str(t["eid"])].append(i)
+    n_ok = 0
+    n_miss = 0
+    for eid, idxs in by_eid.items():
+        spk_path = mv.SESS / f"{eid}.pkl"
+        lfp_path = LFP_DIR / f"{eid}.pkl"
+        if not spk_path.exists() or not lfp_path.exists():
+            n_miss += 1
+            continue
+        with spk_path.open("rb") as fh:
+            src = pickle.load(fh)
+        with lfp_path.open("rb") as fh:
+            lfp_src = pickle.load(fh)
+        units = src["units"]
+        m = np.flatnonzero(mv.motor_mask(units).to_numpy())
+        if m.size < 1:
+            n_miss += 1
+            continue
+        unit_ch = np.asarray(units["channel"].to_numpy()[m], dtype=int)
+        if "probe_name" in units.columns:
+            unit_pr = units["probe_name"].astype(str).to_numpy()[m]
+        else:
+            unit_pr = np.array([""] * int(m.size))
+        unit_xyz = np.stack(
+            [
+                units["allen_x"].to_numpy(dtype=np.float32)[m],
+                units["allen_y"].to_numpy(dtype=np.float32)[m],
+                units["allen_z"].to_numpy(dtype=np.float32)[m],
+            ],
+            axis=1,
+        )
+        lfp_trials = {int(r["trial_index"]): r for r in lfp_src["trials"] if r.get("trial_index") is not None}
+        rec0 = lfp_src["trials"][0]
+        acr = np.asarray(rec0["channel_acronym"]).astype(str)
+        motor = np.asarray(rec0.get("channel_motor", np.zeros(acr.size, dtype=bool)), dtype=bool)
+        axial = np.asarray(rec0["channel_axial_um"], dtype=float)
+        lateral = np.asarray(rec0["channel_lateral_um"], dtype=float)
+        probes = np.asarray(rec0.get("channel_probe", [""] * acr.size)).astype(str)
+        offsets = _probe_offsets(probes)
+        n_full = int(acr.size)
+        keep = motor.copy()
+        full_of_unit = np.full(unit_ch.size, -1, dtype=int)
+        for ui, (ch, pr) in enumerate(zip(unit_ch, unit_pr)):
+            off = offsets.get(str(pr), offsets.get("", 0) if "" in offsets else 0)
+            fi = int(off) + int(ch)
+            if 0 <= fi < n_full:
+                keep[fi] = True
+                full_of_unit[ui] = fi
+        ax_u = np.asarray(units["axial_um"].to_numpy()[m], dtype=float)
+        lat_u = np.asarray(units["lateral_um"].to_numpy()[m], dtype=float)
+        for ui in range(int(m.size)):
+            if full_of_unit[ui] >= 0:
+                continue
+            d = np.abs(axial - ax_u[ui]) + np.abs(lateral - lat_u[ui])
+            fi = int(np.argmin(d))
+            keep[fi] = True
+            full_of_unit[ui] = fi
+        motor_idx = np.flatnonzero(keep)
+        if motor_idx.size < 1:
+            n_miss += 1
+            continue
+        full_to_tok = {int(fi): j for j, fi in enumerate(motor_idx.tolist())}
+        unit_to_ch = np.array([full_to_tok.get(int(fi), -1) for fi in full_of_unit], dtype=np.int32)
+        tok_xyz = np.zeros((motor_idx.size, 3), dtype=np.float32)
+        tok_n = np.zeros(motor_idx.size, dtype=np.float32)
+        for ui, j in enumerate(unit_to_ch):
+            if j < 0:
+                continue
+            tok_xyz[j] += unit_xyz[ui]
+            tok_n[j] += 1.0
+        tok_n = np.maximum(tok_n, 1.0)
+        tok_xyz = tok_xyz / tok_n[:, None]
+        tok_areas = acr[motor_idx]
+        for i in idxs:
+            t = trials[i]
+            rec = lfp_trials.get(int(t["trial_index"]) if t.get("trial_index") is not None else -1)
+            if rec is None:
+                continue
+            pow20 = rec.get("power_car_s20")
+            if pow20 is None:
+                continue
+            lp = _log_lfp(pow20)
+            if lp.shape[1] < n_full:
+                continue
+            n = min(int(t["unit_spikes"].shape[0]), int(lp.shape[0]))
+            if n < mv.MIN_BINS:
+                continue
+            t["lfp"] = lp[:n, motor_idx, :N_LFP_BANDS]
+            t["lfp_xyz"] = tok_xyz
+            t["lfp_areas"] = tok_areas
+            t["unit_to_ch"] = unit_to_ch
+            n_ok += 1
+    log(f"LFP attach: {n_ok} trials with motor-channel band power, {n_miss} sessions missing LFP")
+    return trials
+
+
+def trial_has_lfp(t):
+    x = t.get("lfp")
+    return x is not None and np.asarray(x).ndim == 3 and np.asarray(x).shape[1] >= 1
+
+
+def fit_lfp_scaler(trials, idx):
+    acc = []
+    for i in np.asarray(idx, dtype=int).reshape(-1):
+        t = trials[int(i)]
+        if not trial_has_lfp(t):
+            continue
+        v = np.asarray(t["lfp"], dtype=np.float32).reshape(-1, t["lfp"].shape[-1])
+        m = np.isfinite(v).all(axis=1)
+        if int(m.sum()) < 1:
+            continue
+        acc.append(v[m])
+    if not acc:
+        return np.zeros(N_LFP_BANDS, dtype=np.float32), np.ones(N_LFP_BANDS, dtype=np.float32)
+    m = np.concatenate(acc, axis=0)
+    mean = m.mean(axis=0).astype(np.float32)
+    std = m.std(axis=0).astype(np.float32)
+    std = np.where(std < 1e-6, 1.0, std).astype(np.float32)
+    return mean, std
+
+
+def _z_lfp(t, mean, std):
+    x = np.asarray(t["lfp"], dtype=np.float32)
+    return ((x - mean.reshape(1, 1, -1)) / std.reshape(1, 1, -1)).astype(np.float32)
+
+
+def bind_input(trials, input_name, lfp_mean=None, lfp_std=None):
+    """Point t['spikes']/xyz/areas at the token set for this input mode."""
+    input_name = input_name or "spikes"
+    if lfp_mean is None:
+        lfp_mean = np.zeros(N_LFP_BANDS, dtype=np.float32)
+    if lfp_std is None:
+        lfp_std = np.ones(N_LFP_BANDS, dtype=np.float32)
+    for t in trials:
+        unit_x = np.asarray(t.get("unit_spikes", t["spikes"]), dtype=np.float32)
+        unit_xyz = np.asarray(t.get("unit_xyz", t["xyz"]), dtype=np.float32)
+        unit_areas = np.asarray(t.get("unit_areas", t["areas"]))
+        if input_name == "spikes" or not trial_has_lfp(t):
+            t["spikes"] = unit_x
+            t["xyz"] = unit_xyz
+            t["areas"] = unit_areas
+            continue
+        lfp = _z_lfp(t, lfp_mean, lfp_std)
+        n = min(unit_x.shape[0], lfp.shape[0])
+        unit_x = unit_x[:n]
+        lfp = lfp[:n]
+        if input_name == "lfp":
+            t["spikes"] = lfp
+            t["xyz"] = np.asarray(t["lfp_xyz"], dtype=np.float32)
+            t["areas"] = np.asarray(t["lfp_areas"])
+            continue
+        if input_name == "spike_lfp":
+            n_u = unit_x.shape[1]
+            x = np.zeros((n, n_u, 1 + N_LFP_BANDS), dtype=np.float32)
+            x[:, :, 0] = unit_x
+            map_ch = t.get("unit_to_ch")
+            if map_ch is not None:
+                map_ch = np.asarray(map_ch, dtype=int)
+                for ui, ch in enumerate(map_ch[:n_u]):
+                    if 0 <= int(ch) < lfp.shape[1]:
+                        x[:, ui, 1:] = lfp[:, int(ch)]
+            t["spikes"] = x
+            t["xyz"] = unit_xyz
+            t["areas"] = unit_areas
+            continue
+        # electrode: one token per motor channel
+        n_c = lfp.shape[1]
+        x = np.zeros((n, n_c, 1 + N_LFP_BANDS), dtype=np.float32)
+        x[:, :, 1:] = lfp
+        map_ch = t.get("unit_to_ch")
+        if map_ch is not None:
+            cnt = np.zeros(n_c, dtype=np.float32)
+            map_ch = np.asarray(map_ch, dtype=int)
+            n_u = min(unit_x.shape[1], map_ch.size)
+            for ui in range(n_u):
+                ch = int(map_ch[ui])
+                if 0 <= ch < n_c:
+                    x[:, ch, 0] += unit_x[:, ui]
+                    cnt[ch] += 1.0
+            x[:, :, 0] /= np.maximum(cnt, 1.0).reshape(1, -1)
+        t["spikes"] = x
+        t["xyz"] = np.asarray(t["lfp_xyz"], dtype=np.float32)
+        t["areas"] = np.asarray(t["lfp_areas"])
+    return trials
+
+
+def lfp_idx(trials, idx):
+    keep = [int(i) for i in np.asarray(idx, dtype=int).reshape(-1) if trial_has_lfp(trials[int(i)])]
+    return np.asarray(keep, dtype=int)
 
 
 # ---------------------------------------------------------------------------
@@ -769,9 +1020,63 @@ class HeadTap(nn.Module):
         return self.head(h)
 
 
+class ChannelEncoder(nn.Module):
+    """Encode one electrode from its pooled spikes and 6 LFP bands."""
+
+    def __init__(self, n_areas, d=None, area_dim=None, use_anatomy=True):
+        super().__init__()
+        d = mv.D_MODEL if d is None else d
+        area_dim = mv.AREA_DIM if area_dim is None else area_dim
+        self.use_anatomy = use_anatomy
+        self.spike_mlp = nn.Sequential(nn.Linear(2, d), nn.GELU(), nn.Linear(d, d))
+        self.lfp_mlp = nn.Sequential(nn.Linear(N_LFP_BANDS, d), nn.GELU(), nn.Linear(d, d))
+        if use_anatomy:
+            self.area_emb = nn.Embedding(n_areas, area_dim, padding_idx=0)
+            static_dim = 3 + area_dim + 1
+        else:
+            self.area_emb = None
+            static_dim = 1
+        self.fuse = nn.Sequential(nn.Linear(2 * d + static_dim, d), nn.GELU(), nn.Linear(d, d))
+
+    def forward(self, x, xyz, area, rate, mask_n):
+        xt = x.unsqueeze(-1) if x.dim() == 3 else x
+        spk = xt[..., :1]
+        lfp = xt[..., 1:]
+        if lfp.shape[-1] < N_LFP_BANDS:
+            lfp = F.pad(lfp, (0, N_LFP_BANDS - lfp.shape[-1]))
+        elif lfp.shape[-1] > N_LFP_BANDS:
+            lfp = lfp[..., :N_LFP_BANDS]
+        t_len = xt.shape[2]
+        rate_t = rate.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, t_len, 1)
+        hs = self.spike_mlp(torch.cat([spk, rate_t], dim=-1))
+        hl = self.lfp_mlp(lfp)
+        if self.use_anatomy:
+            static = torch.cat([xyz, self.area_emb(area), rate.unsqueeze(-1)], dim=-1)
+        else:
+            static = rate.unsqueeze(-1)
+        static = static.unsqueeze(2).expand(-1, -1, t_len, -1)
+        h = self.fuse(torch.cat([hs, hl, static], dim=-1))
+        return h.masked_fill(~mask_n[:, :, None, None], 0.0)
+
+
+def _install_encoder(module, n_areas, use_anatomy, feat_dim, channel_encoder):
+    if channel_encoder:
+        return ChannelEncoder(n_areas, use_anatomy=use_anatomy)
+    if int(feat_dim) != 1:
+        return mv.UnitEncoder(n_areas, use_anatomy=use_anatomy, feat_dim=int(feat_dim))
+    return module
+
+
 class DualSetSequence(mv.SetSequence):
-    def __init__(self, *args, dual=False, classify=False, **kwargs):
+    def __init__(
+        self, *args, dual=False, classify=False, feat_dim=1, channel_encoder=False, **kwargs
+    ):
+        kwargs["feat_dim"] = int(feat_dim)
         super().__init__(*args, **kwargs)
+        n_areas = args[0]
+        self.enc = _install_encoder(
+            self.enc, n_areas, self.use_anatomy, feat_dim, channel_encoder
+        )
         self.dual = bool(dual)
         if classify:
             last = self.head.net[-1]
@@ -794,8 +1099,12 @@ class DualSetSequence(mv.SetSequence):
 
 
 class GraphWithHeads(gnn.GraphSequence):
-    def __init__(self, *args, dual=False, classify=False, **kwargs):
+    def __init__(
+        self, *args, dual=False, classify=False, feat_dim=1, channel_encoder=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+        n_areas = args[0]
+        self.enc = _install_encoder(self.enc, n_areas, True, feat_dim, channel_encoder)
         self.dual = bool(dual)
         if classify:
             last = self.head.net[-1]
@@ -963,7 +1272,12 @@ def ensure_session_rates(stats, trials, idx):
         eid = t["eid"]
         if eid in rates:
             continue
-        buckets.setdefault(eid, []).append(np.asarray(t["spikes"], dtype=np.float32).mean(axis=0))
+        s = np.asarray(t["spikes"], dtype=np.float32)
+        if s.ndim == 3:
+            s = s.mean(axis=(0, 2))
+        else:
+            s = s.mean(axis=0)
+        buckets.setdefault(eid, []).append(s)
     for eid, vs in buckets.items():
         rates[eid] = np.mean(vs, axis=0).astype(np.float32)
         log(f"  filled session rate for held-out {str(eid)[:8]}  n_units={int(rates[eid].size)}")
@@ -994,33 +1308,51 @@ def model_kind(name):
     return "base"
 
 
-def build_neural(name, stats, trials, tr_idx, objective):
+def feat_dim_of(input_name):
+    if input_name == "lfp":
+        return N_LFP_BANDS
+    if input_name in ("spike_lfp", "electrode"):
+        return 1 + N_LFP_BANDS
+    return 1
+
+
+def build_neural(name, stats, trials, tr_idx, objective, input_name="spikes"):
     dual = objective == "mixed"
     classify = objective in ("onset", "direction")
     n_areas = int(stats["n_areas"])
+    feat_dim = feat_dim_of(input_name)
+    channel_encoder = input_name == "electrode"
+    kw = dict(feat_dim=feat_dim, channel_encoder=channel_encoder)
     if name == "attn_a1_gru":
         return DualSetSequence(
-            n_areas, pool="attn", use_anatomy=False, temporal="gru", dual=dual, classify=classify
+            n_areas, pool="attn", use_anatomy=False, temporal="gru", dual=dual, classify=classify, **kw
         )
     if name == "attn_a1_transformer":
         return DualSetSequence(
-            n_areas, pool="attn", use_anatomy=False, temporal="transformer", dual=dual, classify=classify
+            n_areas,
+            pool="attn",
+            use_anatomy=False,
+            temporal="transformer",
+            dual=dual,
+            classify=classify,
+            **kw,
         )
     if name == "attn_anat_transformer":
         return DualSetSequence(
-            n_areas, pool="attn", use_anatomy=True, temporal="transformer", dual=dual, classify=classify
+            n_areas, pool="attn", use_anatomy=True, temporal="transformer", dual=dual, classify=classify, **kw
         )
     if name == "gnn_inner":
         return GraphWithHeads(
-            n_areas, region_gnn=False, vocab=stats.get("vocab"), dual=dual, classify=classify
+            n_areas, region_gnn=False, vocab=stats.get("vocab"), dual=dual, classify=classify, **kw
         )
     if name == "gnn_outer":
         return GraphWithHeads(
-            n_areas, region_gnn=True, vocab=stats.get("vocab"), dual=dual, classify=classify
+            n_areas, region_gnn=True, vocab=stats.get("vocab"), dual=dual, classify=classify, **kw
         )
     if name == "hierarchical":
         eids, mice = hier.ids_of(trials, tr_idx)
         inner = hier.HierarchicalGRU(n_areas, eids, mice, shared_encoder=True, use_anatomy=False)
+        inner.unit = _install_encoder(inner.unit, n_areas, False, feat_dim, channel_encoder)
         return HierWithHeads(inner, dual=dual, classify=classify)
     raise ValueError(name)
 
@@ -1040,8 +1372,55 @@ def unpack_pred(name, out, objective):
     return pred, aux, None
 
 
+def collate_feat(batch):
+    spikes, ys, time_valids, loss_valids, xyzs, areas, rates = zip(*batch)
+    B = len(batch)
+    T = max(s.shape[0] for s in spikes)
+    N = max(s.shape[1] for s in spikes)
+    F = max((s.shape[2] if s.ndim == 3 else 1) for s in spikes)
+    y_dim = int(ys[0].shape[-1])
+    x = torch.zeros(B, N, T, F, dtype=torch.float32)
+    y = torch.zeros(B, T, y_dim, dtype=torch.float32)
+    xyz = torch.zeros(B, N, 3, dtype=torch.float32)
+    area = torch.zeros(B, N, dtype=torch.long)
+    rate = torch.zeros(B, N, dtype=torch.float32)
+    mask_t = torch.zeros(B, T, dtype=torch.bool)
+    mask_loss = torch.zeros(B, T, dtype=torch.bool)
+    mask_n = torch.zeros(B, N, dtype=torch.bool)
+    lengths = torch.zeros(B, dtype=torch.long)
+    for i, (s, yi, ti, li, zi, ai, ri) in enumerate(
+        zip(spikes, ys, time_valids, loss_valids, xyzs, areas, rates)
+    ):
+        n, tt = s.shape[1], s.shape[0]
+        if s.ndim == 2:
+            x[i, :n, :tt, 0] = torch.from_numpy(s.T)
+        else:
+            x[i, :n, :tt] = torch.from_numpy(np.transpose(s, (1, 0, 2)))
+        y[i, :tt] = torch.from_numpy(yi)
+        xyz[i, :n] = torch.from_numpy(zi)
+        area[i, :n] = torch.from_numpy(ai)
+        ri = np.asarray(ri, dtype=np.float32).reshape(-1)
+        rate[i, : min(n, ri.size)] = torch.from_numpy(ri[:n])
+        mask_t[i, :tt] = torch.from_numpy(np.asarray(ti, dtype=bool))
+        mask_loss[i, :tt] = torch.from_numpy(np.asarray(li, dtype=bool))
+        mask_n[i, :n] = True
+        lengths[i] = tt
+    return {
+        "x": x,
+        "y": y,
+        "xyz": xyz,
+        "area": area,
+        "rate": rate,
+        "mask_t": mask_t,
+        "mask_loss": mask_loss,
+        "mask_n": mask_n,
+        "lengths": lengths,
+    }
+
+
 def make_loader(name, trials, idx, y_mean, y_std, stats, rho_by_eid, vox, shuffle, seed, batch):
     kind = model_kind(name)
+    feat_dim = int(stats.get("feat_dim") or 1)
     if kind == "cnn":
         ds = RegionGridDS(trials, idx, y_mean, y_std, vox)
         collate = collate_grids
@@ -1055,11 +1434,66 @@ def make_loader(name, trials, idx, y_mean, y_std, stats, rho_by_eid, vox, shuffl
         collate = hier.hier_collate
     else:
         ds = mv.TrialDS(trials, idx, y_mean, y_std, stats)
-        collate = mv.collate
+        collate = collate_feat if feat_dim > 1 else mv.collate
+    if kind == "graph" and feat_dim > 1:
+        collate = make_collate_feat_graph(rho_by_eid or {})
+    if kind == "hier" and feat_dim > 1:
+        collate = hier_collate_feat
     if shuffle:
         sampler = StrataSampler(trials, idx, n_samples=len(ds), seed=seed)
         return DataLoader(ds, batch_size=batch, sampler=sampler, collate_fn=collate)
     return DataLoader(ds, batch_size=batch, shuffle=False, collate_fn=collate)
+
+
+def make_collate_feat_graph(rho_by_eid):
+    def _collate(batch):
+        core = [b[:-1] for b in batch]
+        eids = [b[-1] for b in batch]
+        out = collate_feat(core)
+        bsz, n_node = out["x"].shape[:2]
+        rho = torch.zeros(bsz, n_node, n_node, dtype=torch.float32)
+        for i, eid in enumerate(eids):
+            r = rho_by_eid.get(eid)
+            if r is None:
+                continue
+            n = min(n_node, int(r.shape[0]))
+            rho[i, :n, :n] = torch.from_numpy(np.asarray(r[:n, :n], dtype=np.float32))
+        out["rho"] = rho
+        return out
+
+    return _collate
+
+
+def hier_collate_feat(batch):
+    core = [b[:-2] for b in batch]
+    eids = [b[-2] for b in batch]
+    mice = [b[-1] for b in batch]
+    out = collate_feat(core)
+    out["eids"] = eids
+    out["mice"] = mice
+    return out
+
+
+def token_session_corr(trials, idx):
+    buckets = {}
+    for i in np.asarray(idx, dtype=int):
+        t = trials[int(i)]
+        s = np.asarray(t["spikes"], dtype=np.float32)
+        if s.ndim == 3:
+            s = s.mean(axis=-1)
+        buckets.setdefault(str(t["eid"]), []).append(s)
+    out = {}
+    for eid, xs in buckets.items():
+        x = np.concatenate(xs, axis=0)
+        n = x.shape[1]
+        if x.shape[0] < 4 or n < 2:
+            out[eid] = np.eye(n, dtype=np.float32)
+            continue
+        c = np.corrcoef(x.T)
+        c = np.nan_to_num(np.asarray(c, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
+        np.fill_diagonal(c, 0.0)
+        out[eid] = c
+    return out
 
 
 def forward_model(name, model, batch, dev, train):
@@ -1150,10 +1584,12 @@ def run_epoch(name, model, loader, opt, dev, train, objective, loss_name, y_mean
     return total / max(n, 1)
 
 
-def cache_dir(eval_name, fold_id, model_name, objective, loss_name):
+def cache_dir(eval_name, fold_id, model_name, objective, loss_name, input_name="spikes"):
     configure_out()
     safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in str(fold_id))
     d = CACHE / eval_name / safe / model_name / objective / loss_name
+    if input_name and input_name != "spikes":
+        d = d / str(input_name)
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -1173,16 +1609,20 @@ def train_neural(
     seed,
     rho_by_eid,
     vox,
+    input_name="spikes",
 ):
-    cdir = cache_dir(eval_name, fold_id, name, objective, loss_name)
+    cdir = cache_dir(eval_name, fold_id, name, objective, loss_name, input_name=input_name)
     ckpt, hist_path = cdir / "model.pt", cdir / "history.json"
     if ckpt.exists() and hist_path.exists():
         hist = json.loads(hist_path.read_text())
         if hist.get("finished"):
-            log(f"  cache hit {eval_name}/{fold_id}/{name}/{objective}/{loss_name}")
+            log(f"  cache hit {eval_name}/{fold_id}/{name}/{objective}/{loss_name}/{input_name}")
             return torch.load(ckpt, map_location="cpu", weights_only=False), hist
     dev = slurm_utils.device_of()
     batch = train_batch_size(name, objective)
+    stats = dict(stats or {})
+    stats["feat_dim"] = feat_dim_of(input_name)
+    stats["input"] = input_name
     speed = speed_scale_from(trials, tr_idx)
     max_ep = hier.STAGE_EPOCHS + hier.JOINT_EPOCHS if name == "hierarchical" else mv.MAX_EPOCHS
     if MAX_EPOCHS_CAP is not None:
@@ -1198,7 +1638,7 @@ def train_neural(
                     vox.shape, dual=objective == "mixed", classify=objective in ("onset", "direction")
                 ).to(dev)
             else:
-                model = build_neural(name, stats, trials, tr_idx, objective).to(dev)
+                model = build_neural(name, stats, trials, tr_idx, objective, input_name=input_name).to(dev)
             tr_ld = make_loader(name, trials, tr_idx, y_mean, y_std, stats, rho_by_eid, vox, True, seed, batch)
             va_ld = make_loader(name, trials, va_idx, y_mean, y_std, stats, rho_by_eid, vox, False, seed, batch)
             opt = torch.optim.AdamW(model.parameters(), lr=mv.LR, weight_decay=mv.WEIGHT_DECAY)
@@ -1268,6 +1708,8 @@ def train_neural(
         "rho_by_eid": rho_by_eid,
         "grid": grid_meta(vox) if vox is not None else None,
         "speed_scale": speed,
+        "input": input_name,
+        "feat_dim": feat_dim_of(input_name),
     }
     if name == "hierarchical":
         blob["eids"] = list(model.inner.id_eids)
@@ -1283,13 +1725,15 @@ def predict_neural(blob, trials, idx, stats, vox):
     objective = blob["objective"]
     dev = slurm_utils.device_of()
     st = merge_eval_stats(blob.get("stats"), stats, trials, idx)
+    st["feat_dim"] = int(blob.get("feat_dim") or feat_dim_of(blob.get("input", "spikes")))
+    st["input"] = blob.get("input", "spikes")
     if name == "aniso_cnn_transformer":
         vox = reconstruct_grid(blob["grid"]) if blob.get("grid") else vox
         model = RegionCNNTransformer(
             vox.shape, dual=objective == "mixed", classify=objective in ("onset", "direction")
         )
     else:
-        model = build_neural(name, st, trials, idx, objective)
+        model = build_neural(name, st, trials, idx, objective, input_name=blob.get("input", "spikes"))
     model.load_state_dict(blob["state_dict"], strict=False)
     model.to(dev)
     model.eval()
@@ -1449,7 +1893,7 @@ def ar_curve(trials, test_idx, objective):
 def write_pack(jdir, recs, rows, pooled, blob, hist, cfg):
     jdir = Path(jdir)
     jdir.mkdir(parents=True, exist_ok=True)
-    meta = {k: cfg.get(k) for k in ("eval", "fold", "fold_id", "model", "objective", "loss", "target")}
+    meta = {k: cfg.get(k) for k in ("eval", "fold", "fold_id", "model", "objective", "loss", "input", "target")}
     rows = [{**meta, **r} for r in rows]
     pd.DataFrame(rows).to_csv(jdir / "holdout_trials.csv", index=False)
     y_parts, p_parts, n_bins, ids = [], [], [], []
@@ -1507,23 +1951,52 @@ def losses_for(model_name, objective):
     return ("mse", "huber_move")
 
 
-def job_grid(trials, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=None, single_fold=False):
+def job_grid(
+    trials,
+    evals=EVALS,
+    models=MODELS,
+    objectives=OBJECTIVES,
+    fold=None,
+    single_fold=False,
+    inputs=INPUTS,
+):
     specs = keep_fold(all_folds(trials, evals=evals), fold=fold, single_fold=single_fold)
+    inputs = tuple(inputs or ("spikes",))
     configs = []
+    # Spike jobs first, in the original order, so existing Slurm array indices stay put.
+    if "spikes" in inputs:
+        for spec in specs:
+            for model_name in models:
+                for objective in objectives:
+                    for loss_name in losses_for(model_name, objective):
+                        configs.append(
+                            {
+                                "eval": spec["eval"],
+                                "fold": int(spec["fold"]),
+                                "fold_id": spec["fold_id"],
+                                "model": model_name,
+                                "objective": objective,
+                                "loss": loss_name,
+                            }
+                        )
     for spec in specs:
         for model_name in models:
-            for objective in objectives:
-                for loss_name in losses_for(model_name, objective):
-                    configs.append(
-                        {
-                            "eval": spec["eval"],
-                            "fold": int(spec["fold"]),
-                            "fold_id": spec["fold_id"],
-                            "model": model_name,
-                            "objective": objective,
-                            "loss": loss_name,
-                        }
-                    )
+            if model_name not in LFP_MODELS:
+                continue
+            for input_name in inputs:
+                if input_name not in LFP_INPUTS:
+                    continue
+                configs.append(
+                    {
+                        "eval": spec["eval"],
+                        "fold": int(spec["fold"]),
+                        "fold_id": spec["fold_id"],
+                        "model": model_name,
+                        "objective": "trace",
+                        "loss": "mse",
+                        "input": input_name,
+                    }
+                )
     return configs, specs
 
 
@@ -1536,23 +2009,44 @@ def spec_for(specs, cfg):
 
 def run_config(cfg, trials, specs):
     spec = spec_for(specs, cfg)
+    input_name = cfg.get("input") or "spikes"
     bind_objective(trials, cfg["objective"])
     train_full = mv.usable_idx(trials, spec["train"])
     test_idx = mv.usable_idx(trials, spec["test"], min_bins=1 if cfg["objective"] == "direction" else mv.MIN_BINS)
     if cfg["objective"] == "onset":
         test_idx = mv.usable_idx(trials, spec["test"], min_bins=2)
+    if input_name != "spikes":
+        train_full = lfp_idx(trials, train_full)
+        test_idx = lfp_idx(trials, test_idx)
     if len(train_full) < 8 or len(test_idx) < 1:
         log(f"  skip {cfg}: too few trials")
         return None
     tr_idx, va_idx = mv.train_val_split(train_full, seed=mv.SEED + 17 * int(spec["fold"]))
     tr_idx, va_idx = mv.usable_idx(trials, tr_idx), mv.usable_idx(trials, va_idx)
+    if input_name != "spikes":
+        tr_idx = lfp_idx(trials, tr_idx)
+        va_idx = lfp_idx(trials, va_idx)
     if len(tr_idx) < 4:
         log(f"  skip {cfg}: empty train after val split")
         return None
+    lfp_mean, lfp_std = (
+        fit_lfp_scaler(trials, tr_idx)
+        if input_name != "spikes"
+        else (np.zeros(N_LFP_BANDS, np.float32), np.ones(N_LFP_BANDS, np.float32))
+    )
+    bind_input(trials, input_name, lfp_mean, lfp_std)
     y_mean, y_std = mv.y_scaler_from(trials, tr_idx)
     fallback = np.unique(np.concatenate([tr_idx, va_idx, test_idx]))
     stats = mv.fit_unit_stats(trials, tr_idx, fallback)
     stats = ensure_session_rates(stats, trials, test_idx)
+    for eid, r in list(stats["rates"].items()):
+        r = np.asarray(r, dtype=np.float32)
+        if r.ndim > 1:
+            stats["rates"][eid] = r.mean(axis=-1).astype(np.float32)
+    stats["feat_dim"] = feat_dim_of(input_name)
+    stats["input"] = input_name
+    stats["lfp_mean"] = lfp_mean
+    stats["lfp_std"] = lfp_std
     tag = slurm_utils.tag_of(cfg)
     jdir = slurm_utils.job_dir()
     name = cfg["model"]
@@ -1572,7 +2066,7 @@ def run_config(cfg, trials, specs):
         )
     if name.startswith("gnn"):
         slurm_utils.write_status(state="training", epoch=0, stage="graph_corr", n_train=int(len(tr_idx)))
-        rho = gnn.session_train_corr(trials, tr_idx)
+        rho = token_session_corr(trials, tr_idx) if input_name != "spikes" else gnn.session_train_corr(trials, tr_idx)
     if name in ("mean", "ar"):
         recs = mean_curve(trials, tr_idx, test_idx, objective) if name == "mean" else ar_curve(trials, test_idx, objective)
         blob = {"model": name, "objective": objective, "y_mean": y_mean, "y_std": y_std}
@@ -1592,6 +2086,7 @@ def run_config(cfg, trials, specs):
             mv.SEED + int(spec["fold"]),
             rho,
             vox,
+            input_name=input_name,
         )
         recs = predict_neural(blob, trials, test_idx, stats, vox)
     scored = recs
@@ -1605,6 +2100,7 @@ def run_config(cfg, trials, specs):
         "model": name,
         "objective": objective,
         "loss": cfg["loss"],
+        "input": input_name,
         "target": TARGET,
         "n_train": int(len(tr_idx)),
         "n_val": int(len(va_idx)),
@@ -1613,7 +2109,7 @@ def run_config(cfg, trials, specs):
     }
     row = write_pack(jdir, scored, rows, pooled, blob, hist, meta)
     log(
-        f"  {name:24s} {objective:9s} {cfg['loss']:11s}  "
+        f"  {name:24s} {input_name:10s} {objective:9s} {cfg['loss']:11s}  "
         f"concat R²={pooled.get('fold_concat_r2', float('nan')):.3f}  "
         f"median R²={pooled.get('fold_median_r2', float('nan')):.3f}  "
         f"onset MAE={pooled.get('fold_median_onset_abs_s', float('nan')):.3f}s"
@@ -1636,14 +2132,33 @@ def _install_term_handler():
     signal.signal(signal.SIGINT, _h)
 
 
-def process(job=None, evals=EVALS, models=MODELS, objectives=OBJECTIVES, fold=None, single_fold=False, trials=None):
+def process(
+    job=None,
+    evals=EVALS,
+    models=MODELS,
+    objectives=OBJECTIVES,
+    fold=None,
+    single_fold=False,
+    trials=None,
+    inputs=INPUTS,
+):
     configure_out()
     mv.set_seed(mv.SEED)
     if trials is None:
         trials, _session_meta = mv.load_corpus()
+        if any(inp in LFP_INPUTS for inp in inputs):
+            attach_lfp(trials)
     annotate_trials(trials)
     bind_objective(trials, "trace")
-    configs, specs = job_grid(trials, evals=evals, models=models, objectives=objectives, fold=fold, single_fold=single_fold)
+    configs, specs = job_grid(
+        trials,
+        evals=evals,
+        models=models,
+        objectives=objectives,
+        fold=fold,
+        single_fold=single_fold,
+        inputs=inputs,
+    )
     if job is not None:
         cfg = slurm_utils.pick_config(configs, job)
         slurm_utils.set_device("auto", probe=device_probe(cfg["model"]))
@@ -1692,7 +2207,7 @@ def _mean_median(series, prefix, key):
 
 
 def _job_group_key(row):
-    return tuple(str(row.get(k, "")) for k in ("eval", "model", "objective", "loss"))
+    return tuple(str(row.get(k, "spikes" if k == "input" else "")) for k in ("eval", "model", "objective", "loss", "input"))
 
 
 def aggregate_all():
@@ -1724,7 +2239,7 @@ def aggregate_all():
             grouped_recs[key].append({"y": y[off : off + n], "pred": p[off : off + n]})
             off += n
     summary = []
-    keys = ["eval", "model", "objective", "loss"]
+    keys = ["eval", "model", "objective", "loss", "input"]
     present = [c for c in keys if c in df.columns]
     for gvals, sub in df.groupby(present, dropna=False):
         rec = dict(zip(present, gvals if isinstance(gvals, tuple) else (gvals,)))
@@ -1773,6 +2288,7 @@ def _fake_trials(n_mice=3, n_sess=2, n_per=25):
                 paw[on:] = 200 + 80 * np.sin(np.linspace(0, 3, T - on))
                 wheel = np.zeros(T, dtype=np.float32)
                 wheel[on:] = (1 if k % 2 == 0 else -1) * 0.4
+                n_ch = 4
                 trials.append(
                     {
                         "eid": eid,
@@ -1781,6 +2297,13 @@ def _fake_trials(n_mice=3, n_sess=2, n_per=25):
                         "spikes": spk,
                         "xyz": xyz,
                         "areas": areas,
+                        "unit_spikes": spk,
+                        "unit_xyz": xyz,
+                        "unit_areas": areas,
+                        "lfp": rng.randn(T, n_ch, N_LFP_BANDS).astype(np.float32) * 0.4 + 1.0,
+                        "lfp_xyz": xyz[::2].copy(),
+                        "lfp_areas": areas[::2].copy(),
+                        "unit_to_ch": np.array([0, 0, 1, 1, 2, 2, 3, 3], dtype=np.int32),
                         "behaviors": {
                             "paw_speed": paw,
                             "wheel_signed": wheel,
@@ -1847,6 +2370,28 @@ def dummy_smoke_jobs(specs):
                 "loss": "mse",
             }
         )
+    jobs.append(
+        {
+            "eval": "LTO",
+            "fold": int(lto["fold"]),
+            "fold_id": lto["fold_id"],
+            "model": "attn_a1_gru",
+            "objective": "trace",
+            "loss": "mse",
+            "input": "lfp",
+        }
+    )
+    jobs.append(
+        {
+            "eval": "LTO",
+            "fold": int(lto["fold"]),
+            "fold_id": lto["fold_id"],
+            "model": "attn_a1_gru",
+            "objective": "trace",
+            "loss": "mse",
+            "input": "electrode",
+        }
+    )
     return jobs
 
 
@@ -1953,6 +2498,52 @@ def run_self_test():
     cfgs, specs = job_grid(trials, single_fold=True)
     assert any(c["model"] == "attn_a1_gru" and c["objective"] == "mixed" for c in cfgs)
     assert all(c["fold"] == specs[0]["fold"] or c["eval"] != specs[0]["eval"] for c in cfgs[:3])
+    assert any(c.get("input") == "lfp" and c["model"] == "attn_a1_gru" and c["loss"] == "mse" for c in cfgs)
+    assert any(c.get("input") == "electrode" and c["model"] == "attn_anat_transformer" for c in cfgs)
+    assert not any(c.get("input") in LFP_INPUTS and c["model"] in ("mean", "ar") for c in cfgs)
+    assert not any(c.get("input") in LFP_INPUTS and c["loss"] != "mse" for c in cfgs)
+    elec = DualSetSequence(
+        4, pool="attn", use_anatomy=False, temporal="gru", feat_dim=7, channel_encoder=True
+    )
+    xb = torch.zeros(2, 5, 8, 7)
+    xyzb = torch.zeros(2, 5, 3)
+    areab = torch.zeros(2, 5, dtype=torch.long)
+    rateb = torch.zeros(2, 5)
+    mn = torch.ones(2, 5, dtype=torch.bool)
+    mt = torch.ones(2, 8, dtype=torch.bool)
+    pred, aux = elec(xb, xyzb, areab, rateb, mn, mt, torch.tensor([8, 8]))
+    assert pred.shape[:2] == (2, 8)
+    lfp_net = DualSetSequence(
+        4, pool="attn", use_anatomy=True, temporal="transformer", feat_dim=N_LFP_BANDS
+    )
+    pred_lfp, _ = lfp_net(
+        torch.zeros(2, 5, 8, N_LFP_BANDS), xyzb, areab, rateb, mn, mt, torch.tensor([8, 8])
+    )
+    assert pred_lfp.shape[:2] == (2, 8)
+    both = DualSetSequence(
+        4, pool="attn", use_anatomy=False, temporal="gru", feat_dim=1 + N_LFP_BANDS
+    )
+    pred_both, _ = both(
+        torch.zeros(2, 5, 8, 1 + N_LFP_BANDS), xyzb, areab, rateb, mn, mt, torch.tensor([8, 8])
+    )
+    assert pred_both.shape[:2] == (2, 8)
+    prelim, _ = job_grid(
+        trials,
+        models=("attn_a1_gru", "attn_a1_transformer", "attn_anat_transformer"),
+        objectives=("trace",),
+        single_fold=True,
+        inputs=("lfp", "spike_lfp", "electrode"),
+    )
+    assert len(prelim) == 27, len(prelim)
+    assert all(c.get("loss") == "mse" and c.get("input") in LFP_INPUTS for c in prelim)
+    bind_input(trials, "lfp")
+    assert trials[0]["spikes"].ndim == 3 and trials[0]["spikes"].shape[-1] == N_LFP_BANDS
+    bind_input(trials, "spike_lfp")
+    assert trials[0]["spikes"].ndim == 3 and trials[0]["spikes"].shape[-1] == 1 + N_LFP_BANDS
+    bind_input(trials, "electrode")
+    assert trials[0]["spikes"].ndim == 3 and trials[0]["spikes"].shape[-1] == 7
+    bind_input(trials, "spikes")
+    assert trials[0]["spikes"].ndim == 2
     log(f"self-test ok  LTO={len(lto)} LSO={len(lso)} LMO={len(lmo)} single-fold jobs={len(cfgs)}")
 
 
@@ -1978,6 +2569,13 @@ def main():
     p.add_argument("--eval", nargs="*", default=list(EVALS), choices=list(EVALS))
     p.add_argument("--models", nargs="*", default=list(MODELS), choices=list(MODELS))
     p.add_argument("--objectives", nargs="*", default=list(OBJECTIVES), choices=list(OBJECTIVES))
+    p.add_argument(
+        "--inputs",
+        nargs="*",
+        default=list(INPUTS),
+        choices=list(INPUTS),
+        help="spikes = existing unit counts. lfp / spike_lfp / electrode = motor-channel LFP extras (trace MSE only).",
+    )
     args = p.parse_args()
     if args.self_test:
         run_self_test()
@@ -1997,6 +2595,7 @@ def main():
             objectives=tuple(args.objectives),
             fold=args.fold,
             single_fold=args.single_fold,
+            inputs=tuple(args.inputs),
         )
         slurm_utils.print_jobs(configs)
         return
@@ -2012,6 +2611,7 @@ def main():
         objectives=tuple(args.objectives),
         fold=args.fold,
         single_fold=args.single_fold,
+        inputs=tuple(args.inputs),
     )
 
 

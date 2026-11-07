@@ -1,0 +1,260 @@
+{
+  "built_at": "2026-11-06T19:56:10.859368+00:00",
+  "paper": "https://arxiv.org/abs/2609.22064",
+  "project": "https://www.iblcore.org/resources/benchmarking/ibl-brainwidebench/",
+  "leaderboard": "https://bwb.iblcore.org/html/dashboard/dashboard.html",
+  "epochs": 8,
+  "max_trials": 160,
+  "offline": true,
+  "device": "cpu",
+  "models": [
+    "mean",
+    "ar",
+    "attn_a1_gru",
+    "attn_a1_transformer",
+    "attn_anat_transformer",
+    "hierarchical",
+    "gnn_inner"
+  ],
+  "tasks": [
+    "ts1-wheel_speed",
+    "ts1-right_paw_speed",
+    "ts1-choice",
+    "ts1-reward",
+    "ts1-stimulus_contrast",
+    "ts2-forecast",
+    "ts2-cosmooth",
+    "ts3-cosmos"
+  ],
+  "sessions": [
+    {
+      "eid": "ff4187b5-4176-4e39-8894-53a24b7cf36b",
+      "mouse_id": "ZM_2241",
+      "n_trials": 419,
+      "n_units": 80,
+      "source": "offline",
+      "cosmos": [
+        "CNU",
+        "CTXsp",
+        "Isocortex"
+      ]
+    },
+    {
+      "eid": "a405053a-eb13-4aa4-850c-5a337e5dc7fd",
+      "mouse_id": "NYU-48",
+      "n_trials": 360,
+      "n_units": 79,
+      "source": "offline",
+      "cosmos": [
+        "CNU",
+        "Isocortex"
+      ]
+    }
+  ],
+  "summary": {
+    "ts1-choice": {
+      "ar": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.5,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.5,
+        "n": 2
+      }
+    },
+    "ts1-right_paw_speed": {
+      "ar": {
+        "mean": 0.40815735503624895,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.047061093982947166,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.04649016452569038,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.02247240854051963,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.0,
+        "n": 2
+      }
+    },
+    "ts1-stimulus_contrast": {
+      "ar": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.25,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.25,
+        "n": 2
+      }
+    },
+    "ts1-wheel_speed": {
+      "ar": {
+        "mean": 0.7744339791971218,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.002769732282878412,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.21960767102105144,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.20430288104097238,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.04810612963979022,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.0441519375864346,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.0,
+        "n": 2
+      }
+    },
+    "ts2-cosmooth": {
+      "ar": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.46485278718014,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.5867154464132771,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.41363568656497796,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.5454404369327904,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.44000063273250656,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.0,
+        "n": 2
+      }
+    },
+    "ts2-forecast": {
+      "ar": {
+        "mean": 0.9190076893755724,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "attn_anat_transformer": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "gnn_inner": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.0,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.0,
+        "n": 2
+      }
+    },
+    "ts3-cosmos": {
+      "ar": {
+        "mean": 0.3744909292854498,
+        "n": 2
+      },
+      "attn_a1_gru": {
+        "mean": 0.3744909292854498,
+        "n": 2
+      },
+      "attn_a1_transformer": {
+        "mean": 0.3744909292854498,
+        "n": 2
+      },
+      "hierarchical": {
+        "mean": 0.3744909292854498,
+        "n": 2
+      },
+      "mean": {
+        "mean": 0.3744909292854498,
+        "n": 2
+      }
+    }
+  },
+  "n_rows": 94,
+  "note": "Local single-session trial of ExperimentsClean formulations on BWB windows. Not a leaderboard submission. R\u00b2 / D\u00b2 are clipped at 0 for the reported score, matching Appendix E."
+}
