@@ -1,25 +1,22 @@
 """Spike–LFP fusion models with ExperimentsClean LTO / LSO / LMO folds.
 
-Architecture axes (fully crossed on --grid default / full)
-  association  hard | soft | graph
-  fusion       concat | gate | residual | xattn | private
-  position     atlas | none | probe | depth | local
-  encoder      instant | history | bandconv     (20 ms grid, different windows)
-  temporal     transformer | gru | kalman | recurrent | cde
-  soft_norm    norm | unnorm   (soft assignment only)
-  input        spikes | lfp | lfp_nogamma | spike_lfp | spike_lfp_nogamma
+--grid default (pilot, what --single-fold submits)
+  3 associations × 5 fusions × 5 input modes, atlas / instant / transformer,
+  plus a few one-at-a-time extras (other pos, encoders, temporals, soft unnorm).
+  No hyperparameter sweep. ~130 models × 3 evals.
 
-Default hyperparameters, each swept at 3 values (one-at-a-time on a family base)
-  d_model, n_queries, n_layers, dropout, pool, unit_drop, lr,
-  sigma, k_ne, k_ee, graph_layers, spike_lags, band_scale,
-  kalman_dz, rnn_cell, cde_depth, lambda_s, lambda_l, lambda_c
+--grid core     association × fusion only
+--grid arch     full architecture cartesian × inputs (no HP)
+--grid full     arch cartesian × inputs × HP three-way OATs
+
+Input modes
+  spikes | lfp | lfp_nogamma | spike_lfp | spike_lfp_nogamma
 
 Local:
   python lfpfuse.py --self-test
   python lfpfuse.py --single-fold --list-jobs
-  python lfpfuse.py --single-fold --job 0 --device auto
 
-Cluster (one representative fold per eval, full cross + HP sweeps):
+Cluster:
   bash slurm/submit_fuse.sh --single-fold
 
 After the array:
@@ -74,7 +71,7 @@ TEMPORALS = ("transformer", "gru", "kalman", "recurrent", "cde")
 SOFT_NORMS = ("norm", "unnorm")
 POOLS = ("latent", "mean", "attn")
 INPUT_MODES = ("spikes", "lfp", "lfp_nogamma", "spike_lfp", "spike_lfp_nogamma")
-GRIDS = ("default", "core", "full", "arch")
+GRIDS = ("default", "pilot", "core", "arch", "full")
 
 N_LFP_BANDS = ec.N_LFP_BANDS
 HIGH_GAMMA_IDX = 5  # last of δ θ α β low-γ high-γ
@@ -1787,6 +1784,32 @@ def iter_core(assocs, fuses, soft_norms):
             yield _arch_cfg(assoc, fuse, "atlas", "instant", "transformer", sn)
 
 
+def iter_pilot(assocs, fuses, poses, encoders, temporals, soft_norms):
+    """Small screen: every assoc × fuse, then one-at-a-time extras. No HP sweep."""
+    seen = set()
+    for rec in iter_core(assocs, fuses, soft_norms):
+        seen.add(rec["model"])
+        yield rec
+    if "hard" not in assocs or "concat" not in fuses:
+        return
+    extras = []
+    for pos in poses:
+        if pos != "atlas":
+            extras.append(_arch_cfg("hard", "concat", pos, "instant", "transformer"))
+    for enc in encoders:
+        if enc != "instant":
+            extras.append(_arch_cfg("hard", "concat", "atlas", enc, "transformer"))
+    for temporal in temporals:
+        if temporal != "transformer":
+            extras.append(_arch_cfg("hard", "concat", "atlas", "instant", temporal))
+    if "soft" in assocs and "unnorm" in soft_norms:
+        extras.append(_arch_cfg("soft", "concat", "atlas", "instant", "transformer", "unnorm"))
+    for rec in extras:
+        if rec["model"] not in seen:
+            seen.add(rec["model"])
+            yield rec
+
+
 def hp_oat_cfgs():
     """Three values of each hyperparameter, one-at-a-time on a family base.
 
@@ -1862,11 +1885,13 @@ def job_grid(
     grid = grid or "default"
     inputs = tuple(inputs or INPUT_MODES)
     archs = []
-    if grid == "core":
+    if grid in ("default", "pilot"):
+        archs.extend(iter_pilot(assocs, fuses, poses, encoders, temporals, soft_norms))
+    elif grid == "core":
         archs.extend(iter_core(assocs, fuses, soft_norms))
     else:
         archs.extend(iter_archs(assocs, fuses, poses, encoders, temporals, soft_norms))
-        if grid in ("default", "full"):
+        if grid == "full":
             allow = set(assocs), set(fuses), set(poses), set(encoders), set(temporals), set(soft_norms)
 
             def _ok(rec):
@@ -2156,7 +2181,7 @@ def run_self_test():
             loss = loss + extra
         loss.backward()
         log(f"self-test ok {cfg['model']}  shape={tuple(pred.shape)}")
-    global DUMMY
+    global DUMMY, MAX_EPOCHS_CAP
     DUMMY = True
     MAX_EPOCHS_CAP = 1
     configure_out()
@@ -2166,8 +2191,8 @@ def run_self_test():
     all_cfgs, _ = job_grid(trials, evals=EVALS, grid="default", single_fold=True)
     n_models = len({c["model"] for c in all_cfgs})
     log(f"default single-fold grid: {len(all_cfgs)} jobs, {n_models} unique models")
-    if n_models < 7500:
-        raise AssertionError(f"expected full architecture × 5 inputs, got {n_models} models")
+    if not (80 <= n_models <= 400):
+        raise AssertionError(f"expected a compact pilot grid, got {n_models} models")
     configs, specs = job_grid(trials, evals=("LTO",), grid="core", single_fold=True, assocs=("hard",), fuses=("concat",))
     slurm_utils.begin_job(OUT, 0, "selftest", **configs[0])
     run_config(configs[0], trials, specs)

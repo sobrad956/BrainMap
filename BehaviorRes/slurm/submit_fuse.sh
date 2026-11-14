@@ -1,17 +1,14 @@
 #!/bin/bash
 # Submit lfpfuse.py as a Slurm array (one config per task).
 #
-# Representative fold of each eval, full architecture × 5 input modes + HP sweeps:
+# Pilot screen (default): assoc × fusion × 5 inputs, plus a few extras, one fold per eval.
 #   bash slurm/submit_fuse.sh --single-fold
 #
-# Architecture cartesian only (no HP OATs):
+# Full architecture cartesian (no HP):
 #   bash slurm/submit_fuse.sh --single-fold --grid arch
 #
-# Tiny 3×5 association×fusion smoke grid:
-#   bash slurm/submit_fuse.sh --single-fold --grid core
-#
-# Full CV, every LTO / LSO / LMO fold (very large):
-#   bash slurm/submit_fuse.sh
+# Everything, including HP sweeps (very large):
+#   bash slurm/submit_fuse.sh --single-fold --grid full
 #
 # CPU:
 #   bash slurm/submit_fuse.sh --single-fold --cpu
@@ -88,4 +85,7 @@ while (( GLOBAL_START <= LAST )); do
     "${SBATCH_GPU[@]}" \
     "$ROOT/slurm/lfpfuse.sbatch"
   GLOBAL_START=$((GLOBAL_START + CHUNK_SIZE))
+  if (( GLOBAL_START <= LAST )); then
+    sleep 3
+  fi
 done
